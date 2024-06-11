@@ -9,7 +9,67 @@
 
 <body>
     <h1>Webcam Stream</h1>
-    <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
+    <select id="videoSource"></select>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="startButton">Start Stream</button>
+    <button id="stopButton">Stop Stream</button>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const videoSelect = document.getElementById('videoSource');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        let currentStream;
+
+        navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
+
+        function gotDevices(deviceInfos) {
+            const values = videoSelect.value;
+            while (videoSelect.firstChild) {
+                videoSelect.removeChild(videoSelect.firstChild);
+            }
+            for (let i = 0; i !== deviceInfos.length; ++i) {
+                const deviceInfo = deviceInfos[i];
+                const option = document.createElement('option');
+                option.value = deviceInfo.deviceId;
+                if (deviceInfo.kind === 'videoinput') {
+                    option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+                    videoSelect.appendChild(option);
+                }
+            }
+            if (Array.prototype.slice.call(videoSelect.childNodes).some(n => n.value === values)) {
+                videoSelect.value = values;
+            }
+        }
+
+        function handleError(error) {
+            console.error('Error: ', error);
+        }
+
+        startButton.addEventListener('click', async () => {
+            if (typeof currentStream !== 'undefined') {
+                stopStream();
+            }
+            const videoSource = videoSelect.value;
+            const constraints = {
+                video: {
+                    deviceId: videoSource ? { exact: videoSource } : undefined
+                }
+            };
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            videoElement.srcObject = currentStream;
+        });
+
+        stopButton.addEventListener('click', () => {
+            stopStream();
+        });
+
+        function stopStream() {
+            const tracks = currentStream.getTracks();
+            tracks.forEach(track => track.stop());
+            videoElement.srcObject = null;
+        }
+    </script>
 </body>
 
 </html>
