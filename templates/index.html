@@ -11,10 +11,14 @@
     <h1>Webcam Stream</h1>
     <select id="videoSource" style="display: none;"></select>
     <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
+    <button id="startButton">Start Stream</button>
+    <button id="stopButton">Stop Stream</button>
 
     <script>
         const videoElement = document.getElementById('video');
         const videoSelect = document.getElementById('videoSource');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
         let currentStream;
 
         // Function to handle devices
@@ -67,6 +71,10 @@
 
         // Automatically start the stream when the page loads
         window.addEventListener('load', startStream);
+
+        // Add event listeners for buttons
+        startButton.addEventListener('click', startStream);
+        stopButton.addEventListener('click', stopStream);
     </script>
 </body>
 
