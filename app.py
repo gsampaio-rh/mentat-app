@@ -5,6 +5,8 @@ from pyzbar import pyzbar
 import numpy as np
 import logging
 import argparse
+import os
+import json
 
 app = Flask(__name__)
 
@@ -96,7 +98,7 @@ def overlay_image(frame, overlay_img, position):
     frame[y : y + h, x : x + w] = cv2.add(frame_bg, img_fg)
 
 
-def decode_qr_code(frame, overlay_img):
+def decode_qr_code(frame, overlay_images, qr_mappings):
     decoded_objects = pyzbar.decode(frame)
     for obj in decoded_objects:
         points = obj.polygon
@@ -113,14 +115,40 @@ def decode_qr_code(frame, overlay_img):
             cv2.line(frame, hull[j], hull[(j + 1) % n], (0, 255, 0), 3)
 
         (x, y, w, h) = obj.rect
-        logging.debug(f"QR Code position and size: x={x}, y={y}, w={w}, h={h}")
-        resized_overlay_img = cv2.resize(overlay_img, (w, h))
-        overlay_image(frame, resized_overlay_img, (x, y))
+        qr_data = obj.data.decode("utf-8")
+        logging.debug(f"QR Code data: {qr_data}")
+
+        overlay_filename = qr_mappings.get(qr_data)
+        if overlay_filename is not None:
+            overlay_img = overlay_images.get(overlay_filename)
+            if overlay_img is not None:
+                logging.debug(f"Found overlay image for QR code: {qr_data}")
+                resized_overlay_img = cv2.resize(overlay_img, (w, h))
+                overlay_image(frame, resized_overlay_img, (x, y))
+            else:
+                logging.warning(f"Overlay image file not found: {overlay_filename}")
+        else:
+            logging.warning(f"No overlay mapping found for QR code: {qr_data}")
 
     return frame, decoded_objects
 
 
-def gen(detection_enabled, qr_detection_enabled, overlay_img):
+def load_overlay_images(image_directory):
+    overlay_images = {}
+    for filename in os.listdir(image_directory):
+        if filename.startswith("overlay_"):
+            overlay_images[filename] = cv2.imread(
+                os.path.join(image_directory, filename)
+            )
+    return overlay_images
+
+
+def load_qr_mappings(mapping_file):
+    with open(mapping_file, "r") as f:
+        return json.load(f)
+
+
+def gen(detection_enabled, qr_detection_enabled, overlay_images, qr_mappings):
     logging.info("Starting video capture...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -137,7 +165,7 @@ def gen(detection_enabled, qr_detection_enabled, overlay_img):
             frame = detect_objects(frame, model)
 
         if qr_detection_enabled:
-            frame, _ = decode_qr_code(frame, overlay_img)
+            frame, _ = decode_qr_code(frame, overlay_images, qr_mappings)
 
         _, buffer = cv2.imencode(".jpg", frame)
         frame = buffer.tobytes()
@@ -157,16 +185,13 @@ def video_feed():
     logging.info("Received request for /video_feed")
     detection_enabled = request.args.get("detection", "false").lower() == "true"
     qr_detection_enabled = request.args.get("qr_detection", "false").lower() == "true"
-    overlay_img_path = request.args.get("overlay_img", "overlay_image.png")
-    overlay_img = cv2.imread(overlay_img_path)
-    if overlay_img is None:
-        logging.error(f"Error: Could not load overlay image from {overlay_img_path}")
-        overlay_img = np.zeros((10, 10, 3), np.uint8)  # Placeholder black image
+    overlay_images = load_overlay_images("images/")
+    qr_mappings = load_qr_mappings("qr_mappings.json")
     logging.info(
         f"Starting video feed with detection enabled: {detection_enabled}, QR detection enabled: {qr_detection_enabled}"
     )
     return Response(
-        gen(detection_enabled, qr_detection_enabled, overlay_img),
+        gen(detection_enabled, qr_detection_enabled, overlay_images, qr_mappings),
         mimetype="multipart/x-mixed-replace; boundary=frame",
     )
 
