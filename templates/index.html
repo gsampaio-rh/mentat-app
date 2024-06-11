@@ -1,24 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webcam Stream</title>
 </head>
+
 <body>
     <h1>Webcam Stream</h1>
-    <select id="videoSource"></select>
+    <select id="videoSource" style="display: none;"></select>
     <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
-    <button id="startButton">Start Stream</button>
-    <button id="stopButton">Stop Stream</button>
 
     <script>
         const videoElement = document.getElementById('video');
         const videoSelect = document.getElementById('videoSource');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
         let currentStream;
 
+        // Function to handle devices
         navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
 
         function gotDevices(deviceInfos) {
@@ -38,13 +37,14 @@
             if (Array.prototype.slice.call(videoSelect.childNodes).some(n => n.value === values)) {
                 videoSelect.value = values;
             }
+            startStream();
         }
 
         function handleError(error) {
             console.error('Error: ', error);
         }
 
-        startButton.addEventListener('click', async () => {
+        async function startStream() {
             if (typeof currentStream !== 'undefined') {
                 stopStream();
             }
@@ -56,11 +56,7 @@
             };
             currentStream = await navigator.mediaDevices.getUserMedia(constraints);
             videoElement.srcObject = currentStream;
-        });
-
-        stopButton.addEventListener('click', () => {
-            stopStream();
-        });
+        }
 
         function stopStream() {
             const stream = videoElement.srcObject;
@@ -68,6 +64,10 @@
             tracks.forEach(track => track.stop());
             videoElement.srcObject = null;
         }
+
+        // Automatically start the stream when the page loads
+        window.addEventListener('load', startStream);
     </script>
 </body>
+
 </html>
