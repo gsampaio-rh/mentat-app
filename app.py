@@ -2,9 +2,34 @@ from flask import Flask, render_template, Response
 import cv2
 from ultralytics import YOLO
 import logging
+import argparse
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
+
+# Function to parse command-line arguments
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Real-time Object Detection with Webcam Stream"
+    )
+    parser.add_argument(
+        "--log",
+        type=str,
+        default="INFO",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    return parser.parse_args()
+
+
+# Function to set the logging level
+def set_logging_level(log_level):
+    numeric_level = getattr(logging, log_level.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError(f"Invalid log level: {log_level}")
+    logging.basicConfig(level=numeric_level)
+
+
+# Parse the command-line arguments
+args = parse_args()
+set_logging_level(args.log)
 
 app = Flask(__name__)
 
