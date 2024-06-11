@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response, request
+from flask import Flask, render_template, Response, request, jsonify
 import cv2
 from ultralytics import YOLO
 from pyzbar import pyzbar
@@ -9,6 +9,7 @@ import os
 import json
 
 app = Flask(__name__)
+qr_counter = 0
 
 
 def parse_args():
@@ -118,6 +119,7 @@ def overlay_image(frame, overlay_img, position, icon_name):
 
 
 def decode_qr_code(frame, overlay_images, qr_mappings):
+    global qr_counter
     decoded_objects = pyzbar.decode(frame)
     for obj in decoded_objects:
         points = obj.polygon
@@ -146,6 +148,7 @@ def decode_qr_code(frame, overlay_images, qr_mappings):
                 logging.debug(f"Found overlay image for QR code: {qr_data}")
                 resized_overlay_img = cv2.resize(overlay_img, (w, h))
                 overlay_image(frame, resized_overlay_img, (x, y), icon_name)
+                qr_counter += 1  # Increment counter for each detected QR code
             else:
                 logging.warning(f"Overlay image file not found: {overlay_filename}")
         else:
@@ -215,6 +218,11 @@ def video_feed():
         gen(detection_enabled, qr_detection_enabled, overlay_images, qr_mappings),
         mimetype="multipart/x-mixed-replace; boundary=frame",
     )
+
+
+@app.route("/qr_counter")
+def get_qr_counter():
+    return jsonify({"qr_counter": qr_counter})
 
 
 if __name__ == "__main__":

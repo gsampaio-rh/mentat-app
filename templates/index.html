@@ -67,6 +67,15 @@
             background-color: #c82333;
         }
 
+        .button-yellow {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .button-yellow:hover {
+            background-color: #e0a800;
+        }
+
         #video {
             margin-top: 20px;
             border: 5px solid #ddd;
@@ -76,6 +85,12 @@
             background-color: black;
             object-fit: cover;
             /* This ensures the video fits within the div without resizing */
+        }
+
+        #qrCounter {
+            font-size: 20px;
+            margin-top: 20px;
+            color: #007bff;
         }
     </style>
 </head>
@@ -88,9 +103,10 @@
             <button id="startButton">Start Stream</button>
             <button id="stopButton">Stop Stream</button>
             <button id="toggleDetectionButton" class="button-red">Enable Detection</button>
-            <button id="qrDetectionButton" class="button-red">Enable QR Detection</button>
+            <button id="qrDetectionButton" class="button-yellow">Enable QR Detection</button>
         </div>
         <img id="video" alt="Webcam Stream">
+        <div id="qrCounter">QR Codes Detected: 0</div>
         <!-- <video id="video" autoplay></video> -->
 
         <script>
@@ -100,6 +116,7 @@
             const stopButton = document.getElementById('stopButton');
             const toggleDetectionButton = document.getElementById('toggleDetectionButton');
             const qrDetectionButton = document.getElementById('qrDetectionButton');
+            const qrCounterElement = document.getElementById('qrCounter');
             let currentStream;
             let isDetectionEnabled = false;
             let isQRDetectionEnabled = false;
@@ -180,7 +197,7 @@
             function toggleQRDetection() {
                 isQRDetectionEnabled = !isQRDetectionEnabled;
                 qrDetectionButton.textContent = isQRDetectionEnabled ? 'Disable QR Detection' : 'Enable QR Detection';
-                qrDetectionButton.className = isQRDetectionEnabled ? 'button-green' : 'button-red';
+                qrDetectionButton.className = isQRDetectionEnabled ? 'button-green' : 'button-yellow';
                 console.log("QR detection enabled:", isQRDetectionEnabled);
             }
 
@@ -189,6 +206,19 @@
             stopButton.addEventListener('click', stopStream);
             toggleDetectionButton.addEventListener('click', toggleDetection);
             qrDetectionButton.addEventListener('click', toggleQRDetection);
+
+            // Function to fetch and update QR counter
+            function updateQRCounter() {
+                fetch('/qr_counter')
+                    .then(response => response.json())
+                    .then(data => {
+                        qrCounterElement.textContent = `QR Codes Detected: ${data.qr_counter}`;
+                    })
+                    .catch(error => console.error('Error fetching QR counter:', error));
+            }
+
+            // Update QR counter every second
+            setInterval(updateQRCounter, 1000);
         </script>
     </div>
 </body>
