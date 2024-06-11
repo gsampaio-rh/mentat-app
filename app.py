@@ -1,11 +1,13 @@
 from flask import Flask, render_template, Response, request
 import cv2
 from ultralytics import YOLO
+from pyzbar import pyzbar
 import logging
 import argparse
 
+app = Flask(__name__)
 
-# Function to parse command-line arguments
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Real-time Object Detection with Webcam Stream"
@@ -26,7 +28,6 @@ def parse_args():
     return parser.parse_args()
 
 
-# Function to set the logging level
 def set_logging_level(log_level):
     numeric_level = getattr(logging, log_level.upper(), None)
     if not isinstance(numeric_level, int):
@@ -34,19 +35,6 @@ def set_logging_level(log_level):
     logging.basicConfig(level=numeric_level)
 
 
-# Parse the command-line arguments
-args = parse_args()
-set_logging_level(args.log)
-
-app = Flask(__name__)
-
-# Load the YOLOv8 model based on the command-line argument
-logging.info(f"Loading YOLOv8 model: {args.model}...")
-model = YOLO(args.model)
-logging.info("Model loaded successfully!")
-
-
-# Function to get class colors
 def getColours(cls_num):
     base_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
     color_index = cls_num % len(base_colors)
@@ -59,13 +47,44 @@ def getColours(cls_num):
     return tuple(color)
 
 
-@app.route("/")
-def index():
-    logging.info("Rendering index page.")
-    return render_template("index.html")
+def detect_objects(frame, model):
+    logging.debug("Performing object detection...")
+    results = model(frame, stream=True)
+    for result in results:
+        boxes = result.boxes.cpu().numpy()
+        logging.debug(f"Detected {len(boxes)} objects.")
+        for box in boxes:
+            if box.conf > 0.4:
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cls = int(box.cls[0])
+                color = getColours(cls)
+                label = f"{model.names[cls]} {box.conf[0]:.2f}"
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(
+                    frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2
+                )
+                logging.debug(f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})")
+    return frame
 
 
-def gen(detection_enabled):
+def detect_qr_codes(frame):
+    qr_codes = pyzbar.decode(frame)
+    for qr_code in qr_codes:
+        x, y, w, h = qr_code.rect
+        frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        qr_data = qr_code.data.decode("utf-8")
+        frame = cv2.putText(
+            frame, qr_data, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2
+        )
+        replacement_image = cv2.imread(
+            "overlay_image.png"
+        )  # Ensure this image exists in your project directory
+        replacement_image = cv2.resize(replacement_image, (w, h))
+        frame[y : y + h, x : x + w] = replacement_image
+    return frame
+
+
+def gen(detection_enabled, qr_detection_enabled):
     logging.info("Starting video capture...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -79,36 +98,11 @@ def gen(detection_enabled):
             continue
 
         if detection_enabled:
-            logging.debug("Performing object detection...")
-            results = model(frame, stream=True)
+            frame = detect_objects(frame, model)
 
-            for result in results:
-                logging.debug(f"Result: {result}")
-                boxes = result.boxes.cpu().numpy()  # Convert to numpy array
-                logging.debug(f"Detected {len(boxes)} objects.")
+        if qr_detection_enabled:
+            frame = detect_qr_codes(frame)
 
-                for box in boxes:
-                    logging.debug(f"Box: {box}")
-                    if box.conf > 0.4:
-                        x1, y1, x2, y2 = map(int, box.xyxy[0])
-                        cls = int(box.cls[0])
-                        color = getColours(cls)
-                        label = f"{model.names[cls]} {box.conf[0]:.2f}"
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                        cv2.putText(
-                            frame,
-                            label,
-                            (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.9,
-                            color,
-                            2,
-                        )
-                        logging.debug(
-                            f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})"
-                        )
-
-        # Encode frame to JPEG
         _, buffer = cv2.imencode(".jpg", frame)
         frame = buffer.tobytes()
         yield (b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
@@ -116,16 +110,31 @@ def gen(detection_enabled):
     cap.release()
 
 
+@app.route("/")
+def index():
+    logging.info("Rendering index page.")
+    return render_template("index.html")
+
+
 @app.route("/video_feed")
 def video_feed():
     logging.info("Received request for /video_feed")
     detection_enabled = request.args.get("detection", "false").lower() == "true"
-    logging.info(f"Starting video feed with detection enabled: {detection_enabled}")
+    qr_detection_enabled = request.args.get("qr_detection", "false").lower() == "true"
+    logging.info(
+        f"Starting video feed with detection enabled: {detection_enabled}, QR detection enabled: {qr_detection_enabled}"
+    )
     return Response(
-        gen(detection_enabled), mimetype="multipart/x-mixed-replace; boundary=frame"
+        gen(detection_enabled, qr_detection_enabled),
+        mimetype="multipart/x-mixed-replace; boundary=frame",
     )
 
 
 if __name__ == "__main__":
+    args = parse_args()
+    set_logging_level(args.log)
+    logging.info(f"Loading YOLOv8 model: {args.model}...")
+    model = YOLO(args.model)
+    logging.info("Model loaded successfully!")
     logging.info("Starting Flask app...")
     app.run(host="0.0.0.0", port=8000, debug=False)
