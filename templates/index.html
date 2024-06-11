@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webcam Stream</title>
 </head>
-
 <body>
     <h1>Webcam Stream</h1>
     <select id="videoSource"></select>
-    <video id="video" width="640" height="480" autoplay></video>
+    <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
     <button id="startButton">Start Stream</button>
     <button id="stopButton">Stop Stream</button>
 
@@ -65,11 +63,11 @@
         });
 
         function stopStream() {
-            const tracks = currentStream.getTracks();
+            const stream = videoElement.srcObject;
+            const tracks = stream.getTracks();
             tracks.forEach(track => track.stop());
             videoElement.srcObject = null;
         }
     </script>
 </body>
-
 </html>
