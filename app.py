@@ -4,28 +4,19 @@ from ultralytics import YOLO
 import logging
 import argparse
 
-
 # Function to parse command-line arguments
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Real-time Object Detection with Webcam Stream"
-    )
-    parser.add_argument(
-        "--log",
-        type=str,
-        default="INFO",
-        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-    )
+    parser = argparse.ArgumentParser(description='Real-time Object Detection with Webcam Stream')
+    parser.add_argument('--log', type=str, default='INFO',
+                        help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
     return parser.parse_args()
-
 
 # Function to set the logging level
 def set_logging_level(log_level):
     numeric_level = getattr(logging, log_level.upper(), None)
     if not isinstance(numeric_level, int):
-        raise ValueError(f"Invalid log level: {log_level}")
+        raise ValueError(f'Invalid log level: {log_level}')
     logging.basicConfig(level=numeric_level)
-
 
 # Parse the command-line arguments
 args = parse_args()
@@ -37,7 +28,6 @@ app = Flask(__name__)
 logging.info("Loading YOLOv8 model...")
 model = YOLO("yolov8s.pt")
 logging.info("Model loaded successfully!")
-
 
 # Function to get class colors
 def getColours(cls_num):
@@ -51,12 +41,10 @@ def getColours(cls_num):
     ]
     return tuple(color)
 
-
 @app.route("/")
 def index():
     logging.info("Rendering index page.")
     return render_template("index.html")
-
 
 def gen(detection_enabled):
     logging.info("Starting video capture...")
@@ -97,9 +85,7 @@ def gen(detection_enabled):
                             color,
                             2,
                         )
-                        logging.debug(
-                            f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})"
-                        )
+                        logging.debug(f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})")
 
         # Encode frame to JPEG
         _, buffer = cv2.imencode(".jpg", frame)
@@ -111,6 +97,7 @@ def gen(detection_enabled):
 
 @app.route("/video_feed")
 def video_feed():
+    logging.info("Received request for /video_feed")
     detection_enabled = request.args.get("detection", "false").lower() == "true"
     logging.info(f"Starting video feed with detection enabled: {detection_enabled}")
     return Response(
@@ -119,4 +106,5 @@ def video_feed():
 
 
 if __name__ == "__main__":
-    app.run(debug=False)
+    logging.info("Starting Flask app...")
+    app.run(host="0.0.0.0", port=8000, debug=False)

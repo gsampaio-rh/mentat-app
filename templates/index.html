@@ -41,12 +41,30 @@
 
         button {
             background-color: #007bff;
-            color: white;
             cursor: pointer;
+            color: white;
         }
 
         button:hover {
             background-color: #0056b3;
+        }
+
+        .button-green {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .button-green:hover {
+            background-color: #218838;
+        }
+
+        .button-red {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .button-red:hover {
+            background-color: #c82333;
         }
 
         #video {
@@ -56,6 +74,8 @@
             width: 640px;
             height: 480px;
             background-color: black;
+            object-fit: cover;
+            /* This ensures the video fits within the div without resizing */
         }
     </style>
 </head>
@@ -67,9 +87,10 @@
         <div>
             <button id="startButton">Start Stream</button>
             <button id="stopButton">Stop Stream</button>
-            <button id="toggleDetectionButton">Enable Detection</button>
+            <button id="toggleDetectionButton" class="button-red">Enable Detection</button>
         </div>
         <img id="video" alt="Webcam Stream">
+        <!-- <video id="video" autoplay></video> -->
 
         <script>
             const videoElement = document.getElementById('video');
@@ -123,8 +144,9 @@
                     currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                     videoElement.srcObject = currentStream;
                     videoSelect.disabled = true;  // Disable the dropdown
-                    videoElement.src = `{{ url_for('video_feed') }}?detection=${isDetectionEnabled}`;
-                    console.log("Stream started successfully with device:", videoSource);
+                    const detectionParam = isDetectionEnabled ? 'true' : 'false';
+                    videoElement.src = `/video_feed?detection=${detectionParam}`;
+                    console.log(`Stream started successfully with device: ${videoSource}, detection: ${detectionParam}`);
                 } catch (error) {
                     console.error('Error accessing the camera: ', error);
                 }
@@ -147,6 +169,7 @@
             function toggleDetection() {
                 isDetectionEnabled = !isDetectionEnabled;
                 toggleDetectionButton.textContent = isDetectionEnabled ? 'Disable Detection' : 'Enable Detection';
+                toggleDetectionButton.className = isDetectionEnabled ? 'button-green' : 'button-red';
                 console.log("Object detection enabled:", isDetectionEnabled);
             }
 
