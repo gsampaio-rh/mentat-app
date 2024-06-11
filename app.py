@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 import cv2
 from ultralytics import YOLO
 import logging
@@ -58,7 +58,7 @@ def index():
     return render_template("index.html")
 
 
-def gen():
+def gen(detection_enabled):
     logging.info("Starting video capture...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -71,32 +71,35 @@ def gen():
             logging.warning("Failed to capture frame.")
             continue
 
-        logging.debug("Performing object detection...")
-        results = model(frame, stream=True)
+        if detection_enabled:
+            logging.debug("Performing object detection...")
+            results = model(frame, stream=True)
 
-        for result in results:
-            logging.debug(f"Result: {result}")
-            boxes = result.boxes.cpu().numpy()  # Convert to numpy array
-            logging.debug(f"Detected {len(boxes)} objects.")
+            for result in results:
+                logging.debug(f"Result: {result}")
+                boxes = result.boxes.cpu().numpy()  # Convert to numpy array
+                logging.debug(f"Detected {len(boxes)} objects.")
 
-            for box in boxes:
-                logging.debug(f"Box: {box}")
-                if box.conf > 0.4:
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    cls = int(box.cls[0])
-                    color = getColours(cls)
-                    label = f"{model.names[cls]} {box.conf[0]:.2f}"
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(
-                        frame,
-                        label,
-                        (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.9,
-                        color,
-                        2,
-                    )
-                    logging.debug(f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})")
+                for box in boxes:
+                    logging.debug(f"Box: {box}")
+                    if box.conf > 0.4:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        cls = int(box.cls[0])
+                        color = getColours(cls)
+                        label = f"{model.names[cls]} {box.conf[0]:.2f}"
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                        cv2.putText(
+                            frame,
+                            label,
+                            (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.9,
+                            color,
+                            2,
+                        )
+                        logging.debug(
+                            f"Drawn box for {label} at ({x1}, {y1}, {x2}, {y2})"
+                        )
 
         # Encode frame to JPEG
         _, buffer = cv2.imencode(".jpg", frame)
@@ -108,8 +111,11 @@ def gen():
 
 @app.route("/video_feed")
 def video_feed():
-    logging.info("Starting video feed.")
-    return Response(gen(), mimetype="multipart/x-mixed-replace; boundary=frame")
+    detection_enabled = request.args.get("detection", "false").lower() == "true"
+    logging.info(f"Starting video feed with detection enabled: {detection_enabled}")
+    return Response(
+        gen(detection_enabled), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 if __name__ == "__main__":

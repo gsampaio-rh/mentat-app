@@ -67,6 +67,7 @@
         <div>
             <button id="startButton">Start Stream</button>
             <button id="stopButton">Stop Stream</button>
+            <button id="toggleDetectionButton">Enable Detection</button>
         </div>
         <img id="video" alt="Webcam Stream">
 
@@ -75,7 +76,9 @@
             const videoSelect = document.getElementById('videoSource');
             const startButton = document.getElementById('startButton');
             const stopButton = document.getElementById('stopButton');
+            const toggleDetectionButton = document.getElementById('toggleDetectionButton');
             let currentStream;
+            let isDetectionEnabled = false;
 
             // Function to handle devices
             navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
@@ -120,7 +123,7 @@
                     currentStream = await navigator.mediaDevices.getUserMedia(constraints);
                     videoElement.srcObject = currentStream;
                     videoSelect.disabled = true;  // Disable the dropdown
-                    videoElement.src = "{{ url_for('video_feed') }}";
+                    videoElement.src = `{{ url_for('video_feed') }}?detection=${isDetectionEnabled}`;
                     console.log("Stream started successfully with device:", videoSource);
                 } catch (error) {
                     console.error('Error accessing the camera: ', error);
@@ -141,9 +144,16 @@
                 }
             }
 
-            // Event listeners for start and stop buttons
+            function toggleDetection() {
+                isDetectionEnabled = !isDetectionEnabled;
+                toggleDetectionButton.textContent = isDetectionEnabled ? 'Disable Detection' : 'Enable Detection';
+                console.log("Object detection enabled:", isDetectionEnabled);
+            }
+
+            // Event listeners for start, stop, and toggle detection buttons
             startButton.addEventListener('click', startStream);
             stopButton.addEventListener('click', stopStream);
+            toggleDetectionButton.addEventListener('click', toggleDetection);
         </script>
     </div>
 </body>
