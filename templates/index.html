@@ -53,6 +53,10 @@
             margin-top: 20px;
             border: 5px solid #ddd;
             border-radius: 8px;
+            width: 640px;
+            height: 480px;
+            background-color: black;
+            /* Initial black background */
         }
     </style>
 </head>
@@ -60,81 +64,88 @@
 <body>
     <div class="container">
         <h1>Webcam Stream</h1>
-        <select id="videoSource" disabled></select>
+        <select id="videoSource"></select>
         <div>
             <button id="startButton">Start Stream</button>
             <button id="stopButton">Stop Stream</button>
         </div>
-        <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
+        <img id="video" alt="Webcam Stream">
+
+        <script>
+            const videoElement = document.getElementById('video');
+            const videoSelect = document.getElementById('videoSource');
+            const startButton = document.getElementById('startButton');
+            const stopButton = document.getElementById('stopButton');
+            let currentStream;
+
+            // Function to handle devices
+            navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
+
+            function gotDevices(deviceInfos) {
+                const values = videoSelect.value;
+                while (videoSelect.firstChild) {
+                    videoSelect.removeChild(videoSelect.firstChild);
+                }
+                for (let i = 0; i !== deviceInfos.length; ++i) {
+                    const deviceInfo = deviceInfos[i];
+                    const option = document.createElement('option');
+                    option.value = deviceInfo.deviceId;
+                    if (deviceInfo.kind === 'videoinput') {
+                        option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
+                        videoSelect.appendChild(option);
+                    }
+                }
+                if (Array.prototype.slice.call(videoSelect.childNodes).some(n => n.value === values)) {
+                    videoSelect.value = values;
+                }
+            }
+
+            function handleError(error) {
+                console.error('Error: ', error);
+            }
+
+            async function startStream() {
+                console.log("Starting stream...");
+                if (typeof currentStream !== 'undefined') {
+                    console.log("Stopping existing stream before starting a new one...");
+                    stopStream();
+                }
+                const videoSource = videoSelect.value;
+                const constraints = {
+                    video: {
+                        deviceId: videoSource ? { exact: videoSource } : undefined
+                    }
+                };
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    videoElement.srcObject = currentStream;
+                    videoSelect.disabled = true;  // Disable the dropdown
+                    videoElement.src = "{{ url_for('video_feed') }}";
+                    console.log("Stream started successfully.");
+                } catch (error) {
+                    console.error('Error accessing the camera: ', error);
+                }
+            }
+
+            function stopStream() {
+                console.log("Stopping stream...");
+                if (currentStream) {
+                    const tracks = currentStream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    videoElement.srcObject = null;
+                    currentStream = null;
+                    videoSelect.disabled = false;  // Enable the dropdown
+                    videoElement.style.backgroundColor = 'black';  // Turn the video element black
+                    videoElement.src = "";  // Clear the src attribute
+                    console.log("Stream stopped and video element turned black.");
+                }
+            }
+
+            // Event listeners for start and stop buttons
+            startButton.addEventListener('click', startStream);
+            stopButton.addEventListener('click', stopStream);
+        </script>
     </div>
-
-    <script>
-        const videoElement = document.getElementById('video');
-        const videoSelect = document.getElementById('videoSource');
-        const startButton = document.getElementById('startButton');
-        const stopButton = document.getElementById('stopButton');
-        let currentStream;
-
-        // Function to handle devices
-        navigator.mediaDevices.enumerateDevices().then(gotDevices).catch(handleError);
-
-        function gotDevices(deviceInfos) {
-            const values = videoSelect.value;
-            while (videoSelect.firstChild) {
-                videoSelect.removeChild(videoSelect.firstChild);
-            }
-            for (let i = 0; i !== deviceInfos.length; ++i) {
-                const deviceInfo = deviceInfos[i];
-                const option = document.createElement('option');
-                option.value = deviceInfo.deviceId;
-                if (deviceInfo.kind === 'videoinput') {
-                    option.text = deviceInfo.label || `camera ${videoSelect.length + 1}`;
-                    videoSelect.appendChild(option);
-                }
-            }
-            if (Array.prototype.slice.call(videoSelect.childNodes).some(n => n.value === values)) {
-                videoSelect.value = values;
-            }
-            startStream();
-        }
-
-        function handleError(error) {
-            console.error('Error: ', error);
-        }
-
-        async function startStream() {
-            if (typeof currentStream !== 'undefined') {
-                stopStream();
-            }
-            const videoSource = videoSelect.value;
-            const constraints = {
-                video: {
-                    deviceId: videoSource ? { exact: videoSource } : undefined
-                }
-            };
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = currentStream;
-            } catch (error) {
-                console.error('Error accessing the camera: ', error);
-            }
-        }
-
-        function stopStream() {
-            if (currentStream) {
-                const tracks = currentStream.getTracks();
-                tracks.forEach(track => track.stop());
-                videoElement.srcObject = null;
-            }
-        }
-
-        // Automatically start the stream when the page loads
-        window.addEventListener('load', startStream);
-
-        // Event listeners for start and stop buttons
-        startButton.addEventListener('click', startStream);
-        stopButton.addEventListener('click', stopStream);
-    </script>
 </body>
 
 </html>
