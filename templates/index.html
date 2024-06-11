@@ -9,7 +9,7 @@
 
 <body>
     <h1>Webcam Stream</h1>
-    <select id="videoSource" style="display: none;"></select>
+    <select id="videoSource"></select>
     <img id="video" src="{{ url_for('video_feed') }}" width="640" height="480">
     <button id="startButton">Start Stream</button>
     <button id="stopButton">Stop Stream</button>
@@ -58,23 +58,31 @@
                     deviceId: videoSource ? { exact: videoSource } : undefined
                 }
             };
-            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-            videoElement.srcObject = currentStream;
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = currentStream;
+            } catch (error) {
+                console.error('Error accessing the camera: ', error);
+            }
         }
 
         function stopStream() {
-            const stream = videoElement.srcObject;
-            const tracks = stream.getTracks();
-            tracks.forEach(track => track.stop());
-            videoElement.srcObject = null;
+            if (currentStream) {
+                const tracks = currentStream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
         }
 
         // Automatically start the stream when the page loads
         window.addEventListener('load', startStream);
 
-        // Add event listeners for buttons
+        // Event listeners for start and stop buttons
         startButton.addEventListener('click', startStream);
         stopButton.addEventListener('click', stopStream);
+
+        // Listen for changes in camera selection
+        videoSelect.addEventListener('change', startStream);
     </script>
 </body>
 
