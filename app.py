@@ -70,7 +70,7 @@ def detect_objects(frame, model):
     return frame
 
 
-def overlay_image(frame, overlay_img, position):
+def overlay_image(frame, overlay_img, position, icon_name):
     x, y = position
     h, w = overlay_img.shape[:2]
     frame_h, frame_w = frame.shape[:2]
@@ -85,6 +85,25 @@ def overlay_image(frame, overlay_img, position):
 
     # Resize overlay image to fit exactly the region in the frame
     overlay_img = cv2.resize(overlay_img, (w, h))
+
+    # Draw icon name above the overlay image
+    font_scale = 0.6
+    font_thickness = 2
+    text_size = cv2.getTextSize(
+        icon_name, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thickness
+    )[0]
+    text_x = x + (w - text_size[0]) // 2
+    text_y = y - 10 if y - 10 > text_size[1] else y + h + text_size[1] + 10
+
+    cv2.putText(
+        frame,
+        icon_name,
+        (text_x, text_y),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        font_scale,
+        (0, 255, 0),
+        font_thickness,
+    )
 
     # Overlay the image
     overlay_img_gray = cv2.cvtColor(overlay_img, cv2.COLOR_BGR2GRAY)
@@ -118,13 +137,15 @@ def decode_qr_code(frame, overlay_images, qr_mappings):
         qr_data = obj.data.decode("utf-8")
         logging.debug(f"QR Code data: {qr_data}")
 
-        overlay_filename = qr_mappings.get(qr_data)
-        if overlay_filename is not None:
+        mapping = qr_mappings.get(qr_data)
+        if mapping is not None:
+            overlay_filename = mapping.get("overlay_image")
+            icon_name = mapping.get("icon_name", "Unknown")
             overlay_img = overlay_images.get(overlay_filename)
             if overlay_img is not None:
                 logging.debug(f"Found overlay image for QR code: {qr_data}")
                 resized_overlay_img = cv2.resize(overlay_img, (w, h))
-                overlay_image(frame, resized_overlay_img, (x, y))
+                overlay_image(frame, resized_overlay_img, (x, y), icon_name)
             else:
                 logging.warning(f"Overlay image file not found: {overlay_filename}")
         else:
