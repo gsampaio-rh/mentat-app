@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response, request
 import cv2
 from ultralytics import YOLO
 from pyzbar import pyzbar
+import numpy as np
 import logging
 import argparse
 
@@ -67,24 +68,59 @@ def detect_objects(frame, model):
     return frame
 
 
-def detect_qr_codes(frame):
-    qr_codes = pyzbar.decode(frame)
-    for qr_code in qr_codes:
-        x, y, w, h = qr_code.rect
-        frame = cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-        qr_data = qr_code.data.decode("utf-8")
-        frame = cv2.putText(
-            frame, qr_data, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2
-        )
-        replacement_image = cv2.imread(
-            "overlay_image.png"
-        )  # Ensure this image exists in your project directory
-        replacement_image = cv2.resize(replacement_image, (w, h))
-        frame[y : y + h, x : x + w] = replacement_image
-    return frame
+def overlay_image(frame, overlay_img, position):
+    x, y = position
+    h, w = overlay_img.shape[:2]
+    frame_h, frame_w = frame.shape[:2]
+
+    # Adjust overlay dimensions to fit within the frame
+    if x + w > frame_w:
+        w = frame_w - x
+        overlay_img = overlay_img[:, :w]
+    if y + h > frame_h:
+        h = frame_h - y
+        overlay_img = overlay_img[:h]
+
+    # Resize overlay image to fit exactly the region in the frame
+    overlay_img = cv2.resize(overlay_img, (w, h))
+
+    # Overlay the image
+    overlay_img_gray = cv2.cvtColor(overlay_img, cv2.COLOR_BGR2GRAY)
+    _, mask = cv2.threshold(overlay_img_gray, 1, 255, cv2.THRESH_BINARY)
+    frame_bg = cv2.bitwise_and(
+        frame[y : y + h, x : x + w],
+        frame[y : y + h, x : x + w],
+        mask=cv2.bitwise_not(mask),
+    )
+    img_fg = cv2.bitwise_and(overlay_img, overlay_img, mask=mask)
+    frame[y : y + h, x : x + w] = cv2.add(frame_bg, img_fg)
 
 
-def gen(detection_enabled, qr_detection_enabled):
+def decode_qr_code(frame, overlay_img):
+    decoded_objects = pyzbar.decode(frame)
+    for obj in decoded_objects:
+        points = obj.polygon
+        if len(points) > 4:
+            hull = cv2.convexHull(
+                np.array([point for point in points], dtype=np.float32)
+            )
+            hull = list(map(tuple, np.squeeze(hull)))
+        else:
+            hull = points
+
+        n = len(hull)
+        for j in range(0, n):
+            cv2.line(frame, hull[j], hull[(j + 1) % n], (0, 255, 0), 3)
+
+        (x, y, w, h) = obj.rect
+        logging.debug(f"QR Code position and size: x={x}, y={y}, w={w}, h={h}")
+        resized_overlay_img = cv2.resize(overlay_img, (w, h))
+        overlay_image(frame, resized_overlay_img, (x, y))
+
+    return frame, decoded_objects
+
+
+def gen(detection_enabled, qr_detection_enabled, overlay_img):
     logging.info("Starting video capture...")
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
@@ -101,7 +137,7 @@ def gen(detection_enabled, qr_detection_enabled):
             frame = detect_objects(frame, model)
 
         if qr_detection_enabled:
-            frame = detect_qr_codes(frame)
+            frame, _ = decode_qr_code(frame, overlay_img)
 
         _, buffer = cv2.imencode(".jpg", frame)
         frame = buffer.tobytes()
@@ -121,11 +157,16 @@ def video_feed():
     logging.info("Received request for /video_feed")
     detection_enabled = request.args.get("detection", "false").lower() == "true"
     qr_detection_enabled = request.args.get("qr_detection", "false").lower() == "true"
+    overlay_img_path = request.args.get("overlay_img", "overlay_image.png")
+    overlay_img = cv2.imread(overlay_img_path)
+    if overlay_img is None:
+        logging.error(f"Error: Could not load overlay image from {overlay_img_path}")
+        overlay_img = np.zeros((10, 10, 3), np.uint8)  # Placeholder black image
     logging.info(
         f"Starting video feed with detection enabled: {detection_enabled}, QR detection enabled: {qr_detection_enabled}"
     )
     return Response(
-        gen(detection_enabled, qr_detection_enabled),
+        gen(detection_enabled, qr_detection_enabled, overlay_img),
         mimetype="multipart/x-mixed-replace; boundary=frame",
     )
 
