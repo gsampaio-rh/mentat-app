@@ -401,12 +401,12 @@ def visualize_bottlenecks(df, model):
         "resource constraints, ensuring smooth and efficient performance."
     )
     plt.gcf().text(
-        0.5,
-        -0.2,
+        0.75,
+        0.9,
         explanation_text,
         fontsize=12,
         bbox=dict(facecolor="white", alpha=0.8),
-        ha="center",
+        ha="left",
     )
 
     plt.show()
