@@ -1,24 +1,24 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
-from sklearn.preprocessing import LabelEncoder
 from matplotlib.colors import ListedColormap
 
+
+# Function to load and rename dataset columns
+def load_and_rename_dataset(file_path, rename_dict):
+    df = pd.read_csv(file_path)
+    return df.rename(columns=rename_dict)
+
+
 # Load the datasets
-kubevirt_metrics = pd.read_csv("data/kubevirt_metrics.csv")
-openshift_metrics = pd.read_csv("data/openshift_metrics.csv")
-insights_metrics = pd.read_csv("data/insights_metrics.csv")
-rhel_metrics = pd.read_csv("data/rhel_metrics.csv")
-
-
-# Renaming columns for consistency
-kubevirt_metrics_renamed = kubevirt_metrics.rename(
-    columns={
+kubevirt_metrics = load_and_rename_dataset(
+    "data/kubevirt_metrics.csv",
+    {
         "kubevirt_vmi_cpu_usage_seconds_total": "CPU Usage (seconds)",
         "kubevirt_vmi_memory_used_bytes": "Memory Usage (bytes)",
         "kubevirt_vmi_network_receive_bytes_total": "Network Receive (bytes)",
@@ -29,11 +29,12 @@ kubevirt_metrics_renamed = kubevirt_metrics.rename(
         "kubevirt_vmi_migration_data_processed_bytes": "Migration Data Processed (bytes)",
         "kubevirt_vmi_migration_data_remaining_bytes": "Migration Data Remaining (bytes)",
         "kubevirt_vmi_filesystem_capacity_bytes": "Filesystem Capacity (bytes)",
-    }
+    },
 )
 
-openshift_metrics_renamed = openshift_metrics.rename(
-    columns={
+openshift_metrics = load_and_rename_dataset(
+    "data/openshift_metrics.csv",
+    {
         "CPU Utilization (%)": "CPU Utilization (%)",
         "Memory Utilization (%)": "Memory Utilization (%)",
         "Disk I/O Throughput (MB/s)": "Disk I/O Throughput (MB/s)",
@@ -44,11 +45,12 @@ openshift_metrics_renamed = openshift_metrics.rename(
         "Swap Utilization (%)": "Swap Utilization (%)",
         "Process Count": "Process Count",
         "Context Switch Rate": "Context Switch Rate",
-    }
+    },
 )
 
-insights_metrics_renamed = insights_metrics.rename(
-    columns={
+insights_metrics = load_and_rename_dataset(
+    "data/insights_metrics.csv",
+    {
         "Number of Detected Vulnerabilities": "Detected Vulnerabilities",
         "Anomaly Detection Alerts": "Anomaly Detection Alerts",
         "Compliance Policy Violations": "Policy Violations",
@@ -59,11 +61,12 @@ insights_metrics_renamed = insights_metrics.rename(
         "Baseline Compliance (%)": "Baseline Compliance (%)",
         "Configuration Drift (%)": "Configuration Drift (%)",
         "Unauthorized Access Attempts": "Unauthorized Access Attempts",
-    }
+    },
 )
 
-rhel_metrics_renamed = rhel_metrics.rename(
-    columns={
+rhel_metrics = load_and_rename_dataset(
+    "data/rhel_metrics.csv",
+    {
         "CPU Utilization (%)": "CPU Utilization (%)",
         "Memory Utilization (%)": "Memory Utilization (%)",
         "Disk I/O Throughput (MB/s)": "Disk I/O Throughput (MB/s)",
@@ -74,16 +77,16 @@ rhel_metrics_renamed = rhel_metrics.rename(
         "Swap Utilization (%)": "Swap Utilization (%)",
         "Process Count": "Process Count",
         "Context Switch Rate": "Context Switch Rate",
-    }
+    },
 )
 
 # Combine datasets on the index as a common basis
 combined_df = pd.concat(
     [
-        kubevirt_metrics_renamed,
-        openshift_metrics_renamed,
-        insights_metrics_renamed,
-        rhel_metrics_renamed,
+        kubevirt_metrics,
+        openshift_metrics,
+        insights_metrics,
+        rhel_metrics,
     ],
     axis=1,
 )
@@ -118,14 +121,11 @@ main_cmap = sns.diverging_palette(220, 20, as_cmap=True)
 # Improved Correlation Matrix Visualization with highlighted significant correlations
 plt.figure(figsize=(12, 10))  # Adjusted figure size for a smaller fit
 
-# Improved Correlation Matrix Visualization with significant correlations highlighted
-plt.figure(figsize=(12, 10))  # Adjusted figure size for a smaller fit
-
 # Define a more focused range for the color map
 sns.heatmap(
     correlation_matrix,
     annot=True,
-    cmap="coolwarm",
+    cmap=main_cmap,
     fmt=".2f",
     linewidths=0.5,
     cbar_kws={"label": "Correlation Coefficient"},
@@ -133,7 +133,7 @@ sns.heatmap(
     vmax=0.1,
     center=0,
     annot_kws={"size": 6},  # Smaller font size for annotations
-    mask=mask,  # Mask non-significant correlations
+    mask=mask,  # Mask the diagonal
 )
 
 # Overlay the mask with gray
@@ -146,7 +146,6 @@ sns.heatmap(
     linewidths=0.5,
 )
 
-# Highlight significant correlations
 # Highlight significant correlations excluding the diagonal
 threshold = 0.1
 for i in range(correlation_matrix.shape[0]):
@@ -163,9 +162,9 @@ for i in range(correlation_matrix.shape[0]):
                 weight="bold",
             )
 
-plt.title("Correlation Matrix of Metrics", fontsize=8)  # Smaller title font size
-plt.xticks(rotation=90, fontsize=2)  # Smaller x-tick font size
-plt.yticks(fontsize=2)  # Smaller y-tick font size
+plt.title("Correlation Matrix of Metrics", fontsize=14)  # Smaller title font size
+plt.xticks(rotation=90, fontsize=8)  # Smaller x-tick font size
+plt.yticks(fontsize=8)  # Smaller y-tick font size
 plt.tight_layout()  # Ensures the layout fits into the window
 plt.show()
 
