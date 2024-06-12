@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 from sklearn.ensemble import IsolationForest
-import mpld3
+
 
 def load_and_preprocess_data(file_path):
     data = pd.read_csv(file_path)
@@ -73,13 +74,67 @@ def visualize_anomalies(data_pca, anomalies):
     plt.show()
 
 
+def highlight_anomalies_in_data(data, anomalies):
+    data["Anomaly"] = anomalies
+    anomalies_data = data[data["Anomaly"] == -1]
+    normal_data = data[data["Anomaly"] == 1]
+
+    # Plotting the correlation heatmap to identify important relationships
+    correlation_matrix = data.corr()
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f")
+    plt.title("Correlation Heatmap of Metrics")
+    plt.show()
+
+    # Highlight metrics with significant correlation to anomalies
+    anomaly_correlation = (
+        correlation_matrix["Anomaly"].drop("Anomaly").sort_values(ascending=False)
+    )
+    print("Metrics with highest correlation to anomalies:")
+    print(anomaly_correlation)
+
+    # Scatter plot with different symbols and annotations for key metrics
+    plt.figure(figsize=(14, 7))
+    symbols = ["o", "s", "^", "D", "v", "<", ">", "p", "h"]
+    key_metrics = anomaly_correlation.head(
+        3
+    ).index  # Top 3 metrics correlated with anomalies
+    for i, column in enumerate(key_metrics):
+        plt.scatter(
+            normal_data.index,
+            normal_data[column],
+            label=column,
+            alpha=0.5,
+            marker=symbols[i % len(symbols)],
+        )
+        plt.scatter(
+            anomalies_data.index,
+            anomalies_data[column],
+            label=f"Anomaly in {column}",
+            edgecolors="r",
+            marker=symbols[i % len(symbols)],
+        )
+
+    plt.legend(loc="upper right", bbox_to_anchor=(1.3, 1))
+    plt.title("Detected Anomalies in Key Metrics")
+    plt.xlabel("Index")
+    plt.ylabel("Values")
+    plt.show()
+
+    # Print summary of anomalies
+    print("Summary of Anomalies Detected:")
+    print(anomalies_data.describe())
+
+
 def main():
-    data, data_scaled = load_and_preprocess_data("data/insights_metrics.csv")
+
+    file_path = "data/insights_metrics.csv"
+    data, data_scaled = load_and_preprocess_data(file_path)
     kmeans = perform_clustering(data_scaled)
     data_pca = perform_pca(data_scaled)
     visualize_clusters(data_pca, kmeans.labels_)
     anomalies = detect_anomalies(data_scaled)
-    visualize_anomalies(data_pca, anomalies)
+    highlight_anomalies_in_data(data, anomalies)
 
 
 if __name__ == "__main__":

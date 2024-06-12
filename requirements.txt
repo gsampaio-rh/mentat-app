@@ -2,3 +2,9 @@ Flask
 opencv-python
 ultralytics
 pyzbar
+numpy
+pandas 
+matplotlib 
+seaborn 
+scikit-learn
+mpld3
