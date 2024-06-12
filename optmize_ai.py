@@ -5,6 +5,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
 
 # Load the datasets
 kubevirt_metrics = pd.read_csv("data/kubevirt_metrics.csv")
@@ -13,7 +15,7 @@ insights_metrics = pd.read_csv("data/insights_metrics.csv")
 rhel_metrics = pd.read_csv("data/rhel_metrics.csv")
 
 
-# R Renaming columns for consistency
+# Renaming columns for consistency
 kubevirt_metrics_renamed = kubevirt_metrics.rename(
     columns={
         "kubevirt_vmi_cpu_usage_seconds_total": "CPU Usage (seconds)",
@@ -85,17 +87,47 @@ combined_df = pd.concat(
     axis=1,
 )
 
-# Handle non-numeric values by converting them to NaN and then filling or dropping
-combined_df = combined_df.apply(pd.to_numeric, errors="coerce")
+# Inspect problematic columns
+print(
+    f'Unique values in Cluster Node Health: {combined_df["Cluster Node Health"].unique()}'
+)
+print(
+    f'Unique values in Network Traffic Patterns: {combined_df["Network Traffic Patterns"].unique()}'
+)
 
-# Fill NaN values with 0 or appropriate value
-combined_df = combined_df.fillna(0)
+# Handle non-numeric values using Label Encoding
+label_encoder = LabelEncoder()
+combined_df["Cluster Node Health"] = label_encoder.fit_transform(
+    combined_df["Cluster Node Health"]
+)
+combined_df["Network Traffic Patterns"] = label_encoder.fit_transform(
+    combined_df["Network Traffic Patterns"]
+)
 
-# Correlation matrix
+# Recalculate the correlation matrix
 correlation_matrix = combined_df.corr()
-plt.figure(figsize=(20, 15))
-sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
-plt.title("Correlation Matrix of Metrics")
+
+# Improved Correlation Matrix Visualization
+plt.figure(figsize=(12, 10))  # Adjusted figure size for a smaller fit
+
+# Define a more focused range for the color map
+sns.heatmap(
+    correlation_matrix,
+    annot=True,
+    cmap="coolwarm",
+    fmt=".2f",
+    linewidths=0.5,
+    cbar_kws={"label": "Correlation Coefficient"},
+    vmin=-0.1,
+    vmax=0.1,
+    center=0,
+    annot_kws={"size": 6},  # Smaller font size for annotations
+)
+
+plt.title("Correlation Matrix of Metrics", fontsize=14)  # Smaller title font size
+plt.xticks(rotation=90, fontsize=2)  # Smaller x-tick font size
+plt.yticks(fontsize=2)  # Smaller y-tick font size
+plt.tight_layout()  # Ensures the layout fits into the window
 plt.show()
 
 # Distribution plots
