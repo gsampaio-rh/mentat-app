@@ -152,6 +152,18 @@ def plot_filtered_correlation_matrix(df, threshold=0.7):
     log_filtered_correlations(correlation_matrix, threshold)
 
 
+def calculate_distribution_insights(df, metric):
+    insights = []
+    skewness = df[metric].skew()
+    if skewness > 1:
+        insights.append(f"{metric} is highly positively skewed.")
+    elif skewness < -1:
+        insights.append(f"{metric} is highly negatively skewed.")
+    else:
+        insights.append(f"{metric} is approximately symmetric.")
+    return insights
+
+
 def plot_distributions(df):
     key_metrics = [
         "CPU Usage (seconds)",
@@ -173,6 +185,17 @@ def plot_distributions(df):
         plt.title(f"Distribution of {metric}")
         plt.xlabel(metric)
         plt.ylabel("Frequency")
+
+        insights = calculate_distribution_insights(df, metric)
+        for insight in insights:
+            plt.gca().annotate(
+                insight,
+                xy=(0.5, 0.9),
+                xycoords="axes fraction",
+                ha="center",
+                fontsize=10,
+                color="red",
+            )
 
     plt.tight_layout()
     plt.show()
