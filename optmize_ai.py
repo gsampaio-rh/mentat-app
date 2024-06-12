@@ -10,14 +10,11 @@ from matplotlib.colors import ListedColormap
 
 
 def load_and_rename_dataset(file_path, rename_dict):
-    """Load a dataset and rename its columns based on the provided dictionary."""
     df = pd.read_csv(file_path)
     return df.rename(columns=rename_dict)
 
 
 def preprocess_data():
-    """Load, rename, and combine all datasets."""
-    # Define column rename mappings
     kubevirt_rename = {
         "kubevirt_vmi_cpu_usage_seconds_total": "CPU Usage (seconds)",
         "kubevirt_vmi_memory_used_bytes": "Memory Usage (bytes)",
@@ -70,7 +67,6 @@ def preprocess_data():
         "Context Switch Rate": "Context Switch Rate",
     }
 
-    # Load datasets
     kubevirt_metrics = load_and_rename_dataset(
         "data/kubevirt_metrics.csv", kubevirt_rename
     )
@@ -82,16 +78,13 @@ def preprocess_data():
     )
     rhel_metrics = load_and_rename_dataset("data/rhel_metrics.csv", rhel_rename)
 
-    # Combine datasets
     combined_df = pd.concat(
         [kubevirt_metrics, openshift_metrics, insights_metrics, rhel_metrics], axis=1
     )
-
     return combined_df
 
 
 def encode_non_numeric_columns(df):
-    """Encode non-numeric columns in the dataframe."""
     label_encoder = LabelEncoder()
     df["Cluster Node Health"] = label_encoder.fit_transform(df["Cluster Node Health"])
     df["Network Traffic Patterns"] = label_encoder.fit_transform(
@@ -101,10 +94,8 @@ def encode_non_numeric_columns(df):
 
 
 def plot_heatmap(correlation_matrix, mask, title, cmap, threshold):
-    """Helper function to plot heatmap."""
-    correlation_matrix *= 10  # Scale the correlation values
+    correlation_matrix *= 10
     plt.figure(figsize=(12, 10))
-    # Mask for significant correlations
     significant_mask = (correlation_matrix.abs() >= threshold) & (mask == False)
 
     sns.heatmap(
@@ -137,7 +128,6 @@ def plot_heatmap(correlation_matrix, mask, title, cmap, threshold):
 
 
 def plot_original_correlation_matrix(df):
-    """Plot the original correlation matrix."""
     correlation_matrix = df.corr()
     mask = np.eye(correlation_matrix.shape[0], dtype=bool)
     plot_heatmap(
@@ -150,7 +140,6 @@ def plot_original_correlation_matrix(df):
 
 
 def plot_filtered_correlation_matrix(df, threshold=0.7):
-    """Plot the correlation matrix with highlighted significant correlations."""
     correlation_matrix = df.corr()
     mask = np.eye(correlation_matrix.shape[0], dtype=bool)
     plot_heatmap(
@@ -160,10 +149,10 @@ def plot_filtered_correlation_matrix(df, threshold=0.7):
         sns.diverging_palette(220, 20, as_cmap=True),
         threshold=threshold,
     )
+    log_filtered_correlations(correlation_matrix, threshold)
 
 
 def plot_distributions(df):
-    """Plot the distribution of key metrics."""
     key_metrics = [
         "CPU Usage (seconds)",
         "Memory Usage (bytes)",
@@ -190,14 +179,12 @@ def plot_distributions(df):
 
 
 def normalize_data(df):
-    """Normalize the data using StandardScaler."""
     scaler = StandardScaler()
     normalized_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
     return normalized_df
 
 
 def train_and_evaluate_model(df):
-    """Train and evaluate a Random Forest Regressor model."""
     X = df.drop("CPU Usage (seconds)", axis=1)
     y = df["CPU Usage (seconds)"]
 
@@ -214,6 +201,18 @@ def train_and_evaluate_model(df):
 
     print(f"Mean Absolute Error: {mae}")
     print(f"Root Mean Squared Error: {rmse}")
+
+
+def log_filtered_correlations(correlation_matrix, threshold):
+    significant_correlations = correlation_matrix[
+        (correlation_matrix.abs() >= threshold) & (correlation_matrix.abs() < 1)
+    ]
+    significant_correlations = significant_correlations.stack().reset_index()
+    significant_correlations.columns = ["Metric 1", "Metric 2", "Correlation"]
+    significant_correlations = significant_correlations.sort_values(
+        by="Correlation", ascending=False
+    )
+    print(significant_correlations.to_string(index=False))
 
 
 def main():
