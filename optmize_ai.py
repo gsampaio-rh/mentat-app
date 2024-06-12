@@ -311,7 +311,6 @@ def feature_engineering(df):
 
     return df
 
-
 def train_bottleneck_model(df):
     # Define target variable (bottleneck indicator: 1 if any peak usage, else 0)
     df["Bottleneck"] = df[
@@ -323,13 +322,15 @@ def train_bottleneck_model(df):
         ]
     ].max(axis=1)
 
-    # Drop non-feature columns
+    # Ensure feature columns are consistent
     feature_cols = [
         "CPU Utilization Ratio",
         "Memory Utilization Ratio",
         "Network I/O Ratio",
         "Storage I/O Ratio",
         "System Load Per Core",
+        "Detected Vulnerabilities",
+        "Risk Score",
     ]
     X = df[feature_cols]
     y = df["Bottleneck"]
@@ -359,16 +360,13 @@ def train_bottleneck_model(df):
 
     return model, feature_cols
 
+def visualize_bottlenecks(df, model, feature_cols):
+    # Ensure all required features are present in the dataframe
+    missing_features = set(feature_cols) - set(df.columns)
+    if missing_features:
+        raise ValueError(f"Missing features for prediction: {missing_features}")
 
-def visualize_bottlenecks(df, model):
     # Predict bottlenecks
-    feature_cols = [
-        "CPU Utilization Ratio",
-        "Memory Utilization Ratio",
-        "Network I/O Ratio",
-        "Storage I/O Ratio",
-        "System Load Per Core",
-    ]
     df["Predicted Bottleneck"] = model.predict(df[feature_cols])
 
     # Count the occurrences of bottlenecks
@@ -376,9 +374,7 @@ def visualize_bottlenecks(df, model):
 
     # Plot the distribution of predicted bottlenecks
     plt.figure(figsize=(10, 6))
-    sns.barplot(
-        x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis"
-    )
+    sns.barplot(x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis")
 
     # Adding labels and title
     plt.title("Predicted Resource Bottlenecks", fontsize=16)
@@ -463,25 +459,6 @@ def plot_feature_importance(model, feature_cols):
     plt.show()
 
 
-def train_and_evaluate_model(df):
-    X = df.drop("CPU Usage (seconds)", axis=1)
-    y = df["CPU Usage (seconds)"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred, squared=False)
-
-    print(f"Mean Absolute Error: {mae}")
-    print(f"Root Mean Squared Error: {rmse}")
-
-
 def main():
     combined_df = preprocess_data()
     combined_df = encode_non_numeric_columns(combined_df)
@@ -496,13 +473,11 @@ def main():
     # Train and evaluate the bottleneck prediction model
     bottleneck_model, feature_cols = train_bottleneck_model(combined_df)
 
-    plot_feature_importance(bottleneck_model, feature_cols)
-    
     # Visualize the predicted bottlenecks
-    visualize_bottlenecks(combined_df, bottleneck_model)
-    
-    # plot_kde_bottlenecks(combined_df)
-    # plot_hexbin_bottlenecks(combined_df)
+    visualize_bottlenecks(combined_df, bottleneck_model, feature_cols)
+    plot_kde_bottlenecks(combined_df)
+    plot_hexbin_bottlenecks(combined_df)
+    plot_feature_importance(bottleneck_model, feature_cols)
     # plot_bottlenecks_scatter(combined_df)
 
     normalized_df = normalize_data(combined_df)
