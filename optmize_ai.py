@@ -60,7 +60,7 @@ for i in range(1, 11):
     kmeans.fit(scaled_metrics)
     wcss.append(kmeans.inertia_)
 
-# Plot the elbow graph with Le Corbusier color palette
+# Plot the elbow graph
 plt.figure(figsize=(10, 6))
 plt.plot(range(1, 11), wcss, marker="o", linestyle="-", color="#BBDEFB")  # Light Blue
 plt.title(
