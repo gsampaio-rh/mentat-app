@@ -357,7 +357,7 @@ def train_bottleneck_model(df):
     print(f"Recall: {recall}")
     print(f"F1 Score: {f1}")
 
-    return model
+    return model, feature_cols
 
 
 def visualize_bottlenecks(df, model):
@@ -412,6 +412,57 @@ def visualize_bottlenecks(df, model):
     plt.show()
 
 
+def plot_kde_bottlenecks(df):
+    plt.figure(figsize=(10, 6))
+    sns.kdeplot(
+        x=df["CPU Utilization Ratio"],
+        y=df["Memory Utilization Ratio"],
+        hue=df["Predicted Bottleneck"],
+        fill=True,
+        palette={0: "blue", 1: "red"},
+        alpha=0.5,
+    )
+
+    plt.title("KDE Plot of Servers with and without Bottlenecks", fontsize=16)
+    plt.xlabel("CPU Utilization Ratio", fontsize=14)
+    plt.ylabel("Memory Utilization Ratio", fontsize=14)
+
+    plt.legend(title="Bottleneck", labels=["No Bottleneck", "Bottleneck"])
+
+    plt.show()
+
+
+def plot_hexbin_bottlenecks(df):
+    plt.figure(figsize=(10, 6))
+    plt.hexbin(
+        df["CPU Utilization Ratio"],
+        df["Memory Utilization Ratio"],
+        gridsize=30,
+        cmap="Blues",
+        mincnt=1,
+    )
+    plt.colorbar(label="Count")
+
+    plt.title("Hexbin Plot of Servers with and without Bottlenecks", fontsize=16)
+    plt.xlabel("CPU Utilization Ratio", fontsize=14)
+    plt.ylabel("Memory Utilization Ratio", fontsize=14)
+
+    plt.show()
+
+
+# Visualize feature importance
+def plot_feature_importance(model, feature_cols):
+    feature_importance = pd.Series(model.feature_importances_, index=feature_cols)
+    feature_importance = feature_importance.sort_values(ascending=False)
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=feature_importance, y=feature_importance.index)
+    plt.title("Feature Importance in Bottleneck Prediction")
+    plt.xlabel("Importance")
+    plt.ylabel("Feature")
+    plt.show()
+
+
 def train_and_evaluate_model(df):
     X = df.drop("CPU Usage (seconds)", axis=1)
     y = df["CPU Usage (seconds)"]
@@ -443,10 +494,16 @@ def main():
     combined_df = feature_engineering(combined_df)
 
     # Train and evaluate the bottleneck prediction model
-    bottleneck_model = train_bottleneck_model(combined_df)
+    bottleneck_model, feature_cols = train_bottleneck_model(combined_df)
 
+    plot_feature_importance(bottleneck_model, feature_cols)
+    
     # Visualize the predicted bottlenecks
     visualize_bottlenecks(combined_df, bottleneck_model)
+    
+    # plot_kde_bottlenecks(combined_df)
+    # plot_hexbin_bottlenecks(combined_df)
+    # plot_bottlenecks_scatter(combined_df)
 
     normalized_df = normalize_data(combined_df)
     # train_and_evaluate_model(normalized_df)
