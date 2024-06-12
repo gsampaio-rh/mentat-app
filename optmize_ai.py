@@ -161,6 +161,32 @@ def calculate_distribution_insights(df, metric):
         insights.append(f"{metric} is highly negatively skewed.")
     else:
         insights.append(f"{metric} is approximately symmetric.")
+
+    # Check for unimodal or multimodal distribution using numpy
+    data = df[metric].dropna().values
+    density, bins = np.histogram(data, bins=30, density=True)
+    peaks = (np.diff(np.sign(np.diff(density))) < 0).sum()
+    if peaks == 1:
+        insights.append(f"{metric} has a single peak (unimodal).")
+    elif peaks > 1:
+        insights.append(f"{metric} has multiple peaks (multimodal).")
+
+    # Calculate range
+    data_range = df[metric].max() - df[metric].min()
+    insights.append(f"The range of {metric} is {data_range:.2f}.")
+
+    # Identify outliers
+    Q1 = df[metric].quantile(0.25)
+    Q3 = df[metric].quantile(0.75)
+    IQR = Q3 - Q1
+    outliers = ((df[metric] < (Q1 - 1.5 * IQR)) | (df[metric] > (Q3 + 1.5 * IQR))).sum()
+    if outliers > 0:
+        insights.append(f"{metric} has {outliers} outliers.")
+
+    # Calculate standard deviation
+    std_dev = df[metric].std()
+    insights.append(f"The standard deviation of {metric} is {std_dev:.2f}.")
+
     return insights
 
 
@@ -187,10 +213,10 @@ def plot_distributions(df):
         plt.ylabel("Frequency")
 
         insights = calculate_distribution_insights(df, metric)
-        for insight in insights:
+        for j, insight in enumerate(insights):
             plt.gca().annotate(
                 insight,
-                xy=(0.5, 0.9),
+                xy=(0.5, 0.9 - j * 0.05),
                 xycoords="axes fraction",
                 ha="center",
                 fontsize=10,
