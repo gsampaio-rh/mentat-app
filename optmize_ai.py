@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
+from matplotlib.colors import ListedColormap
 
 # Load the datasets
 kubevirt_metrics = pd.read_csv("data/kubevirt_metrics.csv")
@@ -107,7 +108,17 @@ combined_df["Network Traffic Patterns"] = label_encoder.fit_transform(
 # Recalculate the correlation matrix
 correlation_matrix = combined_df.corr()
 
-# Improved Correlation Matrix Visualization
+# Create a mask for the diagonal
+mask = np.eye(correlation_matrix.shape[0], dtype=bool)
+
+# Create a custom colormap with gray for the mask
+gray_cmap = ListedColormap(["gray"])
+main_cmap = sns.diverging_palette(220, 20, as_cmap=True)
+
+# Improved Correlation Matrix Visualization with highlighted significant correlations
+plt.figure(figsize=(12, 10))  # Adjusted figure size for a smaller fit
+
+# Improved Correlation Matrix Visualization with significant correlations highlighted
 plt.figure(figsize=(12, 10))  # Adjusted figure size for a smaller fit
 
 # Define a more focused range for the color map
@@ -122,9 +133,37 @@ sns.heatmap(
     vmax=0.1,
     center=0,
     annot_kws={"size": 6},  # Smaller font size for annotations
+    mask=mask,  # Mask non-significant correlations
 )
 
-plt.title("Correlation Matrix of Metrics", fontsize=14)  # Smaller title font size
+# Overlay the mask with gray
+sns.heatmap(
+    correlation_matrix,
+    mask=~mask,
+    cmap=gray_cmap,
+    cbar=False,
+    annot=False,
+    linewidths=0.5,
+)
+
+# Highlight significant correlations
+# Highlight significant correlations excluding the diagonal
+threshold = 0.1
+for i in range(correlation_matrix.shape[0]):
+    for j in range(correlation_matrix.shape[1]):
+        if i != j and abs(correlation_matrix.iloc[i, j]) >= threshold:
+            plt.text(
+                j + 0.5,
+                i + 0.5,
+                f"{correlation_matrix.iloc[i, j]:.2f}",
+                horizontalalignment="center",
+                verticalalignment="center",
+                color="black",
+                fontsize=8,
+                weight="bold",
+            )
+
+plt.title("Correlation Matrix of Metrics", fontsize=8)  # Smaller title font size
 plt.xticks(rotation=90, fontsize=2)  # Smaller x-tick font size
 plt.yticks(fontsize=2)  # Smaller y-tick font size
 plt.tight_layout()  # Ensures the layout fits into the window
