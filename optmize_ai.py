@@ -1,13 +1,12 @@
 import pandas as pd
 import seaborn as sns
+from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
-from matplotlib.colors import ListedColormap
-
 
 def load_and_rename_dataset(file_path, rename_dict):
     df = pd.read_csv(file_path)
@@ -204,7 +203,7 @@ def plot_distributions(df):
         "Network I/O Throughput (Mbps)",
     ]
 
-    plt.figure(figsize=(20, 15))
+    plt.figure(figsize=(12, 10))
     for i, metric in enumerate(key_metrics, 1):
         plt.subplot(4, 3, i)
         sns.histplot(df[metric], bins=30, kde=True)
@@ -219,7 +218,7 @@ def plot_distributions(df):
                 xy=(0.5, 0.9 - j * 0.05),
                 xycoords="axes fraction",
                 ha="center",
-                fontsize=10,
+                fontsize=8,
                 color="red",
             )
 
@@ -231,6 +230,43 @@ def normalize_data(df):
     scaler = StandardScaler()
     normalized_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
     return normalized_df
+
+
+def visualize_predictions(df):
+    X = df.drop("CPU Usage (seconds)", axis=1)
+    y = df["CPU Usage (seconds)"]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+
+    # Plotting Actual vs. Predicted CPU Usage
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_pred, alpha=0.5, label="Predicted Values")
+    plt.plot(
+        [y_test.min(), y_test.max()],
+        [y_test.min(), y_test.max()],
+        "--r",
+        linewidth=2,
+        label="Ideal Prediction Line",
+    )
+    plt.xlabel("Actual CPU Usage (seconds)")
+    plt.ylabel("Predicted CPU Usage (seconds)")
+    plt.title("Actual vs. Predicted CPU Usage")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Calculating and displaying the error metrics
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = mean_squared_error(y_test, y_pred, squared=False)
+    print(f"Mean Absolute Error (MAE): {mae}")
+    print(f"Root Mean Squared Error (RMSE): {rmse}")
+
+    return mae, rmse
 
 
 def train_and_evaluate_model(df):
@@ -272,6 +308,9 @@ def main():
     plot_distributions(combined_df)
     normalized_df = normalize_data(combined_df)
     train_and_evaluate_model(normalized_df)
+    visualize_predictions(
+        normalized_df
+    )
 
 
 if __name__ == "__main__":
