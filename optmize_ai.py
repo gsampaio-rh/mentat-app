@@ -4,8 +4,8 @@ from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score, precision_score, recall_score, f1_score
 import numpy as np
 
 def load_and_rename_dataset(file_path, rename_dict):
@@ -92,6 +92,12 @@ def encode_non_numeric_columns(df):
     return df
 
 
+def normalize_data(df):
+    scaler = StandardScaler()
+    normalized_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
+    return normalized_df
+
+
 def plot_heatmap(correlation_matrix, mask, title, cmap, threshold):
     correlation_matrix *= 10
     plt.figure(figsize=(12, 10))
@@ -124,6 +130,18 @@ def plot_heatmap(correlation_matrix, mask, title, cmap, threshold):
     plt.yticks(fontsize=8)
     plt.tight_layout()
     plt.show()
+
+
+def log_filtered_correlations(correlation_matrix, threshold):
+    significant_correlations = correlation_matrix[
+        (correlation_matrix.abs() >= threshold) & (correlation_matrix.abs() < 1)
+    ]
+    significant_correlations = significant_correlations.stack().reset_index()
+    significant_correlations.columns = ["Metric 1", "Metric 2", "Correlation"]
+    significant_correlations = significant_correlations.sort_values(
+        by="Correlation", ascending=False
+    )
+    print(significant_correlations.to_string(index=False))
 
 
 def plot_original_correlation_matrix(df):
@@ -226,12 +244,6 @@ def plot_distributions(df):
     plt.show()
 
 
-def normalize_data(df):
-    scaler = StandardScaler()
-    normalized_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
-    return normalized_df
-
-
 def visualize_predictions(df):
     X = df.drop("CPU Usage (seconds)", axis=1)
     y = df["CPU Usage (seconds)"]
@@ -269,6 +281,137 @@ def visualize_predictions(df):
     return mae, rmse
 
 
+def feature_engineering(df):
+    # Create CPU utilization ratio
+    df["CPU Utilization Ratio"] = df["CPU Usage (seconds)"] / df["CPU Utilization (%)"]
+
+    # Create memory utilization ratio
+    df["Memory Utilization Ratio"] = (
+        df["Memory Usage (bytes)"] / df["Memory Utilization (%)"]
+    )
+
+    # Create network I/O ratio
+    df["Network I/O Ratio"] = (
+        df["Network Receive (bytes)"] + df["Network Transmit (bytes)"]
+    ) / df["Network I/O Throughput (Mbps)"]
+
+    # Create storage I/O ratio
+    df["Storage I/O Ratio"] = (
+        df["Storage Read (bytes)"] + df["Storage Write (bytes)"]
+    ) / df["Disk I/O Throughput (MB/s)"]
+
+    # Create system load per core (assuming 4 cores for this example)
+    df["System Load Per Core"] = df["System Load Average"] / 4
+
+    # Indicator for peak usage times (example: usage above 90%)
+    df["Peak CPU Usage"] = (df["CPU Utilization (%)"] > 90).astype(int)
+    df["Peak Memory Usage"] = (df["Memory Utilization (%)"] > 90).astype(int)
+    df["Peak Network Usage"] = (df["Network I/O Throughput (Mbps)"] > 90).astype(int)
+    df["Peak Storage Usage"] = (df["Disk I/O Throughput (MB/s)"] > 90).astype(int)
+
+    return df
+
+
+def train_bottleneck_model(df):
+    # Define target variable (bottleneck indicator: 1 if any peak usage, else 0)
+    df["Bottleneck"] = df[
+        [
+            "Peak CPU Usage",
+            "Peak Memory Usage",
+            "Peak Network Usage",
+            "Peak Storage Usage",
+        ]
+    ].max(axis=1)
+
+    # Drop non-feature columns
+    feature_cols = [
+        "CPU Utilization Ratio",
+        "Memory Utilization Ratio",
+        "Network I/O Ratio",
+        "Storage I/O Ratio",
+        "System Load Per Core",
+    ]
+    X = df[feature_cols]
+    y = df["Bottleneck"]
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    # Train a Random Forest model
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+
+    # Predict bottlenecks on the test set
+    y_pred = model.predict(X_test)
+
+    # Evaluate the model
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+
+    print(f"Accuracy: {accuracy}")
+    print(f"Precision: {precision}")
+    print(f"Recall: {recall}")
+    print(f"F1 Score: {f1}")
+
+    return model
+
+
+def visualize_bottlenecks(df, model):
+    # Predict bottlenecks
+    feature_cols = [
+        "CPU Utilization Ratio",
+        "Memory Utilization Ratio",
+        "Network I/O Ratio",
+        "Storage I/O Ratio",
+        "System Load Per Core",
+    ]
+    df["Predicted Bottleneck"] = model.predict(df[feature_cols])
+
+    # Count the occurrences of bottlenecks
+    bottleneck_counts = df["Predicted Bottleneck"].value_counts()
+
+    # Plot the distribution of predicted bottlenecks
+    plt.figure(figsize=(10, 6))
+    sns.barplot(
+        x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis"
+    )
+
+    # Adding labels and title
+    plt.title("Predicted Resource Bottlenecks", fontsize=16)
+    plt.xlabel("Bottleneck", fontsize=14)
+    plt.ylabel("Count", fontsize=14)
+
+    # Adding annotations
+    for index, value in enumerate(bottleneck_counts.values):
+        plt.text(index, value + 10, str(value), ha="center", fontsize=12)
+
+    # Adding x-tick labels
+    plt.xticks([0, 1], ["No Bottleneck", "Bottleneck"], fontsize=12)
+
+    # Adding explanation text box
+    explanation_text = (
+        "Bottleneck (1): A predicted resource constraint\n"
+        "that could impact system performance. If a bottleneck occurs,\n"
+        "users may experience slower response times or interruptions.\n"
+        "No Bottleneck (0): System is operating normally without\n"
+        "resource constraints, ensuring smooth and efficient performance."
+    )
+    plt.gcf().text(
+        0.5,
+        -0.2,
+        explanation_text,
+        fontsize=12,
+        bbox=dict(facecolor="white", alpha=0.8),
+        ha="center",
+    )
+
+    plt.show()
+
+
 def train_and_evaluate_model(df):
     X = df.drop("CPU Usage (seconds)", axis=1)
     y = df["CPU Usage (seconds)"]
@@ -288,29 +431,30 @@ def train_and_evaluate_model(df):
     print(f"Root Mean Squared Error: {rmse}")
 
 
-def log_filtered_correlations(correlation_matrix, threshold):
-    significant_correlations = correlation_matrix[
-        (correlation_matrix.abs() >= threshold) & (correlation_matrix.abs() < 1)
-    ]
-    significant_correlations = significant_correlations.stack().reset_index()
-    significant_correlations.columns = ["Metric 1", "Metric 2", "Correlation"]
-    significant_correlations = significant_correlations.sort_values(
-        by="Correlation", ascending=False
-    )
-    print(significant_correlations.to_string(index=False))
-
-
 def main():
     combined_df = preprocess_data()
     combined_df = encode_non_numeric_columns(combined_df)
-    plot_original_correlation_matrix(combined_df)
-    plot_filtered_correlation_matrix(combined_df)
-    plot_distributions(combined_df)
+
+    # plot_original_correlation_matrix(combined_df)
+    # plot_filtered_correlation_matrix(combined_df)
+    # plot_distributions(combined_df)
+
+    # Feature engineering
+    combined_df = feature_engineering(combined_df)
+
+    # Train and evaluate the bottleneck prediction model
+    bottleneck_model = train_bottleneck_model(combined_df)
+
+    # Visualize the predicted bottlenecks
+    visualize_bottlenecks(combined_df, bottleneck_model)
+
     normalized_df = normalize_data(combined_df)
-    train_and_evaluate_model(normalized_df)
-    visualize_predictions(
-        normalized_df
-    )
+    # train_and_evaluate_model(normalized_df)
+    # visualize_predictions(
+    #     normalized_df
+    # # )
+    # bottleneck_model = train_bottleneck_model(normalized_df)
+    # visualize_bottlenecks(normalized_df, bottleneck_model)
 
 
 if __name__ == "__main__":

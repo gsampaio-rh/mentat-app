@@ -46,9 +46,9 @@ This project aims to optimize virtual machine (VM) performance and resource allo
   - Normalize the data using StandardScaler.
 
 ### 4. Model Training and Evaluation
-- [x] **Train Predictive Models:**
+- [ ] **Train Predictive Models:**
   - Implement and train models such as Random Forest, ARIMA for time series analysis.
-- [x] **Evaluate Model Performance:**
+- [ ] **Evaluate Model Performance:**
   - Calculate and log performance metrics such as MAE, RMSE.
 - [ ] **Tune Hyperparameters:**
   - Perform hyperparameter tuning to optimize model performance.
@@ -110,3 +110,25 @@ This project aims to optimize virtual machine (VM) performance and resource allo
 - Document analysis process and insights.
 - Generate comprehensive reports for stakeholders.
 - Create a presentation to communicate results and impact.
+
+
+Resource Bottleneck Prediction:
+
+Objective: Predict potential resource bottlenecks based on current and historical usage patterns.
+Value: Helps in addressing bottlenecks before they impact performance, improving overall system efficiency.
+
+System Load Forecasting:
+
+Objective: Forecast future system load to optimize scheduling and resource allocation.
+Value: Enables efficient use of resources, improving system performance and reducing latency.
+
+CPU Usage Prediction:
+
+Objective: Predict future CPU usage based on historical data to ensure optimal resource allocation and avoid over-provisioning.
+Value: Helps in planning and scaling infrastructure to meet demand, reducing costs, and improving performance.
+
+
+Network I/O Prediction:
+
+Objective: Predict future network I/O throughput to ensure sufficient bandwidth and avoid network congestion.
+Value: Ensures smooth and uninterrupted data flow, enhancing user experience and service reliability.
