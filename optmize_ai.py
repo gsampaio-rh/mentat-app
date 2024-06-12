@@ -100,47 +100,34 @@ def encode_non_numeric_columns(df):
     return df
 
 
-def plot_heatmap(
-    correlation_matrix, mask, title, cmap, annotation=True, threshold=None
-):
+def plot_heatmap(correlation_matrix, mask, title, cmap, threshold):
     """Helper function to plot heatmap."""
+    correlation_matrix *= 10  # Scale the correlation values
     plt.figure(figsize=(12, 10))
+    # Mask for significant correlations
+    significant_mask = (correlation_matrix.abs() >= threshold) & (mask == False)
+
     sns.heatmap(
         correlation_matrix,
-        annot=annotation,
+        annot=True,
         cmap=cmap,
         fmt=".2f",
         linewidths=0.5,
         cbar_kws={"label": "Correlation Coefficient"},
-        vmin=-0.1,
-        vmax=0.1,
+        vmin=-1,
+        vmax=1,
         center=0,
         annot_kws={"size": 6},
-        mask=mask,
+        mask=~significant_mask,
     )
     sns.heatmap(
         correlation_matrix,
-        mask=~mask,
+        mask=mask | significant_mask,
         cmap=ListedColormap(["gray"]),
         cbar=False,
         annot=False,
         linewidths=0.5,
     )
-
-    if threshold is not None:
-        for i in range(correlation_matrix.shape[0]):
-            for j in range(correlation_matrix.shape[1]):
-                if i != j and abs(correlation_matrix.iloc[i, j]) >= threshold:
-                    plt.text(
-                        j + 0.5,
-                        i + 0.5,
-                        f"{correlation_matrix.iloc[i, j]:.2f}",
-                        horizontalalignment="center",
-                        verticalalignment="center",
-                        color="black",
-                        fontsize=8,
-                        weight="bold",
-                    )
 
     plt.title(title, fontsize=14)
     plt.xticks(rotation=90, fontsize=8)
@@ -158,10 +145,11 @@ def plot_original_correlation_matrix(df):
         mask,
         "Original Correlation Matrix of Metrics",
         sns.diverging_palette(220, 20, as_cmap=True),
+        threshold=-1,
     )
 
 
-def plot_filtered_correlation_matrix(df, threshold=0.07):
+def plot_filtered_correlation_matrix(df, threshold=0.7):
     """Plot the correlation matrix with highlighted significant correlations."""
     correlation_matrix = df.corr()
     mask = np.eye(correlation_matrix.shape[0], dtype=bool)
