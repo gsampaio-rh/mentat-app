@@ -100,18 +100,15 @@ def encode_non_numeric_columns(df):
     return df
 
 
-def plot_correlation_matrix(df):
-    """Plot the correlation matrix with highlighted significant correlations."""
-    correlation_matrix = df.corr()
-    mask = np.eye(correlation_matrix.shape[0], dtype=bool)
-    gray_cmap = ListedColormap(["gray"])
-    main_cmap = sns.diverging_palette(220, 20, as_cmap=True)
-
+def plot_heatmap(
+    correlation_matrix, mask, title, cmap, annotation=True, threshold=None
+):
+    """Helper function to plot heatmap."""
     plt.figure(figsize=(12, 10))
     sns.heatmap(
         correlation_matrix,
-        annot=True,
-        cmap=main_cmap,
+        annot=annotation,
+        cmap=cmap,
         fmt=".2f",
         linewidths=0.5,
         cbar_kws={"label": "Correlation Coefficient"},
@@ -124,32 +121,57 @@ def plot_correlation_matrix(df):
     sns.heatmap(
         correlation_matrix,
         mask=~mask,
-        cmap=gray_cmap,
+        cmap=ListedColormap(["gray"]),
         cbar=False,
         annot=False,
         linewidths=0.5,
     )
 
-    threshold = 0.1
-    for i in range(correlation_matrix.shape[0]):
-        for j in range(correlation_matrix.shape[1]):
-            if i != j and abs(correlation_matrix.iloc[i, j]) >= threshold:
-                plt.text(
-                    j + 0.5,
-                    i + 0.5,
-                    f"{correlation_matrix.iloc[i, j]:.2f}",
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    color="black",
-                    fontsize=8,
-                    weight="bold",
-                )
+    if threshold is not None:
+        for i in range(correlation_matrix.shape[0]):
+            for j in range(correlation_matrix.shape[1]):
+                if i != j and abs(correlation_matrix.iloc[i, j]) >= threshold:
+                    plt.text(
+                        j + 0.5,
+                        i + 0.5,
+                        f"{correlation_matrix.iloc[i, j]:.2f}",
+                        horizontalalignment="center",
+                        verticalalignment="center",
+                        color="black",
+                        fontsize=8,
+                        weight="bold",
+                    )
 
-    plt.title("Correlation Matrix of Metrics", fontsize=14)
+    plt.title(title, fontsize=14)
     plt.xticks(rotation=90, fontsize=8)
     plt.yticks(fontsize=8)
     plt.tight_layout()
     plt.show()
+
+
+def plot_original_correlation_matrix(df):
+    """Plot the original correlation matrix."""
+    correlation_matrix = df.corr()
+    mask = np.eye(correlation_matrix.shape[0], dtype=bool)
+    plot_heatmap(
+        correlation_matrix,
+        mask,
+        "Original Correlation Matrix of Metrics",
+        sns.diverging_palette(220, 20, as_cmap=True),
+    )
+
+
+def plot_filtered_correlation_matrix(df, threshold=0.07):
+    """Plot the correlation matrix with highlighted significant correlations."""
+    correlation_matrix = df.corr()
+    mask = np.eye(correlation_matrix.shape[0], dtype=bool)
+    plot_heatmap(
+        correlation_matrix,
+        mask,
+        "Filtered Correlation Matrix of Metrics with Highlighted Significant Correlations",
+        sns.diverging_palette(220, 20, as_cmap=True),
+        threshold=threshold,
+    )
 
 
 def plot_distributions(df):
@@ -209,7 +231,8 @@ def train_and_evaluate_model(df):
 def main():
     combined_df = preprocess_data()
     combined_df = encode_non_numeric_columns(combined_df)
-    plot_correlation_matrix(combined_df)
+    plot_original_correlation_matrix(combined_df)
+    plot_filtered_correlation_matrix(combined_df)
     plot_distributions(combined_df)
     normalized_df = normalize_data(combined_df)
     train_and_evaluate_model(normalized_df)
