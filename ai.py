@@ -93,12 +93,13 @@ def highlight_anomalies_in_data(data, anomalies):
     print("Metrics with highest correlation to anomalies:")
     print(anomaly_correlation)
 
-    # Scatter plot with different symbols and annotations for key metrics
-    plt.figure(figsize=(14, 7))
-    symbols = ["o", "s", "^", "D", "v", "<", ">", "p", "h"]
     key_metrics = anomaly_correlation.head(
         3
     ).index  # Top 3 metrics correlated with anomalies
+
+    # Generate scatter plots for the top 3 metrics
+    plt.figure(figsize=(14, 7))
+    symbols = ["o", "s", "^", "D", "v", "<", ">", "p", "h"]
     for i, column in enumerate(key_metrics):
         plt.scatter(
             normal_data.index,
@@ -119,6 +120,15 @@ def highlight_anomalies_in_data(data, anomalies):
     plt.title("Detected Anomalies in Key Metrics")
     plt.xlabel("Index")
     plt.ylabel("Values")
+    plt.show()
+
+    # Bar chart for all correlation values
+    plt.figure(figsize=(12, 6))
+    anomaly_correlation.plot(kind="bar", color="skyblue")
+    plt.title("Correlation of Metrics with Anomalies")
+    plt.xlabel("Metrics")
+    plt.ylabel("Correlation with Anomalies")
+    plt.xticks(rotation=45, ha="right")
     plt.show()
 
     # Print summary of anomalies
