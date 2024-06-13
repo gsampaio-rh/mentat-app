@@ -47,12 +47,12 @@ def visualize_data(df, target_column):
     plt.xlabel(f"{target_column} (Standardized Units)")
     plt.ylabel("Frequency")
     plt.legend(labels=[f"{target_column} Distribution", "KDE"])
-    plt.show()
+    # plt.show()
 
     # Pairplot of features and target
     plt.figure(figsize=(10, 6))
     sns.pairplot(df, diag_kind="kde")
-    plt.show()
+    # plt.show()
 
 
 def identify_key_features(df, target_column):
