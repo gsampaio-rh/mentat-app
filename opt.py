@@ -61,41 +61,48 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_histograms(df: pd.DataFrame):
+def plot_combined_metrics(df: pd.DataFrame):
     """
-    Plot histograms and KDE plots for key metrics.
+    Plot combined histograms and KDE plots for key metrics with explicit legends.
     """
-    key_metrics = [
-        "CPU Utilization (%)",
-        "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
-        "Network I/O Throughput (Mbps)",
-    ]
-    for metric in key_metrics:
-        plt.figure(figsize=(10, 6))
-        sns.histplot(df[metric], kde=True)
-        plt.title(f"Distribution of {metric}")
-        plt.xlabel(metric)
+    key_metrics = {
+        "CPU Utilization (%)": "CPU Usage",
+        "Memory Utilization (%)": "Memory Usage",
+        "Disk I/O Throughput (MB/s)": "Disk Throughput",
+        "Network I/O Throughput (Mbps)": "Network Throughput",
+    }
+
+    plt.figure(figsize=(12, 8))
+    for i, (metric, label) in enumerate(key_metrics.items(), 1):
+        plt.subplot(2, 2, i)
+        sns.histplot(df[metric], kde=True, label="KDE")
+        plt.title(f"Distribution of {label}")
+        plt.xlabel(label)
         plt.ylabel("Frequency")
-        plt.show()
+        plt.legend(loc="best")
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_boxplots(df: pd.DataFrame):
     """
     Plot box plots for key metrics to identify outliers.
     """
-    key_metrics = [
-        "CPU Utilization (%)",
-        "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
-        "Network I/O Throughput (Mbps)",
-    ]
-    for metric in key_metrics:
-        plt.figure(figsize=(10, 6))
+    key_metrics = {
+        "CPU Utilization (%)": "CPU Usage",
+        "Memory Utilization (%)": "Memory Usage",
+        "Disk I/O Throughput (MB/s)": "Disk Throughput",
+        "Network I/O Throughput (Mbps)": "Network Throughput",
+    }
+
+    plt.figure(figsize=(12, 8))
+    for i, (metric, label) in enumerate(key_metrics.items(), 1):
+        plt.subplot(2, 2, i)
         sns.boxplot(x=df[metric])
-        plt.title(f"Box plot of {metric}")
-        plt.xlabel(metric)
-        plt.show()
+        plt.title(f"Box plot of {label}")
+        plt.xlabel(label)
+    plt.tight_layout()
+    plt.show()
 
 
 def generate_summary_statistics(df: pd.DataFrame):
@@ -118,7 +125,7 @@ def main():
     df = preprocess_data(df)
 
     # Exploratory Data Analysis (EDA)
-    plot_histograms(df)
+    plot_combined_metrics(df)
     plot_boxplots(df)
     generate_summary_statistics(df)
 
