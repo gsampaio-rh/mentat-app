@@ -197,6 +197,51 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def visualize_insights(df: pd.DataFrame) -> None:
+    """
+    Visualize key insights from the dataframe.
+    """
+    fig, axs = plt.subplots(3, figsize=(12, 8))
+
+    # Figure 1: Resource Utilization Efficiency Over Time
+    axs[0].plot(df.index, df["Resource_Utilization_Efficiency"])
+    axs[0].set_title("Resource Utilization Efficiency Over Time")
+    axs[0].set_xlabel("Time")
+    axs[0].set_ylabel("Efficiency")
+
+    # Figure 1: CPU and Memory Utilization Over Time
+    axs[1].plot(df.index, df["CPU Utilization (%)"], label="CPU Utilization")
+    axs[1].plot(df.index, df["Memory Utilization (%)"], label="Memory Utilization")
+    axs[1].set_title("CPU and Memory Utilization Over Time")
+    axs[1].set_xlabel("Time")
+    axs[1].set_ylabel("Utilization (%)")
+    axs[1].legend()
+
+    # Figure 3: Pod and Cluster CPU-Memory Ratios
+    axs[2].scatter(df["Pod_CPU_Memory_Ratio"], df["Cluster_CPU_Memory_Ratio"])
+    axs[2].set_title("Pod vs. Cluster CPU-Memory Ratios")
+    axs[2].set_xlabel("Pod CPU-Memory Ratio")
+    axs[2].set_ylabel("Cluster CPU-Memory Ratio")
+
+    # Figure 4: Disk I/O and Network I/O Throughput
+    # axs[3].bar(
+    #     ["Disk I/O Throughput (MB/s)", "Network I/O Throughput (Mbps)"],
+    #     df[["Disk I/O Throughput (MB/s)", "Network I/O Throughput (Mbps)"]].mean(),
+    # )
+    # axs[3].set_title("Disk I/O and Network I/O Throughput")
+    # axs[3].set_xlabel("Throughput Type")
+    # axs[3].set_ylabel("Throughput")
+
+    # Figure 5: System Load Average and CPU Utilization Ratio
+    # axs[4].scatter(df["CPU Utilization (%)"], df["System_Load_Average_Ratio"])
+    # axs[4].set_title("System Load Average vs. CPU Utilization Ratio")
+    # axs[4].set_xlabel("CPU Utilization (%)")
+    # axs[4].set_ylabel("System Load Average Ratio")
+
+    plt.tight_layout()
+    plt.show()
+
+
 def main():
 
     filepath = os.path.join("data", "real_faang.csv")
@@ -212,7 +257,7 @@ def main():
     # Feature engineering
     df = feature_engineering(df)
     
-    print(df)
+    visualize_insights(df)
 
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
