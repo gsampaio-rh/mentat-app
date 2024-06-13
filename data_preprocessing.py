@@ -94,9 +94,7 @@ def main():
         return
 
     # Split the data
-    target_column = (
-        "your_target_column_name"  # Replace with your actual target column name
-    )
+    target_column = "CPU Utilization (%)"  # Replace with your actual target column name
     try:
         X_train, X_test, y_train, y_test = split_data(df, target_column)
     except ValueError as e:
