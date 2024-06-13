@@ -12,6 +12,14 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+# Key Metrics
+key_metrics = {
+    "CPU Utilization (%)": "CPU Utilization (%)",
+    "Memory Utilization (%)": "Memory Utilization (%)",
+    "Disk I/O Throughput (MB/s)": "Disk I/O Throughput (MB/s)",
+    "Network I/O Throughput (Mbps)": "Network I/O Throughput (Mbps",
+}
+
 def load_data(filepath: str) -> pd.DataFrame:
     """
     Load the dataset from the given file path.
@@ -43,28 +51,10 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Data preprocessing completed.")
     return df
 
-def plot_highlighted_metric(df: pd.DataFrame, metric: str, label: str):
-    average_value = df[metric].mean()
-    x_mean = len(df) / 2  # Use the middle of the dataset for the annotation
-    plt.figure(figsize=(10, 6))
-    plt.plot(df.index, df[metric], "bo", markersize=4)
-    plt.axhline(y=average_value, color="r", linestyle="--")
-    plt.scatter(x_mean, average_value, color="red", s=100, edgecolor="black", zorder=5)
-    plt.title(f"Average {label}")
-    plt.xlabel("Index")
-    plt.ylabel(label)
-    plt.grid(True)
-    plt.annotate(
-        "Average Value",
-        xy=(x_mean, average_value),
-        xytext=(x_mean + 10, average_value + 0.2),
-        arrowprops=dict(facecolor="black", shrink=0.05),
-    )
-    plt.show()
 
-def plot_combined_metrics(df: pd.DataFrame):
+def plot_all_metrics_combined(df: pd.DataFrame):
     """
-    Plot combined histograms and KDE plots for key metrics with explicit legends.
+    Plot highlighted bubble graphs for all key metrics in the same window.
     """
     key_metrics = {
         "CPU Utilization (%)": "CPU Usage",
@@ -72,6 +62,45 @@ def plot_combined_metrics(df: pd.DataFrame):
         "Disk I/O Throughput (MB/s)": "Disk Throughput",
         "Network I/O Throughput (Mbps)": "Network Throughput",
     }
+
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    axes = axes.flatten()
+
+    for i, (metric, label) in enumerate(key_metrics.items()):
+        ax = axes[i]
+        average_value = df[metric].mean()
+        x_mean = len(df) / 2  # Use the middle of the dataset for the annotation
+        ax.plot(df.index, df[metric], "bo", markersize=4)
+        ax.axhline(y=average_value, color="r", linestyle="--")
+        ax.scatter(
+            x_mean, average_value, color="red", s=100, edgecolor="black", zorder=5
+        )
+        ax.set_title(f"Average {label}")
+        ax.set_xlabel("Index")
+        ax.set_ylabel(label)
+        ax.grid(True)
+        ax.annotate(
+            "Average Value",
+            xy=(x_mean, average_value),
+            xytext=(
+                x_mean + 10,
+                average_value + 0.02 * (df[metric].max() - df[metric].min()),
+            ),
+            arrowprops=dict(facecolor="black", shrink=0.05),
+        )
+        ax.set_ylim(
+            [df[metric].min(), df[metric].max()]
+        )  # Set original min and max values
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_combined_metrics(df: pd.DataFrame):
+    """
+    Plot combined histograms and KDE plots for key metrics with explicit legends.
+    """
+    
 
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
@@ -88,12 +117,6 @@ def plot_boxplots(df: pd.DataFrame):
     """
     Plot box plots for key metrics to identify outliers.
     """
-    key_metrics = {
-        "CPU Utilization (%)": "CPU Usage",
-        "Memory Utilization (%)": "Memory Usage",
-        "Disk I/O Throughput (MB/s)": "Disk Throughput",
-        "Network I/O Throughput (Mbps)": "Network Throughput",
-    }
 
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
@@ -108,13 +131,13 @@ def generate_summary_statistics(df: pd.DataFrame):
     """
     Generate and log summary statistics for key metrics.
     """
-    key_metrics = [
+    k_metrics = [
         "CPU Utilization (%)",
         "Memory Utilization (%)",
         "Disk I/O Throughput (MB/s)",
         "Network I/O Throughput (Mbps)",
     ]
-    summary_stats = df[key_metrics].describe()
+    summary_stats = df[k_metrics].describe()
     logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
 
 
@@ -123,13 +146,13 @@ def main():
     df = load_data(filepath)
     df = preprocess_data(df)
 
+    # Plot all metrics with highlighted averages
+    plot_all_metrics_combined(df)
+
     # Exploratory Data Analysis (EDA)
     plot_combined_metrics(df)
     plot_boxplots(df)
     generate_summary_statistics(df)
-
-    # Highlight key metric
-    plot_highlighted_metric(df, "CPU Utilization (%)", "CPU Usage")
 
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
