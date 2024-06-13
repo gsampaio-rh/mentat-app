@@ -1,7 +1,12 @@
 import pandas as pd
 import seaborn as sns
+from sklearn.cluster import KMeans
+from matplotlib.patches import Ellipse
+from sklearn.decomposition import PCA
+from sklearn.metrics import confusion_matrix
 from matplotlib.colors import ListedColormap
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
@@ -360,35 +365,35 @@ def train_bottleneck_model(df):
 
     return model, feature_cols
 
-def visualize_bottlenecks(df, model, feature_cols):
-    # Ensure all required features are present in the dataframe
-    missing_features = set(feature_cols) - set(df.columns)
-    if missing_features:
-        raise ValueError(f"Missing features for prediction: {missing_features}")
 
-    # Predict bottlenecks
+def visualize_bottlenecks(df, model):
+    feature_cols = [
+        "CPU Utilization Ratio",
+        "Memory Utilization Ratio",
+        "Network I/O Ratio",
+        "Storage I/O Ratio",
+        "System Load Per Core",
+        "Detected Vulnerabilities",
+        "Risk Score",
+    ]
     df["Predicted Bottleneck"] = model.predict(df[feature_cols])
 
-    # Count the occurrences of bottlenecks
     bottleneck_counts = df["Predicted Bottleneck"].value_counts()
 
-    # Plot the distribution of predicted bottlenecks
     plt.figure(figsize=(10, 6))
-    sns.barplot(x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis")
+    sns.barplot(
+        x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis"
+    )
 
-    # Adding labels and title
     plt.title("Predicted Resource Bottlenecks", fontsize=16)
     plt.xlabel("Bottleneck", fontsize=14)
     plt.ylabel("Count", fontsize=14)
 
-    # Adding annotations
     for index, value in enumerate(bottleneck_counts.values):
         plt.text(index, value + 10, str(value), ha="center", fontsize=12)
 
-    # Adding x-tick labels
     plt.xticks([0, 1], ["No Bottleneck", "Bottleneck"], fontsize=12)
 
-    # Adding explanation text box
     explanation_text = (
         "Bottleneck (1): A predicted resource constraint\n"
         "that could impact system performance. If a bottleneck occurs,\n"
@@ -406,45 +411,6 @@ def visualize_bottlenecks(df, model, feature_cols):
     )
 
     plt.show()
-
-
-def plot_kde_bottlenecks(df):
-    plt.figure(figsize=(10, 6))
-    sns.kdeplot(
-        x=df["CPU Utilization Ratio"],
-        y=df["Memory Utilization Ratio"],
-        hue=df["Predicted Bottleneck"],
-        fill=True,
-        palette={0: "blue", 1: "red"},
-        alpha=0.5,
-    )
-
-    plt.title("KDE Plot of Servers with and without Bottlenecks", fontsize=16)
-    plt.xlabel("CPU Utilization Ratio", fontsize=14)
-    plt.ylabel("Memory Utilization Ratio", fontsize=14)
-
-    plt.legend(title="Bottleneck", labels=["No Bottleneck", "Bottleneck"])
-
-    plt.show()
-
-
-def plot_hexbin_bottlenecks(df):
-    plt.figure(figsize=(10, 6))
-    plt.hexbin(
-        df["CPU Utilization Ratio"],
-        df["Memory Utilization Ratio"],
-        gridsize=30,
-        cmap="Blues",
-        mincnt=1,
-    )
-    plt.colorbar(label="Count")
-
-    plt.title("Hexbin Plot of Servers with and without Bottlenecks", fontsize=16)
-    plt.xlabel("CPU Utilization Ratio", fontsize=14)
-    plt.ylabel("Memory Utilization Ratio", fontsize=14)
-
-    plt.show()
-
 
 # Visualize feature importance
 def plot_feature_importance(model, feature_cols):
@@ -474,9 +440,7 @@ def main():
     bottleneck_model, feature_cols = train_bottleneck_model(combined_df)
 
     # Visualize the predicted bottlenecks
-    visualize_bottlenecks(combined_df, bottleneck_model, feature_cols)
-    plot_kde_bottlenecks(combined_df)
-    plot_hexbin_bottlenecks(combined_df)
+    visualize_bottlenecks(combined_df, bottleneck_model)
     plot_feature_importance(bottleneck_model, feature_cols)
     # plot_bottlenecks_scatter(combined_df)
 
