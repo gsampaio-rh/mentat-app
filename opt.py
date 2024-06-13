@@ -7,6 +7,8 @@ import os
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import PowerTransformer
 import logging
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import SMOTE
 
 # Logging setup
 logging.basicConfig(
@@ -73,6 +75,32 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df.reset_index(drop=True, inplace=True)
     logging.info("Data preprocessing completed.")
     return df
+
+
+def split_data(df: pd.DataFrame, target_column: str):
+    """
+    Split the data into training and testing sets.
+    """
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    logging.info("Data splitting completed.")
+    return X_train, X_test, y_train, y_test
+
+
+def handle_imbalanced_data(X_train, y_train):
+    """
+    Handle imbalanced data using SMOTE.
+    """
+    smote = SMOTE(random_state=42)
+    X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
+    
+    logging.info("Handling imbalanced data completed.")
+    return X_resampled, y_resampled
 
 
 def plot_all_metrics_single_chart(df: pd.DataFrame):
@@ -311,7 +339,14 @@ def main():
 
     # Feature engineering
     df = feature_engineering(df)
-    
+
+    # Data Splitting
+    target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
+    X_train, X_test, y_train, y_test = split_data(df, target_column)
+
+    # # Handling Imbalanced Data
+    # X_train_balanced, y_train_balanced = handle_imbalanced_data(X_train, y_train)
+
     visualize_insights(df)
 
     # Display first few rows of the preprocessed data for verification
