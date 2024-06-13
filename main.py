@@ -4,6 +4,12 @@ import os
 from data_preprocessing import load_dataset, clean_data, normalize_data, split_data
 from eda import generate_summary_statistics, visualize_data, identify_key_features
 from feature_engineering import create_new_features, feature_selection
+from model_selection import (
+    linear_regression,
+    random_forest,
+    xgboost_regressor,
+    k_means_clustering,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,6 +82,26 @@ def main():
     X_train.to_csv(f"{output_dir}/X_train_with_new_features.csv", index=False)
     X_test.to_csv(f"{output_dir}/X_test_with_new_features.csv", index=False)
     logger.info("New features created and data saved successfully.")
+
+    # Define features and target for regression models
+    features = X_train.columns.tolist()
+    target = "Target"
+
+    # # Linear Regression
+    # lr_model, lr_mse, lr_r2 = linear_regression(X_train, y_train, features, target)
+    # logger.info(f"Linear Regression - MSE: {lr_mse}, R2: {lr_r2}")
+
+    # Random Forest
+    rf_model, rf_mse, rf_r2 = random_forest(X_train, y_train, features, target)
+    logger.info(f"Random Forest - MSE: {rf_mse}, R2: {rf_r2}")
+
+    # XGBoost
+    xgb_model, xgb_mse, xgb_r2 = xgboost_regressor(X_train, y_train, features, target)
+    logger.info(f"XGBoost - MSE: {xgb_mse}, R2: {xgb_r2}")
+
+    # K-Means Clustering
+    # k_means_model, df_clustered = k_means_clustering(df, features, n_clusters=3)
+    # logger.info(f"K-Means Clustering result:\n{df_clustered.head()}")
 
 
 if __name__ == "__main__":
