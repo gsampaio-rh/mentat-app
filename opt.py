@@ -14,11 +14,12 @@ logging.basicConfig(
 
 # Key Metrics
 key_metrics = {
-    "CPU Utilization (%)": "CPU Utilization (%)",
-    "Memory Utilization (%)": "Memory Utilization (%)",
-    "Disk I/O Throughput (MB/s)": "Disk I/O Throughput (MB/s)",
-    "Network I/O Throughput (Mbps)": "Network I/O Throughput (Mbps",
+    "CPU Utilization (%)": "CPU Usage",
+    "Memory Utilization (%)": "Memory Usage",
+    "Disk I/O Throughput (MB/s)": "Disk Throughput",
+    "Network I/O Throughput (Mbps)": "Network Throughput",
 }
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -31,6 +32,7 @@ def load_data(filepath: str) -> pd.DataFrame:
     except FileNotFoundError as e:
         logging.error(f"File not found: {filepath}")
         raise e
+
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -56,12 +58,6 @@ def plot_all_metrics_combined(df: pd.DataFrame):
     """
     Plot highlighted bubble graphs for all key metrics in the same window.
     """
-    key_metrics = {
-        "CPU Utilization (%)": "CPU Usage",
-        "Memory Utilization (%)": "Memory Usage",
-        "Disk I/O Throughput (MB/s)": "Disk Throughput",
-        "Network I/O Throughput (Mbps)": "Network Throughput",
-    }
 
     fig, axes = plt.subplots(2, 2, figsize=(15, 10))
     axes = axes.flatten()
@@ -100,7 +96,6 @@ def plot_combined_metrics(df: pd.DataFrame):
     """
     Plot combined histograms and KDE plots for key metrics with explicit legends.
     """
-    
 
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
@@ -112,6 +107,7 @@ def plot_combined_metrics(df: pd.DataFrame):
         plt.legend(loc="best")
     plt.tight_layout()
     plt.show()
+
 
 def plot_boxplots(df: pd.DataFrame):
     """
@@ -127,17 +123,12 @@ def plot_boxplots(df: pd.DataFrame):
     plt.tight_layout()
     plt.show()
 
+
 def generate_summary_statistics(df: pd.DataFrame):
     """
     Generate and log summary statistics for key metrics.
     """
-    k_metrics = [
-        "CPU Utilization (%)",
-        "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
-        "Network I/O Throughput (Mbps)",
-    ]
-    summary_stats = df[k_metrics].describe()
+    summary_stats = df[list(key_metrics.keys())].describe()
     logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
 
 
