@@ -20,6 +20,14 @@ key_metrics = {
     "Network I/O Throughput (Mbps)": "Network Throughput",
 }
 
+additional_metrics = [
+    "System Load Average",
+    "Pod CPU Utilization (%)",
+    "Pod Memory Utilization (%)",
+    "Cluster CPU Utilization (%)",
+    "Cluster Memory Utilization (%)",
+]
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -54,44 +62,6 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def plot_all_metrics_combined(df: pd.DataFrame):
-    """
-    Plot highlighted bubble graphs for all key metrics in the same window.
-    """
-
-    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
-    axes = axes.flatten()
-
-    for i, (metric, label) in enumerate(key_metrics.items()):
-        ax = axes[i]
-        average_value = df[metric].mean()
-        x_mean = len(df) / 2  # Use the middle of the dataset for the annotation
-        ax.plot(df.index, df[metric], "bo", markersize=4)
-        ax.axhline(y=average_value, color="r", linestyle="--")
-        ax.scatter(
-            x_mean, average_value, color="red", s=100, edgecolor="black", zorder=5
-        )
-        ax.set_title(f"Average {label}")
-        ax.set_xlabel("Index")
-        ax.set_ylabel(label)
-        ax.grid(True)
-        ax.annotate(
-            "Average Value",
-            xy=(x_mean, average_value),
-            xytext=(
-                x_mean + 10,
-                average_value + 0.02 * (df[metric].max() - df[metric].min()),
-            ),
-            arrowprops=dict(facecolor="black", shrink=0.05),
-        )
-        ax.set_ylim(
-            [df[metric].min(), df[metric].max()]
-        )  # Set original min and max values
-
-    plt.tight_layout()
-    plt.show()
-
-
 def plot_all_metrics_single_chart(df: pd.DataFrame):
     """
     Plot all key metrics in a single chart with different colors.
@@ -100,6 +70,9 @@ def plot_all_metrics_single_chart(df: pd.DataFrame):
 
     for metric, label in key_metrics.items():
         plt.scatter(df.index, df[metric], label=label, s=10)
+
+    for metric in additional_metrics:
+        plt.scatter(df.index, df[metric], label=metric, s=10)
 
     plt.title("All Key Metrics")
     plt.xlabel("Index")
@@ -145,20 +118,18 @@ def generate_summary_statistics(df: pd.DataFrame):
     """
     Generate and log summary statistics for key metrics.
     """
-    summary_stats = df[list(key_metrics.keys())].describe()
+    summary_stats = df[list(key_metrics.keys()) + additional_metrics].describe()
     logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
 
 
 def main():
+
     filepath = os.path.join("data", "real_faang.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
 
     # Plot all metrics in a single chart
     plot_all_metrics_single_chart(df)
-    
-    # Plot all metrics with highlighted averages
-    # plot_all_metrics_combined(df)
 
     # Exploratory Data Analysis (EDA)
     plot_combined_metrics(df)
