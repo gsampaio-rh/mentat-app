@@ -173,6 +173,7 @@ SOURCE_DOCUMENTS/.DS_Store
 
 #data
 data/
+preprocessed_data/
 
 #content
 content/

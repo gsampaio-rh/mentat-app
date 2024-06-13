@@ -3,7 +3,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import logging
-import matplotlib.pyplot as plt
 
 # Configure logging
 logging.basicConfig(
@@ -26,14 +25,11 @@ def load_dataset(file_path):
 def clean_data(df):
     """Clean the dataset by handling missing values and outliers."""
     logger.info(f"Initial dataset shape: {df.shape}")
-
     # Handle missing values
     missing_values_count = df.isnull().sum().sum()
     logger.info(f"Missing values in dataset: {missing_values_count}")
-
     df = df.dropna()  # Simple approach: drop rows with missing values
     logger.info(f"Dataset shape after dropping missing values: {df.shape}")
-
     # Handle outliers using IQR method
     numeric_cols = df.select_dtypes(include=[np.number]).columns
     Q1 = df[numeric_cols].quantile(0.25)
@@ -46,7 +42,6 @@ def clean_data(df):
         ).any(axis=1)
     ]
     logger.info(f"Dataset shape after removing outliers: {df.shape}")
-
     return df
 
 
@@ -55,10 +50,8 @@ def normalize_data(df):
     scaler = StandardScaler()
     numeric_features = df.select_dtypes(include=[np.number]).columns
     logger.info(f"Numeric features to be scaled: {list(numeric_features)}")
-
     if df[numeric_features].shape[0] == 0:
         raise ValueError("No samples left after cleaning to normalize.")
-
     df[numeric_features] = scaler.fit_transform(df[numeric_features])
     return df, scaler
 
@@ -67,7 +60,6 @@ def split_data(df, target_column, test_size=0.2, random_state=42):
     """Split the data into training and testing sets."""
     if target_column not in df.columns:
         raise ValueError(f"Target column '{target_column}' not found in the dataset.")
-
     X = df.drop(columns=[target_column])
     y = df[target_column]
     X_train, X_test, y_train, y_test = train_test_split(
@@ -77,55 +69,3 @@ def split_data(df, target_column, test_size=0.2, random_state=42):
         f"Training set shape: {X_train.shape}, Testing set shape: {X_test.shape}"
     )
     return X_train, X_test, y_train, y_test
-
-
-# def plot_all_metrics_single_chart(df: pd.DataFrame):
-#     """
-#     Plot all key metrics in a single chart with different colors.
-#     """
-#     plt.figure(figsize=(12, 8))
-
-#     for metric, label in key_metrics.items():
-#         plt.scatter(df.index, df[metric], label=label, s=10)
-
-#     plt.title("All Key Metrics")
-#     plt.xlabel("Index")
-#     plt.ylabel("Value")
-#     plt.legend()
-#     plt.grid(True)
-#     plt.show()
-
-
-def main():
-    # Load the dataset
-    file_path = "data/system_metrics.csv"  # Ensure this path is correct
-    df = load_dataset(file_path)
-
-    # Clean the data
-    df = clean_data(df)
-
-    # Normalize the data
-    try:
-        df, scaler = normalize_data(df)
-    except ValueError as e:
-        logger.error(f"Normalization failed: {e}")
-        return
-
-    # Split the data
-    target_column = "CPU Utilization (%)"  # Replace with your actual target column name
-    try:
-        X_train, X_test, y_train, y_test = split_data(df, target_column)
-    except ValueError as e:
-        logger.error(f"Data split failed: {e}")
-        return
-
-    # Save preprocessed data if needed
-    X_train.to_csv("X_train.csv", index=False)
-    X_test.to_csv("X_test.csv", index=False)
-    y_train.to_csv("y_train.csv", index=False)
-    y_test.to_csv("y_test.csv", index=False)
-    logger.info("Preprocessed data saved successfully.")
-
-
-if __name__ == "__main__":
-    main()
