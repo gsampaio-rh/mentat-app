@@ -27,30 +27,16 @@ logging.basicConfig(
 key_metrics = {
     "CPU Utilization (%)": "CPU Usage",
     "Memory Utilization (%)": "Memory Usage",
-    "Disk I/O Throughput (MB/s)": "Disk Throughput",
     "Network I/O Throughput (Mbps)": "Network Throughput",
 }
 
-additional_metrics = [
-    "System Load Average",
-    "Pod CPU Utilization (%)",
-    "Pod Memory Utilization (%)",
-    "Cluster CPU Utilization (%)",
-    "Cluster Memory Utilization (%)",
-]
-
 # Example weights (adjust based on importance)
 weights = {
-    "CPU Utilization (%)": 0.2,
-    "Memory Utilization (%)": 0.2,
-    "Disk I/O Throughput (MB/s)": 0.15,
-    "Network I/O Throughput (Mbps)": 0.15,
-    "System Load Average": 0.1,
-    "Pod CPU Utilization (%)": 0.1,
-    "Pod Memory Utilization (%)": 0.05,
-    "Cluster CPU Utilization (%)": 0.05,
-    "Cluster Memory Utilization (%)": 0.05,
+    "CPU Utilization (%)": 0.4,
+    "Memory Utilization (%)": 0.4,
+    "Network I/O Throughput (Mbps)": 0.2,
 }
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -157,9 +143,6 @@ def plot_all_metrics_single_chart(df: pd.DataFrame):
     for metric, label in key_metrics.items():
         plt.scatter(df.index, df[metric], label=label, s=10)
 
-    for metric in additional_metrics:
-        plt.scatter(df.index, df[metric], label=metric, s=10)
-
     plt.title("All Key Metrics")
     plt.xlabel("Index")
     plt.ylabel("Value")
@@ -172,7 +155,6 @@ def plot_combined_metrics(df: pd.DataFrame):
     """
     Plot combined histograms and KDE plots for key metrics with explicit legends.
     """
-
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
         plt.subplot(2, 2, i)
@@ -189,7 +171,6 @@ def plot_boxplots(df: pd.DataFrame):
     """
     Plot box plots for key metrics to identify outliers.
     """
-
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
         plt.subplot(2, 2, i)
@@ -204,7 +185,142 @@ def generate_summary_statistics(df: pd.DataFrame):
     """
     Generate and log summary statistics for key metrics.
     """
-    summary_stats = df[list(key_metrics.keys()) + additional_metrics].describe()
+    summary_stats = df[list(key_metrics.keys())].describe()
+    logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
+
+
+def analyze_resource_utilization(df: pd.DataFrame):
+    """
+    Analyze resource utilization to identify potential bottlenecks.
+    """
+    resource_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Network I/O Throughput (Mbps)",
+    ]
+
+    # Identify potential bottlenecks by checking high utilization
+    high_cpu = df["CPU Utilization (%)"] > 90
+    high_memory = df["Memory Utilization (%)"] > 90
+    high_network_io = df["Network I/O Throughput (Mbps)"] > 90
+
+    bottlenecks = high_cpu | high_memory | high_network_io
+
+    logging.info(f"Number of potential bottlenecks: {bottlenecks.sum()}")
+    logging.info(f"High CPU Utilization: {high_cpu.sum()}")
+    logging.info(f"High Memory Utilization: {high_memory.sum()}")
+    logging.info(f"High Network I/O Throughput: {high_network_io.sum()}")
+
+    return df[bottlenecks], resource_columns
+
+
+def visualize_resource_utilization(df: pd.DataFrame, resource_columns: list):
+    """
+    Visualize resource utilization to identify bottlenecks.
+    """
+    plt.figure(figsize=(12, 8))
+
+    for column in resource_columns:
+        sns.histplot(df[column], kde=True, label=column)
+
+    plt.title("Resource Utilization Analysis")
+    plt.xlabel("Utilization")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def perform_clustering_analysis(df: pd.DataFrame, n_clusters: int = 3):
+    """
+    Perform clustering analysis on the dataset to group VMs based on resource usage patterns.
+    """
+    resource_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Network I/O Throughput (Mbps)",
+    ]
+
+    scaler = StandardScaler()
+    standardized_data = scaler.fit_transform(df[resource_columns])
+
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    df["Cluster"] = kmeans.fit_predict(standardized_data)
+
+    logging.info(f"Cluster centers: {kmeans.cluster_centers_}")
+
+    return df, kmeans.cluster_centers_
+
+
+def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
+    """
+    Visualize overutilized, underutilized, and efficient VMs in one image along with the cluster distribution.
+    """
+    fig, axs = plt.subplots(1, 2, figsize=(20, 8))
+
+    # Scatter plot of clusters
+    sns.scatterplot(
+        x="CPU Utilization (%)",
+        y="Memory Utilization (%)",
+        hue="Cluster",
+        data=df,
+        palette="viridis",
+        alpha=0.6,
+        edgecolor="w",
+        ax=axs[0],
+    )
+
+    axs[0].scatter(
+        cluster_centers[:, 0],
+        cluster_centers[:, 1],
+        s=300,
+        c="red",
+        label="Cluster Centers",
+        edgecolors="black",
+    )
+
+    axs[0].set_title(
+        "Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs"
+    )
+    axs[0].set_xlabel("CPU Utilization (%)")
+    axs[0].set_ylabel("Memory Utilization (%)")
+    axs[0].legend(title="Cluster")
+    axs[0].grid(True)
+
+    # Bar plot of cluster distribution
+    cluster_counts = df["Cluster"].value_counts().sort_index()
+    sns.barplot(
+        x=cluster_counts.index, y=cluster_counts.values, palette="viridis", ax=axs[1]
+    )
+    axs[1].set_title("Number of Servers in Each Cluster")
+    axs[1].set_xlabel("Cluster")
+    axs[1].set_ylabel("Number of Servers")
+    axs[1].grid(True)
+
+    plt.show()
+
+    logging.info(f"Cluster counts: {cluster_counts.to_dict()}")
+
+
+def plot_boxplots(df: pd.DataFrame):
+    """
+    Plot box plots for key metrics to identify outliers.
+    """
+    plt.figure(figsize=(12, 8))
+    for i, (metric, label) in enumerate(key_metrics.items(), 1):
+        plt.subplot(2, 2, i)
+        sns.boxplot(x=df[metric], color="blue")
+        plt.title(f"Box plot of {label}")
+        plt.xlabel(label)
+    plt.tight_layout()
+    plt.show()
+
+
+def generate_summary_statistics(df: pd.DataFrame):
+    """
+    Generate and log summary statistics for key metrics.
+    """
+    summary_stats = df[list(key_metrics.keys())].describe()
     logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
 
 
@@ -227,31 +343,13 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df["Resource_Utilization_Efficiency"] = (
         df["CPU Utilization (%)"] * weights["CPU Utilization (%)"]
         + df["Memory Utilization (%)"] * weights["Memory Utilization (%)"]
-        + df["Disk I/O Throughput (MB/s)"] * weights["Disk I/O Throughput (MB/s)"]
         + df["Network I/O Throughput (Mbps)"] * weights["Network I/O Throughput (Mbps)"]
-        + df["System Load Average"] * weights["System Load Average"]
-        + df["Pod CPU Utilization (%)"] * weights["Pod CPU Utilization (%)"]
-        + df["Pod Memory Utilization (%)"] * weights["Pod Memory Utilization (%)"]
-        + df["Cluster CPU Utilization (%)"] * weights["Cluster CPU Utilization (%)"]
-        + df["Cluster Memory Utilization (%)"]
-        * weights["Cluster Memory Utilization (%)"]
     ) / sum(
         weights.values()
     )  # Normalize by sum of weights
 
     df["CPU_Memory_Ratio"] = df["CPU Utilization (%)"] / (
         df["Memory Utilization (%)"] + 1e-5
-    )
-
-    # Additional metrics
-    df["System_Load_Average_Ratio"] = df["System Load Average"] / (
-        df["CPU Utilization (%)"] + 1e-5
-    )
-    df["Pod_CPU_Memory_Ratio"] = df["Pod CPU Utilization (%)"] / (
-        df["Pod Memory Utilization (%)"] + 1e-5
-    )
-    df["Cluster_CPU_Memory_Ratio"] = df["Cluster CPU Utilization (%)"] / (
-        df["Cluster Memory Utilization (%)"] + 1e-5
     )
 
     logging.info("Feature engineering completed.")
@@ -556,22 +654,19 @@ def analyze_resource_utilization(df: pd.DataFrame):
     resource_columns = [
         "CPU Utilization (%)",
         "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
         "Network I/O Throughput (Mbps)",
     ]
 
     # Identify potential bottlenecks by checking high utilization
     high_cpu = df["CPU Utilization (%)"] > 90
     high_memory = df["Memory Utilization (%)"] > 90
-    high_disk_io = df["Disk I/O Throughput (MB/s)"] > 90
     high_network_io = df["Network I/O Throughput (Mbps)"] > 90
 
-    bottlenecks = high_cpu | high_memory | high_disk_io | high_network_io
+    bottlenecks = high_cpu | high_memory | high_network_io
 
     logging.info(f"Number of potential bottlenecks: {bottlenecks.sum()}")
     logging.info(f"High CPU Utilization: {high_cpu.sum()}")
     logging.info(f"High Memory Utilization: {high_memory.sum()}")
-    logging.info(f"High Disk I/O Throughput: {high_disk_io.sum()}")
     logging.info(f"High Network I/O Throughput: {high_network_io.sum()}")
 
     return df[bottlenecks], resource_columns
@@ -601,7 +696,6 @@ def perform_clustering_analysis(df: pd.DataFrame, n_clusters: int = 3):
     resource_columns = [
         "CPU Utilization (%)",
         "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
         "Network I/O Throughput (Mbps)",
     ]
 
@@ -614,118 +708,6 @@ def perform_clustering_analysis(df: pd.DataFrame, n_clusters: int = 3):
     logging.info(f"Cluster centers: {kmeans.cluster_centers_}")
 
     return df, kmeans.cluster_centers_
-
-
-def visualize_clustering_results(df: pd.DataFrame, cluster_centers):
-    """
-    Visualize the clustering results.
-    """
-    plt.figure(figsize=(12, 8))
-
-    sns.scatterplot(
-        x="CPU Utilization (%)",
-        y="Memory Utilization (%)",
-        hue="Cluster",
-        data=df,
-        palette="viridis",
-        alpha=0.6,
-        edgecolor="w",
-    )
-
-    plt.scatter(
-        cluster_centers[:, 0],
-        cluster_centers[:, 1],
-        s=300,
-        c="red",
-        label="Cluster Centers",
-        edgecolors="black",
-    )
-
-    plt.title("Clustering Analysis of VMs")
-    plt.xlabel("CPU Utilization (%)")
-    plt.ylabel("Memory Utilization (%)")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
-def resource_utilization_analysis(df: pd.DataFrame):
-    """
-    Analyze and visualize resource utilization to identify bottlenecks.
-    """
-    resource_columns = [
-        "CPU Utilization (%)",
-        "Memory Utilization (%)",
-        "Disk I/O Throughput (MB/s)",
-        "Network I/O Throughput (Mbps)",
-    ]
-
-    plt.figure(figsize=(12, 8))
-
-    for column in resource_columns:
-        sns.histplot(df[column], kde=True, label=column)
-
-    plt.title("Resource Utilization Analysis")
-    plt.xlabel("Utilization")
-    plt.ylabel("Frequency")
-    plt.legend()
-    plt.show()
-
-    logging.info("Resource Utilization Analysis completed.")
-
-
-def visualize_clusters_together(df: pd.DataFrame, cluster_centers):
-    """
-    Visualize overutilized, underutilized, and efficient VMs in one image.
-    """
-    plt.figure(figsize=(12, 8))
-
-    sns.scatterplot(
-        x="CPU Utilization (%)",
-        y="Memory Utilization (%)",
-        hue="Cluster",
-        data=df,
-        palette="viridis",
-        alpha=0.6,
-        edgecolor="w",
-    )
-
-    plt.scatter(
-        cluster_centers[:, 0],
-        cluster_centers[:, 1],
-        s=300,
-        c="red",
-        label="Cluster Centers",
-        edgecolors="black",
-    )
-
-    plt.title(
-        "Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs"
-    )
-    plt.xlabel("CPU Utilization (%)")
-    plt.ylabel("Memory Utilization (%)")
-    plt.legend(title="Cluster")
-    plt.grid(True)
-    plt.show()
-
-    logging.info(
-        "Cluster visualization with overutilized, underutilized, and efficient VMs completed."
-    )
-
-def visualize_cluster_distribution(df: pd.DataFrame):
-    """
-    Visualize the distribution of servers in each cluster.
-    """
-    cluster_counts = df["Cluster"].value_counts().sort_index()
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette="viridis")
-    plt.title("Number of Servers in Each Cluster")
-    plt.xlabel("Cluster")
-    plt.ylabel("Number of Servers")
-    plt.grid(True)
-    plt.show()
-
-    logging.info(f"Cluster counts: {cluster_counts.to_dict()}")
 
 
 def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
@@ -743,7 +725,7 @@ def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
         palette="viridis",
         alpha=0.6,
         edgecolor="w",
-        ax=axs[0]
+        ax=axs[0],
     )
 
     axs[0].scatter(
@@ -755,15 +737,19 @@ def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
         edgecolors="black",
     )
 
-    axs[0].set_title("Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs")
+    axs[0].set_title(
+        "Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs"
+    )
     axs[0].set_xlabel("CPU Utilization (%)")
     axs[0].set_ylabel("Memory Utilization (%)")
-    axs[0].legend(title='Cluster')
+    axs[0].legend(title="Cluster")
     axs[0].grid(True)
 
     # Bar plot of cluster distribution
     cluster_counts = df["Cluster"].value_counts().sort_index()
-    sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette="viridis", ax=axs[1])
+    sns.barplot(
+        x=cluster_counts.index, y=cluster_counts.values, palette="viridis", ax=axs[1]
+    )
     axs[1].set_title("Number of Servers in Each Cluster")
     axs[1].set_xlabel("Cluster")
     axs[1].set_ylabel("Number of Servers")
@@ -773,9 +759,10 @@ def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
 
     logging.info(f"Cluster counts: {cluster_counts.to_dict()}")
 
+
 def main():
 
-    filepath = os.path.join("data", "real_faang.csv")
+    filepath = os.path.join("data", "system_metrics.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
 
@@ -785,16 +772,14 @@ def main():
     # Initial combined metrics plot
     plot_all_metrics_single_chart(df)
 
-    # # Perform EDA
+    # Perform EDA
     perform_eda(df)
 
     # Feature engineering
     df = feature_engineering(df)
 
-    # visualize_insights(df)
-
     # Data Splitting
-    target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
+    target_column = "Resource_Utilization_Efficiency"
     X_train, X_test, y_train, y_test = split_data(df, target_column)
 
     # Handling Imbalanced Data
@@ -834,11 +819,11 @@ def main():
 
     # Resource Utilization Analysis
     bottleneck_df, resource_columns = analyze_resource_utilization(df)
-    # visualize_resource_utilization(bottleneck_df, resource_columns)
 
     # Clustering Analysis
     clustered_df, cluster_centers = perform_clustering_analysis(df)
     visualize_clusters_with_distribution(clustered_df, cluster_centers)
+
 
 if __name__ == "__main__":
     main()
