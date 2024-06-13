@@ -3,30 +3,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from sklearn.model_selection import (
-    train_test_split,
-    RandomizedSearchCV,
-    cross_val_score,
-)
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_auc_score,
-)
-from sklearn.preprocessing import StandardScaler, PowerTransformer
-from sklearn.mixture import GaussianMixture
 from sklearn.impute import SimpleImputer
-from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import PowerTransformer
 import logging
 
 # Logging setup
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -39,7 +23,6 @@ def load_data(filepath: str) -> pd.DataFrame:
     except FileNotFoundError as e:
         logging.error(f"File not found: {filepath}")
         raise e
-
 
 def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -60,6 +43,24 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Data preprocessing completed.")
     return df
 
+def plot_highlighted_metric(df: pd.DataFrame, metric: str, label: str):
+    average_value = df[metric].mean()
+    x_mean = len(df) / 2  # Use the middle of the dataset for the annotation
+    plt.figure(figsize=(10, 6))
+    plt.plot(df.index, df[metric], "bo", markersize=4)
+    plt.axhline(y=average_value, color="r", linestyle="--")
+    plt.scatter(x_mean, average_value, color="red", s=100, edgecolor="black", zorder=5)
+    plt.title(f"Average {label}")
+    plt.xlabel("Index")
+    plt.ylabel(label)
+    plt.grid(True)
+    plt.annotate(
+        "Average Value",
+        xy=(x_mean, average_value),
+        xytext=(x_mean + 10, average_value + 0.2),
+        arrowprops=dict(facecolor="black", shrink=0.05),
+    )
+    plt.show()
 
 def plot_combined_metrics(df: pd.DataFrame):
     """
@@ -83,7 +84,6 @@ def plot_combined_metrics(df: pd.DataFrame):
     plt.tight_layout()
     plt.show()
 
-
 def plot_boxplots(df: pd.DataFrame):
     """
     Plot box plots for key metrics to identify outliers.
@@ -103,7 +103,6 @@ def plot_boxplots(df: pd.DataFrame):
         plt.xlabel(label)
     plt.tight_layout()
     plt.show()
-
 
 def generate_summary_statistics(df: pd.DataFrame):
     """
@@ -128,6 +127,9 @@ def main():
     plot_combined_metrics(df)
     plot_boxplots(df)
     generate_summary_statistics(df)
+
+    # Highlight key metric
+    plot_highlighted_metric(df, "CPU Utilization (%)", "CPU Usage")
 
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
