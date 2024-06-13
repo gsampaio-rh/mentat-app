@@ -11,6 +11,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, accuracy_score, precision_score, recall_score, f1_score
+from sklearn.mixture import GaussianMixture
 import numpy as np
 
 def load_and_rename_dataset(file_path, rename_dict):
@@ -316,6 +317,7 @@ def feature_engineering(df):
 
     return df
 
+
 def train_bottleneck_model(df):
     # Define target variable (bottleneck indicator: 1 if any peak usage, else 0)
     df["Bottleneck"] = df[
@@ -363,7 +365,71 @@ def train_bottleneck_model(df):
     print(f"Recall: {recall}")
     print(f"F1 Score: {f1}")
 
-    return model, feature_cols
+    return model, feature_cols, X_test, y_test, y_pred
+
+
+def plot_ellipses(gmm, ax):
+    for n, color in enumerate(["r", "g", "b"]):
+        if n >= len(gmm.means_):
+            continue
+        covariances = gmm.covariances_[n][:2, :2]
+        v, w = np.linalg.eigh(covariances)
+        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+        u = w[0] / np.linalg.norm(w[0])
+        angle = np.arctan(u[1] / u[0])
+        angle = 180.0 * angle / np.pi
+        ell = plt.matplotlib.patches.Ellipse(
+            gmm.means_[n, :2], v[0], v[1], angle=angle, color=color, alpha=0.3
+        )
+        ell.set_clip_box(ax.bbox)
+        ax.add_artist(ell)
+
+
+def plot_classification_results_with_clusters(X_test, y_test, y_pred, df):
+    # Ensure "Number of Servers" column is present and has appropriate values
+    if "Number of Servers" not in df.columns:
+        print("Warning: 'Number of Servers' column not found. Adding placeholder values.")
+        df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
+    else:
+        # If the column exists, ensure it has reasonable values
+        if df["Number of Servers"].isnull().any() or (df["Number of Servers"] <= 0).any():
+            print("Warning: 'Number of Servers' column has invalid values. Replacing with placeholder values.")
+            df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
+
+    # Fit a Gaussian Mixture Model to get ellipses representing clusters
+    n_components = min(len(X_test), 3)
+    gmm = GaussianMixture(n_components=n_components, random_state=42)
+    gmm.fit(X_test.iloc[:, :2])  # Fit only the first two features for visualization
+
+    plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+    sizes = df.loc[X_test.index, "Number of Servers"] * 10  # Scale for better visualization
+    scatter = ax.scatter(
+        X_test.iloc[:, 0],
+        X_test.iloc[:, 1],
+        c=y_pred,
+        s=sizes,
+        cmap="coolwarm",
+        alpha=0.6,
+        edgecolors="w",
+        label=y_pred
+    )
+    plot_ellipses(gmm, ax)
+    plt.xlabel("CPU Utilization Ratio")
+    plt.ylabel("Memory Utilization Ratio")
+    plt.title("Random Forest Classification Results with Server Counts and Clusters")
+
+    # Add a legend
+    handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
+    legend1 = ax.legend(handles, labels, loc="upper right", title="Number of Servers")
+    ax.add_artist(legend1)
+
+    handles, labels = scatter.legend_elements()
+    legend2 = ax.legend(handles, ["Non-Bottleneck", "Bottleneck"], loc="upper left", title="Prediction")
+    ax.add_artist(legend2)
+
+    plt.show()
+
 
 
 def visualize_bottlenecks(df, model):
@@ -436,8 +502,15 @@ def main():
     # Feature engineering
     combined_df = feature_engineering(combined_df)
 
-    # Train and evaluate the bottleneck prediction model
-    bottleneck_model, feature_cols = train_bottleneck_model(combined_df)
+    # Train the model and get predictions
+    bottleneck_model, feature_cols, X_test, y_test, y_pred = train_bottleneck_model(
+        combined_df
+    )
+
+    # Visualize the classification results with bubble sizes and ellipses
+    plot_classification_results_with_clusters(X_test, y_test, y_pred, combined_df)
+
+    # Visualize the
 
     # Visualize the predicted bottlenecks
     visualize_bottlenecks(combined_df, bottleneck_model)
