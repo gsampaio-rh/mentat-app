@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import PowerTransformer
 import logging
 from sklearn.model_selection import train_test_split
-from imblearn.over_sampling import SMOTE
+from sklearn.utils import resample
 
 # Logging setup
 logging.basicConfig(
@@ -92,14 +92,39 @@ def split_data(df: pd.DataFrame, target_column: str):
     return X_train, X_test, y_train, y_test
 
 
-def handle_imbalanced_data(X_train, y_train):
+def handle_imbalanced_data_regression(X_train, y_train):
     """
-    Handle imbalanced data using SMOTE.
+    Handle imbalanced data for regression using oversampling.
     """
-    smote = SMOTE(random_state=42)
-    X_resampled, y_resampled = smote.fit_resample(X_train, y_train)
-    
-    logging.info("Handling imbalanced data completed.")
+    # Combine X_train and y_train into a single DataFrame
+    train_data = pd.concat([X_train, y_train], axis=1)
+
+    # Separate the majority and minority classes
+    majority = train_data[
+        train_data["Resource_Utilization_Efficiency"]
+        > train_data["Resource_Utilization_Efficiency"].median()
+    ]
+    minority = train_data[
+        train_data["Resource_Utilization_Efficiency"]
+        <= train_data["Resource_Utilization_Efficiency"].median()
+    ]
+
+    # Upsample the minority class
+    minority_upsampled = resample(
+        minority,
+        replace=True,  # sample with replacement
+        n_samples=len(majority),  # to match majority class
+        random_state=42,
+    )  # reproducible results
+
+    # Combine majority and upsampled minority
+    upsampled = pd.concat([majority, minority_upsampled])
+
+    # Separate X and y again
+    X_resampled = upsampled.drop(columns=["Resource_Utilization_Efficiency"])
+    y_resampled = upsampled["Resource_Utilization_Efficiency"]
+
+    logging.info("Handling imbalanced data using oversampling completed.")
     return X_resampled, y_resampled
 
 
@@ -344,8 +369,10 @@ def main():
     target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
     X_train, X_test, y_train, y_test = split_data(df, target_column)
 
-    # # Handling Imbalanced Data
-    # X_train_balanced, y_train_balanced = handle_imbalanced_data(X_train, y_train)
+    # Handling Imbalanced Data
+    X_train_balanced, y_train_balanced = handle_imbalanced_data_regression(
+        X_train, y_train
+    )
 
     visualize_insights(df)
 
