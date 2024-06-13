@@ -7,26 +7,48 @@ from sklearn.model_selection import (
     train_test_split,
     RandomizedSearchCV,
     cross_val_score,
+    KFold,
 )
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_auc_score,
-)
-from sklearn.preprocessing import StandardScaler, PowerTransformer
-from sklearn.mixture import GaussianMixture
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler, PowerTransformer, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from imblearn.over_sampling import SMOTE
 import logging
+from sklearn.utils import resample
 
 # Logging setup
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+# Key Metrics
+key_metrics = {
+    "CPU Utilization (%)": "CPU Usage",
+    "Memory Utilization (%)": "Memory Usage",
+    "Disk I/O Throughput (MB/s)": "Disk Throughput",
+    "Network I/O Throughput (Mbps)": "Network Throughput",
+}
+
+additional_metrics = [
+    "System Load Average",
+    "Pod CPU Utilization (%)",
+    "Pod Memory Utilization (%)",
+    "Cluster CPU Utilization (%)",
+    "Cluster Memory Utilization (%)",
+]
+
+# Example weights (adjust based on importance)
+weights = {
+    "CPU Utilization (%)": 0.2,
+    "Memory Utilization (%)": 0.2,
+    "Disk I/O Throughput (MB/s)": 0.15,
+    "Network I/O Throughput (Mbps)": 0.15,
+    "System Load Average": 0.1,
+    "Pod CPU Utilization (%)": 0.1,
+    "Pod Memory Utilization (%)": 0.05,
+    "Cluster CPU Utilization (%)": 0.05,
+    "Cluster Memory Utilization (%)": 0.05,
+}
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -50,374 +72,463 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     numeric_df = pd.DataFrame(
         imputer.fit_transform(numeric_df), columns=numeric_df.columns
     )
+
+    # Encode categorical features
+    categorical_df = df.select_dtypes(include=[object])
+    encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+    encoded_categorical_df = pd.DataFrame(
+        encoder.fit_transform(categorical_df),
+        columns=encoder.get_feature_names_out(categorical_df.columns),
+    )
+
+    # Combine numeric and encoded categorical data
+    df_processed = pd.concat([numeric_df, encoded_categorical_df], axis=1)
+
+    # Normalize/standardize the data
     pt = PowerTransformer()
-    numeric_df[numeric_df.columns] = pt.fit_transform(numeric_df[numeric_df.columns])
-    df[numeric_df.columns] = numeric_df
-    df.reset_index(drop=True, inplace=True)
+    df_processed[df_processed.columns] = pt.fit_transform(
+        df_processed[df_processed.columns]
+    )
+    df_processed.reset_index(drop=True, inplace=True)
+
     logging.info("Data preprocessing completed.")
-    return df
+    return df_processed
+
+
+def split_data(df: pd.DataFrame, target_column: str):
+    """
+    Split the data into training and testing sets.
+    """
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    logging.info("Data splitting completed.")
+    return X_train, X_test, y_train, y_test
+
+
+def handle_imbalanced_data_regression(X_train, y_train):
+    """
+    Handle imbalanced data for regression using oversampling.
+    """
+    # Combine X_train and y_train into a single DataFrame
+    train_data = pd.concat([X_train, y_train], axis=1)
+
+    # Separate the majority and minority classes
+    majority = train_data[
+        train_data["Resource_Utilization_Efficiency"]
+        > train_data["Resource_Utilization_Efficiency"].median()
+    ]
+    minority = train_data[
+        train_data["Resource_Utilization_Efficiency"]
+        <= train_data["Resource_Utilization_Efficiency"].median()
+    ]
+
+    # Upsample the minority class
+    minority_upsampled = resample(
+        minority,
+        replace=True,  # sample with replacement
+        n_samples=len(majority),  # to match majority class
+        random_state=42,
+    )  # reproducible results
+
+    # Combine majority and upsampled minority
+    upsampled = pd.concat([majority, minority_upsampled])
+
+    # Separate X and y again
+    X_resampled = upsampled.drop(columns=["Resource_Utilization_Efficiency"])
+    y_resampled = upsampled["Resource_Utilization_Efficiency"]
+
+    logging.info("Handling imbalanced data using oversampling completed.")
+    return X_resampled, y_resampled
+
+
+def plot_all_metrics_single_chart(df: pd.DataFrame):
+    """
+    Plot all key metrics in a single chart with different colors.
+    """
+    plt.figure(figsize=(12, 8))
+
+    for metric, label in key_metrics.items():
+        plt.scatter(df.index, df[metric], label=label, s=10)
+
+    for metric in additional_metrics:
+        plt.scatter(df.index, df[metric], label=metric, s=10)
+
+    plt.title("All Key Metrics")
+    plt.xlabel("Index")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def plot_combined_metrics(df: pd.DataFrame):
+    """
+    Plot combined histograms and KDE plots for key metrics with explicit legends.
+    """
+
+    plt.figure(figsize=(12, 8))
+    for i, (metric, label) in enumerate(key_metrics.items(), 1):
+        plt.subplot(2, 2, i)
+        sns.histplot(df[metric], kde=True, label="KDE", color="blue")
+        plt.title(f"Distribution of {label}")
+        plt.xlabel(label)
+        plt.ylabel("Frequency")
+        plt.legend(loc="best")
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_boxplots(df: pd.DataFrame):
+    """
+    Plot box plots for key metrics to identify outliers.
+    """
+
+    plt.figure(figsize=(12, 8))
+    for i, (metric, label) in enumerate(key_metrics.items(), 1):
+        plt.subplot(2, 2, i)
+        sns.boxplot(x=df[metric], color="blue")
+        plt.title(f"Box plot of {label}")
+        plt.xlabel(label)
+    plt.tight_layout()
+    plt.show()
+
+
+def generate_summary_statistics(df: pd.DataFrame):
+    """
+    Generate and log summary statistics for key metrics.
+    """
+    summary_stats = df[list(key_metrics.keys()) + additional_metrics].describe()
+    logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
+
+
+def perform_eda(df: pd.DataFrame):
+    """
+    Perform exploratory data analysis on the dataframe.
+    """
+    # Plot combined metrics
+    plot_combined_metrics(df)
+    # Plot box plots
+    plot_boxplots(df)
+    # Generate summary statistics
+    generate_summary_statistics(df)
 
 
 def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Perform feature engineering to create new features.
     """
-    df["CPU Utilization Ratio"] = df["CPU Usage (seconds)"] / df["CPU Utilization (%)"]
-    df["Memory Utilization Ratio"] = (
-        df["Memory Usage (bytes)"] / df["Memory Utilization (%)"]
+    df["Resource_Utilization_Efficiency"] = (
+        df["CPU Utilization (%)"] * weights["CPU Utilization (%)"]
+        + df["Memory Utilization (%)"] * weights["Memory Utilization (%)"]
+        + df["Disk I/O Throughput (MB/s)"] * weights["Disk I/O Throughput (MB/s)"]
+        + df["Network I/O Throughput (Mbps)"] * weights["Network I/O Throughput (Mbps)"]
+        + df["System Load Average"] * weights["System Load Average"]
+        + df["Pod CPU Utilization (%)"] * weights["Pod CPU Utilization (%)"]
+        + df["Pod Memory Utilization (%)"] * weights["Pod Memory Utilization (%)"]
+        + df["Cluster CPU Utilization (%)"] * weights["Cluster CPU Utilization (%)"]
+        + df["Cluster Memory Utilization (%)"]
+        * weights["Cluster Memory Utilization (%)"]
+    ) / sum(
+        weights.values()
+    )  # Normalize by sum of weights
+
+    df["CPU_Memory_Ratio"] = df["CPU Utilization (%)"] / (
+        df["Memory Utilization (%)"] + 1e-5
     )
-    df["Network I/O Ratio"] = (
-        df["Network Receive (bytes)"] + df["Network Transmit (bytes)"]
-    ) / df["Network I/O Throughput (Mbps)"]
-    df["Storage I/O Ratio"] = (
-        df["Storage Read (bytes)"] + df["Storage Write (bytes)"]
-    ) / df["Disk I/O Throughput (MB/s)"]
-    df["System Load Per Core"] = df["System Load Average"] / 4
-    df["Peak CPU Usage"] = (df["CPU Utilization (%)"] > 90).astype(int)
-    df["Peak Memory Usage"] = (df["Memory Utilization (%)"] > 90).astype(int)
-    df["Peak Network Usage"] = (df["Network I/O Throughput (Mbps)"] > 90).astype(int)
-    df["Peak Storage Usage"] = (df["Disk I/O Throughput (MB/s)"] > 90).astype(int)
+
+    # Additional metrics
+    df["System_Load_Average_Ratio"] = df["System Load Average"] / (
+        df["CPU Utilization (%)"] + 1e-5
+    )
+    df["Pod_CPU_Memory_Ratio"] = df["Pod CPU Utilization (%)"] / (
+        df["Pod Memory Utilization (%)"] + 1e-5
+    )
+    df["Cluster_CPU_Memory_Ratio"] = df["Cluster CPU Utilization (%)"] / (
+        df["Cluster Memory Utilization (%)"] + 1e-5
+    )
+
     logging.info("Feature engineering completed.")
     return df
 
 
-def check_data_balance(df: pd.DataFrame) -> bool:
+def visualize_insights(df: pd.DataFrame) -> None:
     """
-    Check if the target variable 'Bottleneck' is balanced.
+    Visualize key insights from the dataframe.
     """
-    bottleneck_counts = df["Bottleneck"].value_counts()
-    logging.info(
-        "Class distribution in the target variable 'Bottleneck':\n"
-        + str(bottleneck_counts)
-    )
-    return len(bottleneck_counts) > 1
+    fig, axs = plt.subplots(4, figsize=(12, 8))
+
+    required_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Pod_CPU_Memory_Ratio",
+        "Cluster_CPU_Memory_Ratio",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"DataFrame missing required columns: {missing_columns}")
+
+    # Plotting
+    try:
+        # Figure 1: Resource Utilization Efficiency Over Time
+        axs[0].plot(df.index, df["Resource_Utilization_Efficiency"])
+        axs[0].set_title("Resource Utilization Efficiency Over Time")
+        axs[0].set_xlabel("Time")
+        axs[0].set_ylabel("Efficiency")
+
+        # Figure 1: CPU and Memory Utilization Over Time
+        axs[1].plot(df.index, df["CPU Utilization (%)"], label="CPU Utilization")
+        axs[1].plot(df.index, df["Memory Utilization (%)"], label="Memory Utilization")
+        axs[1].set_title("CPU and Memory Utilization Over Time")
+        axs[1].set_xlabel("Time")
+        axs[1].set_ylabel("Utilization (%)")
+        axs[1].legend()
+
+        # Figure 3: Pod and Cluster CPU-Memory Ratios
+        axs[2].scatter(df["Pod_CPU_Memory_Ratio"], df["Cluster_CPU_Memory_Ratio"])
+        axs[2].set_title("Pod vs. Cluster CPU-Memory Ratios")
+        axs[2].set_xlabel("Pod CPU-Memory Ratio")
+        axs[2].set_ylabel("Cluster CPU-Memory Ratio")
+
+        # Figure 4: Disk I/O and Network I/O Throughput
+        bar_width = 0.35
+        disk_io_mean = df["Disk I/O Throughput (MB/s)"].mean()
+        network_io_mean = df["Network I/O Throughput (Mbps)"].mean()
+        axs[3].bar(
+            ["Disk I/O Throughput"],
+            disk_io_mean,
+            bar_width,
+            label="Disk I/O Throughput",
+        )
+        axs[3].bar(
+            ["Network I/O Throughput"],
+            network_io_mean,
+            bar_width,
+            label="Network I/O Throughput",
+        )
+        axs[3].set_title("Disk I/O and Network I/O Throughput")
+        axs[3].set_xlabel("Throughput Type")
+        axs[3].set_ylabel("Average Throughput")
+        axs[3].legend()
+
+        # Figure 5: System Load Average and CPU Utilization Ratio
+        # axs[4].scatter(df["CPU Utilization (%)"], df["System_Load_Average_Ratio"])
+        # axs[4].set_title("System Load Average vs. CPU Utilization Ratio")
+        # axs[4].set_xlabel("CPU Utilization (%)")
+        # axs[4].set_ylabel("System Load Average Ratio")
+
+    except KeyError as e:
+        print(f"Key error: {e} - Check if the DataFrame contains the required columns.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    plt.tight_layout()
+    plt.show()
 
 
-def create_synthetic_bottlenecks(df: pd.DataFrame) -> pd.DataFrame:
+def train_baseline_model(X_train, y_train):
     """
-    Create synthetic bottleneck instances to balance the dataset.
+    Train a baseline Random Forest model.
     """
-    synthetic_bottlenecks = df.sample(10).copy()
-    synthetic_bottlenecks["Peak CPU Usage"] = 1
-    synthetic_bottlenecks["Peak Memory Usage"] = 1
-    synthetic_bottlenecks["Peak Network Usage"] = 1
-    synthetic_bottlenecks["Peak Storage Usage"] = 1
-    synthetic_bottlenecks["Bottleneck"] = 1
-    logging.info("Synthetic bottlenecks created.")
-    return pd.concat([df, synthetic_bottlenecks], ignore_index=True)
+    rf = RandomForestRegressor(random_state=42)
+    rf.fit(X_train, y_train)
+
+    logging.info("Baseline model training completed.")
+    return rf
 
 
-def balance_dataset(X: pd.DataFrame, y: pd.Series) -> tuple:
+def hyperparameter_tuning(X_train, y_train):
     """
-    Balance the dataset using SMOTE.
+    Tune hyperparameters using RandomizedSearchCV.
     """
-    smote = SMOTE(random_state=42, k_neighbors=3)
-    X_resampled, y_resampled = smote.fit_resample(X, y)
-    logging.info("Dataset balanced using SMOTE.")
-    return X_resampled, y_resampled
+    rf = RandomForestRegressor(random_state=42)
 
-
-def tune_model(X_train: pd.DataFrame, y_train: pd.Series) -> RandomForestClassifier:
-    """
-    Tune the Random Forest model using RandomizedSearchCV.
-    """
+    # Define the parameter grid
     param_dist = {
-        "n_estimators": [100, 200, 300, 400, 500],
-        "max_features": ["sqrt", "log2"],
-        "max_depth": [10, 20, 30, 40, None],
+        "n_estimators": [int(x) for x in np.linspace(start=100, stop=1000, num=10)],
+        "max_features": ["sqrt", "log2", None],  # Removed 'auto'
+        "max_depth": [int(x) for x in np.linspace(10, 110, num=11)],
         "min_samples_split": [2, 5, 10],
         "min_samples_leaf": [1, 2, 4],
         "bootstrap": [True, False],
     }
-    rf = RandomForestClassifier(random_state=42)
-    random_search = RandomizedSearchCV(
+
+    # Randomized search
+    rf_random = RandomizedSearchCV(
         estimator=rf,
         param_distributions=param_dist,
         n_iter=100,
-        cv=5,
+        cv=3,
         verbose=2,
         random_state=42,
         n_jobs=-1,
     )
-    random_search.fit(X_train, y_train)
-    logging.info("Model tuning completed.")
-    return random_search.best_estimator_
+    rf_random.fit(X_train, y_train)
+
+    logging.info("Hyperparameter tuning completed.")
+    return rf_random.best_estimator_
 
 
-def train_bottleneck_model(df: pd.DataFrame) -> tuple:
+def plot_model_performance(model, X_test, y_test):
     """
-    Train the Random Forest model to predict bottlenecks.
+    Plot the model performance on the test set with additional details.
     """
-    df["Bottleneck"] = df[
-        [
-            "Peak CPU Usage",
-            "Peak Memory Usage",
-            "Peak Network Usage",
-            "Peak Storage Usage",
-        ]
-    ].max(axis=1)
-    feature_cols = [
-        "CPU Utilization Ratio",
-        "Memory Utilization Ratio",
-        "Network I/O Ratio",
-        "Storage I/O Ratio",
-        "System Load Per Core",
-    ]
-    X = df[feature_cols]
-    y = df["Bottleneck"]
-
-    if not check_data_balance(df):
-        logging.warning(
-            "Only one class present in the target variable. Creating synthetic bottlenecks."
-        )
-        df = create_synthetic_bottlenecks(df)
-        X = df[feature_cols]
-        y = df["Bottleneck"]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    X_test_indices = X_test.index
-    X_train, y_train = balance_dataset(X_train, y_train)
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-    best_rf = tune_model(X_train, y_train)
-
-    # Cross-validation
-    cv_scores = cross_val_score(best_rf, X_train, y_train, cv=5)
-    logging.info(f"Cross-validation scores: {cv_scores}")
-    logging.info(f"Mean CV score: {cv_scores.mean()}")
-
-    y_pred = best_rf.predict(X_test)
-
-    if len(np.unique(y_test)) == 1:
-        logging.warning(
-            "Only one class present in y_test. Skipping ROC AUC, Precision, Recall, and F1 scores."
-        )
-        roc_auc = precision = recall = f1 = "N/A"
-    else:
-        roc_auc = roc_auc_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred, zero_division=0)
-        recall = recall_score(y_test, y_pred, zero_division=0)
-        f1 = f1_score(y_test, y_pred, zero_division=0)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    logging.info(f"Accuracy: {accuracy}")
-    logging.info(f"Precision: {precision}")
-    logging.info(f"Recall: {recall}")
-    logging.info(f"F1 Score: {f1}")
-    logging.info(f"ROC AUC Score: {roc_auc}")
-
-    return best_rf, feature_cols, X_test, y_test, y_pred, X_test_indices
-
-
-def plot_ellipses(gmm, ax):
-    for n, color in enumerate(["r", "g", "b"]):
-        if n >= len(gmm.means_):
-            continue
-        covariances = gmm.covariances_[n][:2, :2]
-        v, w = np.linalg.eigh(covariances)
-        v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-        u = w[0] / np.linalg.norm(w[0])
-        angle = np.arctan(u[1] / u[0])
-        angle = 180.0 * angle / np.pi
-        ell = plt.matplotlib.patches.Ellipse(
-            gmm.means_[n, :2], v[0], v[1], angle=angle, color=color, alpha=0.3
-        )
-        ell.set_clip_box(ax.bbox)
-        ax.add_artist(ell)
-
-
-def plot_classification_results_with_clusters(
-    X_test, y_test, y_pred, df, X_test_indices
-):
-
-    # Ensure the indices are aligned correctly
-    try:
-        df_aligned = df.loc[X_test_indices]
-    except KeyError as e:
-        missing_indices = list(set(X_test_indices) - set(df.index))
-        print(
-            f"Warning: The following indices are missing and will be skipped: {missing_indices}"
-        )
-        df_aligned = df.loc[df.index.intersection(X_test_indices)]
-        X_test = X_test[np.isin(X_test_indices, df.index)]
-        y_pred = y_pred[np.isin(X_test_indices, df.index)]
-        X_test_indices = X_test_indices[np.isin(X_test_indices, df.index)]
-
-    n_components = min(len(X_test), 3)
-    gmm = GaussianMixture(n_components=n_components, random_state=42)
-    gmm.fit(X_test[:, :2])
+    y_pred = model.predict(X_test)
 
     plt.figure(figsize=(10, 6))
-    ax = plt.gca()
-    scatter = ax.scatter(
-        X_test[:, 0],
-        X_test[:, 1],
-        c=y_pred,
-        cmap="coolwarm",
-        alpha=0.6,
-        edgecolors="w",
-        label=y_pred,
+    sns.scatterplot(x=y_test, y=y_pred)
+    plt.xlabel("Actual Values")
+    plt.ylabel("Predicted Values")
+    plt.title("Actual vs Predicted Values")
+    plt.grid(True)
+
+    # Adding mean squared error and R2 score to the plot
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    plt.text(
+        0.05,
+        0.95,
+        f"MSE: {mse:.2f}",
+        transform=plt.gca().transAxes,
+        fontsize=12,
+        verticalalignment="top",
     )
-    plot_ellipses(gmm, ax)
-    plt.xlabel("CPU Utilization Ratio")
-    plt.ylabel("Memory Utilization Ratio")
-    plt.title("Random Forest Classification Results with Server Counts and Clusters")
-
-    handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
-    legend1 = ax.legend(handles, labels, loc="upper right", title="Prediction")
-    ax.add_artist(legend1)
-
-    handles, labels = scatter.legend_elements()
-    legend2 = ax.legend(
-        handles, ["Non-Bottleneck", "Bottleneck"], loc="upper left", title="Prediction"
+    plt.text(
+        0.05,
+        0.90,
+        f"R2 Score: {r2:.2f}",
+        transform=plt.gca().transAxes,
+        fontsize=12,
+        verticalalignment="top",
     )
-    ax.add_artist(legend2)
 
-    plt.show()
+    # Adding a legend
+    plt.legend(["Data points"], loc="best")
 
-
-def visualize_bottlenecks(df: pd.DataFrame, model: RandomForestClassifier):
-    """
-    Visualize the predicted bottlenecks.
-    """
-    feature_cols = [
-        "CPU Utilization Ratio",
-        "Memory Utilization Ratio",
-        "Network I/O Ratio",
-        "Storage I/O Ratio",
-        "System Load Per Core",
-    ]
-    df["Predicted Bottleneck"] = model.predict(df[feature_cols])
-    bottleneck_counts = df["Predicted Bottleneck"].value_counts()
-
-    plt.figure(figsize=(10, 6))
-    sns.barplot(
-        x=bottleneck_counts.index, y=bottleneck_counts.values, palette="viridis"
-    )
-    plt.title("Predicted Resource Bottlenecks", fontsize=16)
-    plt.xlabel("Bottleneck", fontsize=14)
-    plt.ylabel("Count", fontsize=14)
-
-    for index, value in enumerate(bottleneck_counts.values):
-        plt.text(index, value + 10, str(value), ha="center", fontsize=12)
-
-    plt.xticks([0, 1], ["No Bottleneck", "Bottleneck"], fontsize=12)
-
+    # Explanation for non-technical people
     explanation_text = (
-        "Bottleneck (1): A predicted resource constraint\n"
-        "that could impact system performance. If a bottleneck occurs,\n"
-        "users may experience slower response times or interruptions.\n"
-        "No Bottleneck (0): System is operating normally without\n"
-        "resource constraints, ensuring smooth and efficient performance."
+        "MSE (Mean Squared Error) is a measure of how well the model's predictions match the actual values. "
+        "A lower MSE indicates better accuracy.\n"
+        "R2 Score (R-squared) indicates the proportion of variance in the dependent variable that is predictable from the independent variables. "
+        "A higher R2 Score indicates a better fit."
     )
     plt.gcf().text(
-        0.75,
-        0.9,
+        0.05,
+        0.85,
         explanation_text,
-        fontsize=12,
+        fontsize=10,
         bbox=dict(facecolor="white", alpha=0.8),
         ha="left",
     )
+
+    plt.show()
+
+    logging.info(f"Mean Squared Error: {mse}")
+    logging.info(f"R2 Score: {r2}")
+
+
+def plot_residuals(y_test, y_pred):
+    """
+    Plot the residuals of the model.
+    """
+    residuals = y_test - y_pred
+    plt.figure(figsize=(10, 6))
+    sns.histplot(residuals, kde=True)
+    plt.xlabel("Residuals")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of Residuals")
+    plt.grid(True)
     plt.show()
 
 
-def plot_feature_importance(model: RandomForestClassifier, feature_cols: list):
-    if hasattr(model, "feature_importances_"):
-        feature_importance = pd.Series(model.feature_importances_, index=feature_cols)
-        feature_importance = feature_importance.sort_values(ascending=False)
+def plot_feature_importances(model, feature_names, top_n=10):
+    """
+    Plot the feature importances of the model, focusing on the top N features.
+    """
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]
 
-        plt.figure(figsize=(10, 6))
-        sns.barplot(x=feature_importance, y=feature_importance.index)
-        plt.title("Feature Importance in Bottleneck Prediction")
-        plt.xlabel("Importance")
-        plt.ylabel("Feature")
-        plt.show()
-
-        # Select the top features
-        selected_features = feature_importance[feature_importance > 0.01].index.tolist()
-        logging.info(f"Selected features: {selected_features}")
-        return selected_features
-    else:
-        logging.error("Model does not have feature_importances_ attribute.")
-        return feature_cols
-
-
-def evaluate_model(model, X_test, y_test):
-    y_prob = model.predict_proba(X_test)[:, 1]
-    thresholds = np.arange(0.0, 1.0, 0.01)
-    precisions = []
-    recalls = []
-
-    for threshold in thresholds:
-        y_pred = (y_prob >= threshold).astype(int)
-        precision = precision_score(y_test, y_pred)
-        recall = recall_score(y_test, y_pred)
-        precisions.append(precision)
-        recalls.append(recall)
+    # Select top N features
+    top_indices = indices[:top_n]
+    top_importances = importances[top_indices]
+    top_feature_names = np.array(feature_names)[top_indices]
 
     plt.figure(figsize=(10, 6))
-    plt.plot(thresholds, precisions, label="Precision")
-    plt.plot(thresholds, recalls, label="Recall")
-    plt.xlabel("Threshold")
-    plt.ylabel("Score")
-    plt.title("Precision-Recall vs Threshold")
-    plt.legend()
+    sns.barplot(x=top_importances, y=top_feature_names, palette="viridis")
+    plt.title("Top Feature Importances")
+    plt.xlabel("Importance")
+    plt.ylabel("Feature")
+    plt.tight_layout()
     plt.show()
 
-    best_threshold = thresholds[np.argmax(np.array(precisions) + np.array(recalls))]
-    logging.info(f"Best threshold: {best_threshold}")
-    return best_threshold
+    logging.info(f"Top {top_n} feature importances plotted.")
+
+
+def validate_model(model, X_train, y_train):
+    """
+    Validate the model using KFold cross-validation.
+    """
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, X_train, y_train, cv=kf, scoring="r2")
+
+    logging.info(f"Cross-validation R2 scores: {cv_results}")
+    logging.info(f"Mean R2 score: {cv_results.mean()}")
+    return cv_results
 
 
 def main():
+
     filepath = os.path.join("data", "real_faang.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
+
+    # Display first few rows of the preprocessed data for verification
+    # logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
+
+    # Initial combined metrics plot
+    plot_all_metrics_single_chart(df)
+
+    # Perform EDA
+    perform_eda(df)
+
+    # Feature engineering
     df = feature_engineering(df)
-    model, feature_cols, X_test, y_test, y_pred, X_test_indices = (
-        train_bottleneck_model(df)
+
+    visualize_insights(df)
+
+    # Data Splitting
+    target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
+    X_train, X_test, y_train, y_test = split_data(df, target_column)
+
+    # Handling Imbalanced Data
+    X_train_balanced, y_train_balanced = handle_imbalanced_data_regression(
+        X_train, y_train
     )
 
-    if model is None:
-        logging.error(
-            "Model training skipped due to lack of class diversity in the target variable."
-        )
-        return
+    # Train baseline model
+    baseline_model = train_baseline_model(X_train_balanced, y_train_balanced)
 
-    selected_features = plot_feature_importance(model, feature_cols)
+    # Hyperparameter tuning
+    best_model = hyperparameter_tuning(X_train_balanced, y_train_balanced)
 
-    # Debug: Check if selected_features are in the original dataframe
-    logging.info(f"Columns in df: {df.columns.tolist()}")
-    logging.info(f"Selected features: {selected_features}")
+    # Validate model
+    validate_model(best_model, X_train_balanced, y_train_balanced)
 
-    if not all(feature in df.columns for feature in selected_features):
-        logging.error(
-            "Some selected features are not present in the original dataframe."
-        )
-        return
+    # Plot model performance
+    plot_model_performance(best_model, X_test, y_test)
 
-    # Extract selected features from the original dataframe for X_test
-    X_test_selected = X_test[
-        :, [feature_cols.index(feat) for feat in selected_features]
-    ]
-    best_threshold = evaluate_model(model, X_test_selected, y_test)
+    # Plot residuals
+    plot_residuals(y_test, best_model.predict(X_test))
 
-    y_prob = model.predict_proba(X_test_selected)[:, 1]
-    y_pred = (y_prob >= best_threshold).astype(int)
-
-    plot_classification_results_with_clusters(
-        X_test_selected, y_test, y_pred, df, X_test_indices
-    )
-    visualize_bottlenecks(df, model)
-    plot_feature_importance(model, selected_features)
-
-    # Plot additional performance charts
-    # plot_precision_recall_curve(y_test, y_prob)
-    # plot_confusion_matrix(y_test, y_pred)
-
+    # Plot feature importances
+    feature_names = X_train.columns
+    plot_feature_importances(best_model, feature_names, top_n=10)
 
 if __name__ == "__main__":
     main()
