@@ -29,6 +29,18 @@ additional_metrics = [
     "Cluster Memory Utilization (%)",
 ]
 
+# Example weights (adjust based on importance)
+weights = {
+    "CPU Utilization (%)": 0.2,
+    "Memory Utilization (%)": 0.2,
+    "Disk I/O Throughput (MB/s)": 0.15,
+    "Network I/O Throughput (Mbps)": 0.15,
+    "System Load Average": 0.1,
+    "Pod CPU Utilization (%)": 0.1,
+    "Pod Memory Utilization (%)": 0.05,
+    "Cluster CPU Utilization (%)": 0.05,
+    "Cluster Memory Utilization (%)": 0.05,
+}
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -140,12 +152,24 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     Perform feature engineering on the dataframe.
     """
     # Create new features
+    df["Resource_Utilization_Efficiency"] = (
+        df["CPU Utilization (%)"] * weights["CPU Utilization (%)"]
+        + df["Memory Utilization (%)"] * weights["Memory Utilization (%)"]
+        + df["Disk I/O Throughput (MB/s)"] * weights["Disk I/O Throughput (MB/s)"]
+        + df["Network I/O Throughput (Mbps)"] * weights["Network I/O Throughput (Mbps)"]
+        + df["System Load Average"] * weights["System Load Average"]
+        + df["Pod CPU Utilization (%)"] * weights["Pod CPU Utilization (%)"]
+        + df["Pod Memory Utilization (%)"] * weights["Pod Memory Utilization (%)"]
+        + df["Cluster CPU Utilization (%)"] * weights["Cluster CPU Utilization (%)"]
+        + df["Cluster Memory Utilization (%)"]
+        * weights["Cluster Memory Utilization (%)"]
+    ) / sum(
+        weights.values()
+    )  # Normalize by sum of weights
+
     df["CPU_Memory_Ratio"] = df["CPU Utilization (%)"] / (
         df["Memory Utilization (%)"] + 1e-5
     )
-    df["Resource_Utilization_Efficiency"] = (
-        df["CPU Utilization (%)"] + df["Memory Utilization (%)"]
-    ) / 2
 
     # Additional metrics
     df["System_Load_Average_Ratio"] = df["System Load Average"] / (
