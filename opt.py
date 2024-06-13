@@ -122,19 +122,44 @@ def generate_summary_statistics(df: pd.DataFrame):
     logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
 
 
+def perform_eda(df: pd.DataFrame):
+    """
+    Perform exploratory data analysis on the dataframe.
+    """
+    # Plot combined metrics
+    plot_combined_metrics(df)
+    # Plot box plots
+    plot_boxplots(df)
+    # Generate summary statistics
+    generate_summary_statistics(df)
+
+
+def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Perform feature engineering on the dataframe.
+    """
+    # Example: Create interaction term between CPU and Memory Utilization
+    df["CPU_Memory_Interaction"] = (
+        df["CPU Utilization (%)"] * df["Memory Utilization (%)"]
+    )
+    logging.info("Feature engineering completed.")
+    return df
+
+
 def main():
 
     filepath = os.path.join("data", "real_faang.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
 
-    # Plot all metrics in a single chart
+    # Initial combined metrics plot
     plot_all_metrics_single_chart(df)
 
-    # Exploratory Data Analysis (EDA)
-    plot_combined_metrics(df)
-    plot_boxplots(df)
-    generate_summary_statistics(df)
+    # Perform EDA
+    perform_eda(df)
+
+    # Feature engineering
+    df = feature_engineering(df)
 
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
