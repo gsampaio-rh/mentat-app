@@ -15,6 +15,8 @@ from sklearn.preprocessing import StandardScaler, PowerTransformer, OneHotEncode
 from sklearn.impute import SimpleImputer
 import logging
 from sklearn.utils import resample
+from sklearn.inspection import PartialDependenceDisplay
+from sklearn.cluster import KMeans
 
 # Logging setup
 logging.basicConfig(
@@ -478,6 +480,172 @@ def validate_model(model, X_train, y_train):
     return cv_results
 
 
+def plot_partial_dependence(model, X_train, features):
+    """
+    Plot partial dependence plots for the top features.
+    """
+    fig, ax = plt.subplots(figsize=(12, 8))
+    display = PartialDependenceDisplay.from_estimator(
+        model, X_train, features, ax=ax, grid_resolution=50
+    )
+    plt.suptitle("Partial Dependence Plots")
+    plt.show()
+
+
+def analyze_predictions(model, X_test, y_test):
+    """
+    Analyze the model's predictions to identify key factors influencing VM performance and resource allocation.
+    Generate actionable recommendations to optimize resource usage and improve VM performance.
+    """
+    y_pred = model.predict(X_test)
+    residuals = y_test - y_pred
+
+    # Identify key factors (features) influencing VM performance
+    feature_importances = model.feature_importances_
+    important_features = X_test.columns[np.argsort(feature_importances)[::-1][:5]]
+
+    # Generate actionable recommendations
+    recommendations = []
+    if "CPU Utilization (%)" in important_features:
+        recommendations.append(
+            "Consider optimizing CPU usage or upgrading CPUs for better performance."
+        )
+    if "Memory Utilization (%)" in important_features:
+        recommendations.append(
+            "Evaluate memory usage and consider adding more RAM if necessary."
+        )
+    if "Disk I/O Throughput (MB/s)" in important_features:
+        recommendations.append(
+            "Optimize disk I/O operations or upgrade storage hardware."
+        )
+    if "Network I/O Throughput (Mbps)" in important_features:
+        recommendations.append("Enhance network bandwidth or optimize network usage.")
+    if "System Load Average" in important_features:
+        recommendations.append(
+            "Monitor system load and distribute workloads more evenly."
+        )
+
+    logging.info("Key factors influencing VM performance: %s", important_features)
+    logging.info("Recommendations: %s", recommendations)
+
+    return important_features, recommendations
+
+
+def visualize_recommendations(important_features, recommendations):
+    """
+    Visualize key factors and actionable recommendations.
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.barplot(
+        x=important_features, y=[1] * len(important_features), palette="viridis", ax=ax
+    )
+    ax.set_title("Key Factors Influencing VM Performance")
+    ax.set_xlabel("Important Features")
+    ax.set_ylabel("")
+
+    for i, rec in enumerate(recommendations):
+        plt.text(i, 1.1, rec, ha="center", va="bottom", fontsize=10)
+
+    plt.show()
+
+
+def analyze_resource_utilization(df: pd.DataFrame):
+    """
+    Analyze resource utilization to identify potential bottlenecks.
+    """
+    resource_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+
+    # Identify potential bottlenecks by checking high utilization
+    high_cpu = df["CPU Utilization (%)"] > 90
+    high_memory = df["Memory Utilization (%)"] > 90
+    high_disk_io = df["Disk I/O Throughput (MB/s)"] > 90
+    high_network_io = df["Network I/O Throughput (Mbps)"] > 90
+
+    bottlenecks = high_cpu | high_memory | high_disk_io | high_network_io
+
+    logging.info(f"Number of potential bottlenecks: {bottlenecks.sum()}")
+    logging.info(f"High CPU Utilization: {high_cpu.sum()}")
+    logging.info(f"High Memory Utilization: {high_memory.sum()}")
+    logging.info(f"High Disk I/O Throughput: {high_disk_io.sum()}")
+    logging.info(f"High Network I/O Throughput: {high_network_io.sum()}")
+
+    return df[bottlenecks], resource_columns
+
+
+def visualize_resource_utilization(df: pd.DataFrame, resource_columns: list):
+    """
+    Visualize resource utilization to identify bottlenecks.
+    """
+    plt.figure(figsize=(12, 8))
+
+    for column in resource_columns:
+        sns.histplot(df[column], kde=True, label=column)
+
+    plt.title("Resource Utilization Analysis")
+    plt.xlabel("Utilization")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+def perform_clustering_analysis(df: pd.DataFrame, n_clusters: int = 3):
+    """
+    Perform clustering analysis on the dataset to group VMs based on resource usage patterns.
+    """
+    resource_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    df["Cluster"] = kmeans.fit_predict(df[resource_columns])
+
+    logging.info(f"Cluster centers: {kmeans.cluster_centers_}")
+
+    return df, kmeans.cluster_centers_
+
+
+def visualize_clustering_results(df: pd.DataFrame, cluster_centers):
+    """
+    Visualize the clustering results.
+    """
+    plt.figure(figsize=(12, 8))
+
+    sns.scatterplot(
+        x="CPU Utilization (%)",
+        y="Memory Utilization (%)",
+        hue="Cluster",
+        data=df,
+        palette="viridis",
+        alpha=0.6,
+        edgecolor="w",
+    )
+
+    plt.scatter(
+        cluster_centers[:, 0],
+        cluster_centers[:, 1],
+        s=300,
+        c="red",
+        label="Cluster Centers",
+        edgecolors="black",
+    )
+
+    plt.title("Clustering Analysis of VMs")
+    plt.xlabel("CPU Utilization (%)")
+    plt.ylabel("Memory Utilization (%)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
 def main():
 
     filepath = os.path.join("data", "real_faang.csv")
@@ -488,15 +656,15 @@ def main():
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
 
     # Initial combined metrics plot
-    plot_all_metrics_single_chart(df)
+    # plot_all_metrics_single_chart(df)
 
-    # Perform EDA
-    perform_eda(df)
+    # # Perform EDA
+    # perform_eda(df)
 
     # Feature engineering
     df = feature_engineering(df)
 
-    visualize_insights(df)
+    # visualize_insights(df)
 
     # Data Splitting
     target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
@@ -525,6 +693,25 @@ def main():
     # Plot feature importances
     feature_names = X_train.columns
     plot_feature_importances(best_model, feature_names, top_n=10)
+
+    # Insights and Recommendations
+    important_features, recommendations = analyze_predictions(
+        best_model, X_test, y_test
+    )
+
+    # Visualize recommendations
+    visualize_recommendations(important_features, recommendations)
+
+    # Partial Dependence Plots for the top features
+    plot_partial_dependence(best_model, X_train, important_features)
+
+    # Resource Utilization Analysis
+    bottleneck_df, resource_columns = analyze_resource_utilization(df)
+    visualize_resource_utilization(bottleneck_df, resource_columns)
+
+    # Clustering Analysis
+    clustered_df, cluster_centers = perform_clustering_analysis(df)
+    visualize_clustering_results(clustered_df, cluster_centers)
 
 if __name__ == "__main__":
     main()
