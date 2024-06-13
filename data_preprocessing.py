@@ -3,9 +3,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import logging
-import os
 
-# Logging setup
+# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -34,11 +33,17 @@ def clean_data(df):
     df = df.dropna()  # Simple approach: drop rows with missing values
     logger.info(f"Dataset shape after dropping missing values: {df.shape}")
 
-    # Handle outliers (example: using z-score)
-    from scipy import stats
-
+    # Handle outliers using IQR method
     numeric_cols = df.select_dtypes(include=[np.number]).columns
-    df = df[(np.abs(stats.zscore(df[numeric_cols])) < 3).all(axis=1)]
+    Q1 = df[numeric_cols].quantile(0.25)
+    Q3 = df[numeric_cols].quantile(0.75)
+    IQR = Q3 - Q1
+    df = df[
+        ~(
+            (df[numeric_cols] < (Q1 - 1.5 * IQR))
+            | (df[numeric_cols] > (Q3 + 1.5 * IQR))
+        ).any(axis=1)
+    ]
     logger.info(f"Dataset shape after removing outliers: {df.shape}")
 
     return df
