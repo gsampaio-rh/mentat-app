@@ -377,7 +377,7 @@ def hyperparameter_tuning(X_train, y_train):
 
 def plot_model_performance(model, X_test, y_test):
     """
-    Plot the model performance on the test set.
+    Plot the model performance on the test set with additional details.
     """
     y_pred = model.predict(X_test)
 
@@ -387,10 +387,87 @@ def plot_model_performance(model, X_test, y_test):
     plt.ylabel("Predicted Values")
     plt.title("Actual vs Predicted Values")
     plt.grid(True)
+
+    # Adding mean squared error and R2 score to the plot
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    plt.text(
+        0.05,
+        0.95,
+        f"MSE: {mse:.2f}",
+        transform=plt.gca().transAxes,
+        fontsize=12,
+        verticalalignment="top",
+    )
+    plt.text(
+        0.05,
+        0.90,
+        f"R2 Score: {r2:.2f}",
+        transform=plt.gca().transAxes,
+        fontsize=12,
+        verticalalignment="top",
+    )
+
+    # Adding a legend
+    plt.legend(["Data points"], loc="best")
+
+    # Explanation for non-technical people
+    explanation_text = (
+        "MSE (Mean Squared Error) is a measure of how well the model's predictions match the actual values. "
+        "A lower MSE indicates better accuracy.\n"
+        "R2 Score (R-squared) indicates the proportion of variance in the dependent variable that is predictable from the independent variables. "
+        "A higher R2 Score indicates a better fit."
+    )
+    plt.gcf().text(
+        0.05,
+        0.85,
+        explanation_text,
+        fontsize=10,
+        bbox=dict(facecolor="white", alpha=0.8),
+        ha="left",
+    )
+
     plt.show()
 
-    logging.info(f"Mean Squared Error: {mean_squared_error(y_test, y_pred)}")
-    logging.info(f"R2 Score: {r2_score(y_test, y_pred)}")
+    logging.info(f"Mean Squared Error: {mse}")
+    logging.info(f"R2 Score: {r2}")
+
+
+def plot_residuals(y_test, y_pred):
+    """
+    Plot the residuals of the model.
+    """
+    residuals = y_test - y_pred
+    plt.figure(figsize=(10, 6))
+    sns.histplot(residuals, kde=True)
+    plt.xlabel("Residuals")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of Residuals")
+    plt.grid(True)
+    plt.show()
+
+
+def plot_feature_importances(model, feature_names, top_n=10):
+    """
+    Plot the feature importances of the model, focusing on the top N features.
+    """
+    importances = model.feature_importances_
+    indices = np.argsort(importances)[::-1]
+
+    # Select top N features
+    top_indices = indices[:top_n]
+    top_importances = importances[top_indices]
+    top_feature_names = np.array(feature_names)[top_indices]
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=top_importances, y=top_feature_names, palette="viridis")
+    plt.title("Top Feature Importances")
+    plt.xlabel("Importance")
+    plt.ylabel("Feature")
+    plt.tight_layout()
+    plt.show()
+
+    logging.info(f"Top {top_n} feature importances plotted.")
 
 
 def validate_model(model, X_train, y_train):
@@ -445,6 +522,13 @@ def main():
 
     # Plot model performance
     plot_model_performance(best_model, X_test, y_test)
+
+    # Plot residuals
+    plot_residuals(y_test, best_model.predict(X_test))
+
+    # Plot feature importances
+    feature_names = X_train.columns
+    plot_feature_importances(best_model, feature_names, top_n=10)
 
 if __name__ == "__main__":
     main()
