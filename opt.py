@@ -1,13 +1,19 @@
 import pandas as pd
-from sklearn.preprocessing import PolynomialFeatures
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from sklearn.model_selection import (
+    train_test_split,
+    RandomizedSearchCV,
+    cross_val_score,
+    KFold,
+)
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler, PowerTransformer, OneHotEncoder
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import PowerTransformer
 import logging
-from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 
 # Logging setup
@@ -61,20 +67,32 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Preprocess the data by handling missing values and transforming skewed features.
     """
-    # Handle missing values
     numeric_df = df.select_dtypes(include=[np.number])
     imputer = SimpleImputer(strategy="median")
     numeric_df = pd.DataFrame(
         imputer.fit_transform(numeric_df), columns=numeric_df.columns
     )
 
+    # Encode categorical features
+    categorical_df = df.select_dtypes(include=[object])
+    encoder = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+    encoded_categorical_df = pd.DataFrame(
+        encoder.fit_transform(categorical_df),
+        columns=encoder.get_feature_names_out(categorical_df.columns),
+    )
+
+    # Combine numeric and encoded categorical data
+    df_processed = pd.concat([numeric_df, encoded_categorical_df], axis=1)
+
     # Normalize/standardize the data
     pt = PowerTransformer()
-    numeric_df[numeric_df.columns] = pt.fit_transform(numeric_df[numeric_df.columns])
-    df[numeric_df.columns] = numeric_df
-    df.reset_index(drop=True, inplace=True)
+    df_processed[df_processed.columns] = pt.fit_transform(
+        df_processed[df_processed.columns]
+    )
+    df_processed.reset_index(drop=True, inplace=True)
+
     logging.info("Data preprocessing completed.")
-    return df
+    return df_processed
 
 
 def split_data(df: pd.DataFrame, target_column: str):
@@ -202,9 +220,8 @@ def perform_eda(df: pd.DataFrame):
 
 def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Perform feature engineering on the dataframe.
+    Perform feature engineering to create new features.
     """
-    # Create new features
     df["Resource_Utilization_Efficiency"] = (
         df["CPU Utilization (%)"] * weights["CPU Utilization (%)"]
         + df["Memory Utilization (%)"] * weights["Memory Utilization (%)"]
@@ -234,41 +251,6 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df["Cluster_CPU_Memory_Ratio"] = df["Cluster CPU Utilization (%)"] / (
         df["Cluster Memory Utilization (%)"] + 1e-5
     )
-
-    # Polynomial Features
-    poly = PolynomialFeatures(degree=2, include_bias=False)
-    poly_features = poly.fit_transform(
-        df[
-            [
-                "CPU Utilization (%)",
-                "Memory Utilization (%)",
-                "Disk I/O Throughput (MB/s)",
-                "Network I/O Throughput (Mbps)",
-                "System Load Average",
-                "Pod CPU Utilization (%)",
-                "Pod Memory Utilization (%)",
-                "Cluster CPU Utilization (%)",
-                "Cluster Memory Utilization (%)",
-            ]
-        ]
-    )
-    poly_df = pd.DataFrame(
-        poly_features,
-        columns=poly.get_feature_names_out(
-            [
-                "CPU Utilization (%)",
-                "Memory Utilization (%)",
-                "Disk I/O Throughput (MB/s)",
-                "Network I/O Throughput (Mbps)",
-                "System Load Average",
-                "Pod CPU Utilization (%)",
-                "Pod Memory Utilization (%)",
-                "Cluster CPU Utilization (%)",
-                "Cluster Memory Utilization (%)",
-            ]
-        ),
-    )
-    df = pd.concat([df, poly_df], axis=1)
 
     logging.info("Feature engineering completed.")
     return df
