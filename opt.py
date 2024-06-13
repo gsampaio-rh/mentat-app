@@ -18,7 +18,7 @@ from sklearn.impute import SimpleImputer
 from imblearn.over_sampling import SMOTE
 import logging
 
-# Configure logging
+# Logging setup
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -37,26 +37,20 @@ def load_data(filepath: str) -> pd.DataFrame:
         raise e
 
 
-def preprocess_data(df):
-    # Select only numeric columns for imputation
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Preprocess the data by handling missing values and transforming skewed features.
+    """
     numeric_df = df.select_dtypes(include=[np.number])
-
-    # Handle missing values for numeric columns
     imputer = SimpleImputer(strategy="median")
     numeric_df = pd.DataFrame(
         imputer.fit_transform(numeric_df), columns=numeric_df.columns
     )
-
-    # Power transform to handle skewness
     pt = PowerTransformer()
     numeric_df[numeric_df.columns] = pt.fit_transform(numeric_df[numeric_df.columns])
-
-    # Replace the original numeric columns with the processed ones
     df[numeric_df.columns] = numeric_df
-
-    # Reset index to ensure alignment
     df.reset_index(drop=True, inplace=True)
-
+    logging.info("Data preprocessing completed.")
     return df
 
 
@@ -229,7 +223,7 @@ def plot_classification_results_with_clusters(
     X_test, y_test, y_pred, df, X_test_indices
 ):
     if "Number of Servers" not in df.columns:
-        print(
+        logging.warning(
             "Warning: 'Number of Servers' column not found. Adding placeholder values."
         )
         df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
@@ -238,7 +232,7 @@ def plot_classification_results_with_clusters(
             df["Number of Servers"].isnull().any()
             or (df["Number of Servers"] <= 0).any()
         ):
-            print(
+            logging.warning(
                 "Warning: 'Number of Servers' column has invalid values. Replacing with placeholder values."
             )
             df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
@@ -255,7 +249,7 @@ def plot_classification_results_with_clusters(
         X_test = X_test[np.isin(X_test_indices, df.index)]
         y_pred = y_pred[np.isin(X_test_indices, df.index)]
         X_test_indices = X_test_indices[np.isin(X_test_indices, df.index)]
-
+        
     n_components = min(len(X_test), 3)
     gmm = GaussianMixture(n_components=n_components, random_state=42)
     gmm.fit(X_test[:, :2])
@@ -287,8 +281,6 @@ def plot_classification_results_with_clusters(
         handles, ["Non-Bottleneck", "Bottleneck"], loc="upper left", title="Prediction"
     )
     ax.add_artist(legend2)
-
-    plt.show()
 
     plt.show()
 
