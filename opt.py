@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
@@ -138,10 +139,24 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     """
     Perform feature engineering on the dataframe.
     """
-    # Example: Create interaction term between CPU and Memory Utilization
-    df["CPU_Memory_Interaction"] = (
-        df["CPU Utilization (%)"] * df["Memory Utilization (%)"]
+    # Create new features
+    df["CPU_Memory_Ratio"] = df["CPU Utilization (%)"] / (
+        df["Memory Utilization (%)"] + 1e-5
     )
+
+    # Polynomial Features
+    poly = PolynomialFeatures(degree=2, include_bias=False)
+    poly_features = poly.fit_transform(
+        df[["CPU Utilization (%)", "Memory Utilization (%)"]]
+    )
+    poly_df = pd.DataFrame(
+        poly_features,
+        columns=poly.get_feature_names_out(
+            ["CPU Utilization (%)", "Memory Utilization (%)"]
+        ),
+    )
+    df = pd.concat([df, poly_df], axis=1)
+
     logging.info("Feature engineering completed.")
     return df
 
@@ -160,6 +175,8 @@ def main():
 
     # Feature engineering
     df = feature_engineering(df)
+    
+    print(df)
 
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
