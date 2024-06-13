@@ -75,7 +75,7 @@ def plot_combined_metrics(df: pd.DataFrame):
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
         plt.subplot(2, 2, i)
-        sns.histplot(df[metric], kde=True, label="KDE")
+        sns.histplot(df[metric], kde=True, label="KDE", color="blue")
         plt.title(f"Distribution of {label}")
         plt.xlabel(label)
         plt.ylabel("Frequency")
@@ -98,7 +98,7 @@ def plot_boxplots(df: pd.DataFrame):
     plt.figure(figsize=(12, 8))
     for i, (metric, label) in enumerate(key_metrics.items(), 1):
         plt.subplot(2, 2, i)
-        sns.boxplot(x=df[metric])
+        sns.boxplot(x=df[metric], color="blue")
         plt.title(f"Box plot of {label}")
         plt.xlabel(label)
     plt.tight_layout()
