@@ -143,16 +143,52 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
     df["CPU_Memory_Ratio"] = df["CPU Utilization (%)"] / (
         df["Memory Utilization (%)"] + 1e-5
     )
+    df["Resource_Utilization_Efficiency"] = (
+        df["CPU Utilization (%)"] + df["Memory Utilization (%)"]
+    ) / 2
+
+    # Additional metrics
+    df["System_Load_Average_Ratio"] = df["System Load Average"] / (
+        df["CPU Utilization (%)"] + 1e-5
+    )
+    df["Pod_CPU_Memory_Ratio"] = df["Pod CPU Utilization (%)"] / (
+        df["Pod Memory Utilization (%)"] + 1e-5
+    )
+    df["Cluster_CPU_Memory_Ratio"] = df["Cluster CPU Utilization (%)"] / (
+        df["Cluster Memory Utilization (%)"] + 1e-5
+    )
 
     # Polynomial Features
     poly = PolynomialFeatures(degree=2, include_bias=False)
     poly_features = poly.fit_transform(
-        df[["CPU Utilization (%)", "Memory Utilization (%)"]]
+        df[
+            [
+                "CPU Utilization (%)",
+                "Memory Utilization (%)",
+                "Disk I/O Throughput (MB/s)",
+                "Network I/O Throughput (Mbps)",
+                "System Load Average",
+                "Pod CPU Utilization (%)",
+                "Pod Memory Utilization (%)",
+                "Cluster CPU Utilization (%)",
+                "Cluster Memory Utilization (%)",
+            ]
+        ]
     )
     poly_df = pd.DataFrame(
         poly_features,
         columns=poly.get_feature_names_out(
-            ["CPU Utilization (%)", "Memory Utilization (%)"]
+            [
+                "CPU Utilization (%)",
+                "Memory Utilization (%)",
+                "Disk I/O Throughput (MB/s)",
+                "Network I/O Throughput (Mbps)",
+                "System Load Average",
+                "Pod CPU Utilization (%)",
+                "Pod Memory Utilization (%)",
+                "Cluster CPU Utilization (%)",
+                "Cluster Memory Utilization (%)",
+            ]
         ),
     )
     df = pd.concat([df, poly_df], axis=1)
