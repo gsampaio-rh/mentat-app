@@ -2,46 +2,64 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+)
 from sklearn.preprocessing import StandardScaler, PowerTransformer
 from sklearn.mixture import GaussianMixture
 from sklearn.impute import SimpleImputer
+from imblearn.over_sampling import SMOTE
+
 
 def load_data(filepath):
     df = pd.read_csv(filepath)
     return df
 
+
 def preprocess_data(df):
     # Select only numeric columns for imputation
     numeric_df = df.select_dtypes(include=[np.number])
-    
+
     # Handle missing values for numeric columns
-    imputer = SimpleImputer(strategy='median')
-    numeric_df = pd.DataFrame(imputer.fit_transform(numeric_df), columns=numeric_df.columns)
-    
+    imputer = SimpleImputer(strategy="median")
+    numeric_df = pd.DataFrame(
+        imputer.fit_transform(numeric_df), columns=numeric_df.columns
+    )
+
     # Power transform to handle skewness
     pt = PowerTransformer()
     numeric_df[numeric_df.columns] = pt.fit_transform(numeric_df[numeric_df.columns])
-    
+
     # Replace the original numeric columns with the processed ones
     df[numeric_df.columns] = numeric_df
-    
+
     return df
+
 
 def feature_engineering(df):
     # Create CPU utilization ratio
     df["CPU Utilization Ratio"] = df["CPU Usage (seconds)"] / df["CPU Utilization (%)"]
 
     # Create memory utilization ratio
-    df["Memory Utilization Ratio"] = df["Memory Usage (bytes)"] / df["Memory Utilization (%)"]
+    df["Memory Utilization Ratio"] = (
+        df["Memory Usage (bytes)"] / df["Memory Utilization (%)"]
+    )
 
     # Create network I/O ratio
-    df["Network I/O Ratio"] = (df["Network Receive (bytes)"] + df["Network Transmit (bytes)"]) / df["Network I/O Throughput (Mbps)"]
+    df["Network I/O Ratio"] = (
+        df["Network Receive (bytes)"] + df["Network Transmit (bytes)"]
+    ) / df["Network I/O Throughput (Mbps)"]
 
     # Create storage I/O ratio
-    df["Storage I/O Ratio"] = (df["Storage Read (bytes)"] + df["Storage Write (bytes)"]) / df["Disk I/O Throughput (MB/s)"]
+    df["Storage I/O Ratio"] = (
+        df["Storage Read (bytes)"] + df["Storage Write (bytes)"]
+    ) / df["Disk I/O Throughput (MB/s)"]
 
     # Create system load per core (assuming 4 cores for this example)
     df["System Load Per Core"] = df["System Load Average"] / 4
@@ -53,6 +71,54 @@ def feature_engineering(df):
     df["Peak Storage Usage"] = (df["Disk I/O Throughput (MB/s)"] > 90).astype(int)
 
     return df
+
+
+def check_data_balance(df):
+    bottleneck_counts = df["Bottleneck"].value_counts()
+    print("Class distribution in the target variable 'Bottleneck':")
+    print(bottleneck_counts)
+    return len(bottleneck_counts) > 1
+
+
+def create_synthetic_bottlenecks(df):
+    # Manually create a few synthetic bottleneck instances
+    synthetic_bottlenecks = df.sample(10).copy()
+    synthetic_bottlenecks["Peak CPU Usage"] = 1
+    synthetic_bottlenecks["Peak Memory Usage"] = 1
+    synthetic_bottlenecks["Peak Network Usage"] = 1
+    synthetic_bottlenecks["Peak Storage Usage"] = 1
+    synthetic_bottlenecks["Bottleneck"] = 1
+
+    return pd.concat([df, synthetic_bottlenecks], ignore_index=True)
+
+
+def balance_dataset(X, y):
+    smote = SMOTE(random_state=42, k_neighbors=3)
+    X_resampled, y_resampled = smote.fit_resample(X, y)
+    return X_resampled, y_resampled
+
+
+def tune_model(X_train, y_train):
+    param_dist = {
+        "n_estimators": [100, 200, 300, 400, 500],
+        "max_features": ["sqrt", "log2"],
+        "max_depth": [10, 20, 30, 40, None],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "bootstrap": [True, False],
+    }
+    rf = RandomForestClassifier(random_state=42)
+    random_search = RandomizedSearchCV(
+        estimator=rf,
+        param_distributions=param_dist,
+        n_iter=100,
+        cv=3,
+        verbose=2,
+        random_state=42,
+        n_jobs=-1,
+    )
+    random_search.fit(X_train, y_train)
+    return random_search.best_estimator_
 
 
 def train_bottleneck_model(df):
@@ -77,37 +143,31 @@ def train_bottleneck_model(df):
     X = df[feature_cols]
     y = df["Bottleneck"]
 
+    # Check data balance
+    if not check_data_balance(df):
+        print(
+            "Only one class present in the target variable. Creating synthetic bottlenecks."
+        )
+        df = create_synthetic_bottlenecks(df)
+        X = df[feature_cols]
+        y = df["Bottleneck"]
+
     # Split the data into training and testing sets, keep the indices
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
     X_test_indices = X_test.index
 
+    # Balance the dataset if necessary
+    X_train, y_train = balance_dataset(X_train, y_train)
+
     # Standardize features
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # Train a Random Forest model with GridSearchCV for hyperparameter tuning
-    param_grid = {
-        "n_estimators": [100, 200],
-        "max_features": ["sqrt", "log2", None],
-        "max_depth": [10, 20, None],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
-        "bootstrap": [True, False],
-    }
-    rf = RandomForestClassifier(random_state=42)
-    grid_search = GridSearchCV(
-        estimator=rf,
-        param_grid=param_grid,
-        cv=3,
-        n_jobs=-1,
-        verbose=2,
-        error_score="raise",
-    )
-    grid_search.fit(X_train, y_train)
-    best_rf = grid_search.best_estimator_
+    # Train a Random Forest model with RandomizedSearchCV for hyperparameter tuning
+    best_rf = tune_model(X_train, y_train)
 
     # Predict bottlenecks on the test set
     y_pred = best_rf.predict(X_test)
@@ -125,7 +185,7 @@ def train_bottleneck_model(df):
         f1 = f1_score(y_test, y_pred, zero_division=0)
 
     accuracy = accuracy_score(y_test, y_pred)
-    
+
     print(f"Accuracy: {accuracy}")
     print(f"Precision: {precision}")
     print(f"Recall: {recall}")
@@ -204,7 +264,6 @@ def plot_classification_results_with_clusters(
 
     plt.show()
 
-
 def visualize_bottlenecks(df, model):
     feature_cols = ["CPU Utilization Ratio", "Memory Utilization Ratio", "Network I/O Ratio", "Storage I/O Ratio", "System Load Per Core"]
     df["Predicted Bottleneck"] = model.predict(df[feature_cols])
@@ -244,15 +303,18 @@ def visualize_bottlenecks(df, model):
     plt.show()
 
 def plot_feature_importance(model, feature_cols):
-    feature_importance = pd.Series(model.feature_importances_, index=feature_cols)
-    feature_importance = feature_importance.sort_values(ascending=False)
+    if hasattr(model, 'feature_importances_'):
+        feature_importance = pd.Series(model.feature_importances_, index=feature_cols)
+        feature_importance = feature_importance.sort_values(ascending=False)
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x=feature_importance, y=feature_importance.index)
-    plt.title("Feature Importance in Bottleneck Prediction")
-    plt.xlabel("Importance")
-    plt.ylabel("Feature")
-    plt.show()
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=feature_importance, y=feature_importance.index)
+        plt.title("Feature Importance in Bottleneck Prediction")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
+        plt.show()
+    else:
+        print("Model does not have feature_importances_ attribute.")
 
 def main():
     # Load the dataset
@@ -269,6 +331,10 @@ def main():
         train_bottleneck_model(df)
     )
 
+    if model is None:
+        print("Model training skipped due to lack of class diversity in the target variable.")
+        return
+
     # Visualize the results
     plot_classification_results_with_clusters(
         X_test, y_test, y_pred, df, X_test_indices
@@ -278,3 +344,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
