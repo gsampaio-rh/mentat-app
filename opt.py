@@ -783,10 +783,10 @@ def main():
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
 
     # Initial combined metrics plot
-    # plot_all_metrics_single_chart(df)
+    plot_all_metrics_single_chart(df)
 
     # # Perform EDA
-    # perform_eda(df)
+    perform_eda(df)
 
     # Feature engineering
     df = feature_engineering(df)
@@ -834,11 +834,7 @@ def main():
 
     # Resource Utilization Analysis
     bottleneck_df, resource_columns = analyze_resource_utilization(df)
-    visualize_resource_utilization(bottleneck_df, resource_columns)
-
-    # Resource Utilization Analysis
-    bottleneck_df, resource_columns = analyze_resource_utilization(df)
-    visualize_resource_utilization(bottleneck_df, resource_columns)
+    # visualize_resource_utilization(bottleneck_df, resource_columns)
 
     # Clustering Analysis
     clustered_df, cluster_centers = perform_clustering_analysis(df)
