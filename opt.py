@@ -92,6 +92,23 @@ def plot_all_metrics_combined(df: pd.DataFrame):
     plt.show()
 
 
+def plot_all_metrics_single_chart(df: pd.DataFrame):
+    """
+    Plot all key metrics in a single chart with different colors.
+    """
+    plt.figure(figsize=(12, 8))
+
+    for metric, label in key_metrics.items():
+        plt.scatter(df.index, df[metric], label=label, s=10)
+
+    plt.title("All Key Metrics")
+    plt.xlabel("Index")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
 def plot_combined_metrics(df: pd.DataFrame):
     """
     Plot combined histograms and KDE plots for key metrics with explicit legends.
@@ -137,8 +154,11 @@ def main():
     df = load_data(filepath)
     df = preprocess_data(df)
 
+    # Plot all metrics in a single chart
+    plot_all_metrics_single_chart(df)
+    
     # Plot all metrics with highlighted averages
-    plot_all_metrics_combined(df)
+    # plot_all_metrics_combined(df)
 
     # Exploratory Data Analysis (EDA)
     plot_combined_metrics(df)
