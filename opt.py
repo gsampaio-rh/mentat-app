@@ -225,42 +225,73 @@ def visualize_insights(df: pd.DataFrame) -> None:
     """
     Visualize key insights from the dataframe.
     """
-    fig, axs = plt.subplots(3, figsize=(12, 8))
+    fig, axs = plt.subplots(4, figsize=(12, 8))
 
-    # Figure 1: Resource Utilization Efficiency Over Time
-    axs[0].plot(df.index, df["Resource_Utilization_Efficiency"])
-    axs[0].set_title("Resource Utilization Efficiency Over Time")
-    axs[0].set_xlabel("Time")
-    axs[0].set_ylabel("Efficiency")
+    required_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Pod_CPU_Memory_Ratio",
+        "Cluster_CPU_Memory_Ratio",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"DataFrame missing required columns: {missing_columns}")
 
-    # Figure 1: CPU and Memory Utilization Over Time
-    axs[1].plot(df.index, df["CPU Utilization (%)"], label="CPU Utilization")
-    axs[1].plot(df.index, df["Memory Utilization (%)"], label="Memory Utilization")
-    axs[1].set_title("CPU and Memory Utilization Over Time")
-    axs[1].set_xlabel("Time")
-    axs[1].set_ylabel("Utilization (%)")
-    axs[1].legend()
+    # Plotting
+    try:
+        # Figure 1: Resource Utilization Efficiency Over Time
+        axs[0].plot(df.index, df["Resource_Utilization_Efficiency"])
+        axs[0].set_title("Resource Utilization Efficiency Over Time")
+        axs[0].set_xlabel("Time")
+        axs[0].set_ylabel("Efficiency")
 
-    # Figure 3: Pod and Cluster CPU-Memory Ratios
-    axs[2].scatter(df["Pod_CPU_Memory_Ratio"], df["Cluster_CPU_Memory_Ratio"])
-    axs[2].set_title("Pod vs. Cluster CPU-Memory Ratios")
-    axs[2].set_xlabel("Pod CPU-Memory Ratio")
-    axs[2].set_ylabel("Cluster CPU-Memory Ratio")
+        # Figure 1: CPU and Memory Utilization Over Time
+        axs[1].plot(df.index, df["CPU Utilization (%)"], label="CPU Utilization")
+        axs[1].plot(df.index, df["Memory Utilization (%)"], label="Memory Utilization")
+        axs[1].set_title("CPU and Memory Utilization Over Time")
+        axs[1].set_xlabel("Time")
+        axs[1].set_ylabel("Utilization (%)")
+        axs[1].legend()
 
-    # Figure 4: Disk I/O and Network I/O Throughput
-    # axs[3].bar(
-    #     ["Disk I/O Throughput (MB/s)", "Network I/O Throughput (Mbps)"],
-    #     df[["Disk I/O Throughput (MB/s)", "Network I/O Throughput (Mbps)"]].mean(),
-    # )
-    # axs[3].set_title("Disk I/O and Network I/O Throughput")
-    # axs[3].set_xlabel("Throughput Type")
-    # axs[3].set_ylabel("Throughput")
+        # Figure 3: Pod and Cluster CPU-Memory Ratios
+        axs[2].scatter(df["Pod_CPU_Memory_Ratio"], df["Cluster_CPU_Memory_Ratio"])
+        axs[2].set_title("Pod vs. Cluster CPU-Memory Ratios")
+        axs[2].set_xlabel("Pod CPU-Memory Ratio")
+        axs[2].set_ylabel("Cluster CPU-Memory Ratio")
 
-    # Figure 5: System Load Average and CPU Utilization Ratio
-    # axs[4].scatter(df["CPU Utilization (%)"], df["System_Load_Average_Ratio"])
-    # axs[4].set_title("System Load Average vs. CPU Utilization Ratio")
-    # axs[4].set_xlabel("CPU Utilization (%)")
-    # axs[4].set_ylabel("System Load Average Ratio")
+        # Figure 4: Disk I/O and Network I/O Throughput
+        bar_width = 0.35
+        disk_io_mean = df["Disk I/O Throughput (MB/s)"].mean()
+        network_io_mean = df["Network I/O Throughput (Mbps)"].mean()
+        axs[3].bar(
+            ["Disk I/O Throughput"],
+            disk_io_mean,
+            bar_width,
+            label="Disk I/O Throughput",
+        )
+        axs[3].bar(
+            ["Network I/O Throughput"],
+            network_io_mean,
+            bar_width,
+            label="Network I/O Throughput",
+        )
+        axs[3].set_title("Disk I/O and Network I/O Throughput")
+        axs[3].set_xlabel("Throughput Type")
+        axs[3].set_ylabel("Average Throughput")
+        axs[3].legend()
+
+        # Figure 5: System Load Average and CPU Utilization Ratio
+        # axs[4].scatter(df["CPU Utilization (%)"], df["System_Load_Average_Ratio"])
+        # axs[4].set_title("System Load Average vs. CPU Utilization Ratio")
+        # axs[4].set_xlabel("CPU Utilization (%)")
+        # axs[4].set_ylabel("System Load Average Ratio")
+
+    except KeyError as e:
+        print(f"Key error: {e} - Check if the DataFrame contains the required columns.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
     plt.tight_layout()
     plt.show()
