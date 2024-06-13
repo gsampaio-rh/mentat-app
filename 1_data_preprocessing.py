@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import logging
+import matplotlib.pyplot as plt
 
 # Configure logging
 logging.basicConfig(
@@ -76,6 +77,23 @@ def split_data(df, target_column, test_size=0.2, random_state=42):
         f"Training set shape: {X_train.shape}, Testing set shape: {X_test.shape}"
     )
     return X_train, X_test, y_train, y_test
+
+
+# def plot_all_metrics_single_chart(df: pd.DataFrame):
+#     """
+#     Plot all key metrics in a single chart with different colors.
+#     """
+#     plt.figure(figsize=(12, 8))
+
+#     for metric, label in key_metrics.items():
+#         plt.scatter(df.index, df[metric], label=label, s=10)
+
+#     plt.title("All Key Metrics")
+#     plt.xlabel("Index")
+#     plt.ylabel("Value")
+#     plt.legend()
+#     plt.grid(True)
+#     plt.show()
 
 
 def main():
