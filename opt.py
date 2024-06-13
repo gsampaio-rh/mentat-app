@@ -3,7 +3,11 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.model_selection import (
+    train_test_split,
+    RandomizedSearchCV,
+    cross_val_score,
+)
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
@@ -130,7 +134,7 @@ def tune_model(X_train: pd.DataFrame, y_train: pd.Series) -> RandomForestClassif
         estimator=rf,
         param_distributions=param_dist,
         n_iter=100,
-        cv=3,
+        cv=5,
         verbose=2,
         random_state=42,
         n_jobs=-1,
@@ -179,6 +183,12 @@ def train_bottleneck_model(df: pd.DataFrame) -> tuple:
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
     best_rf = tune_model(X_train, y_train)
+
+    # Cross-validation
+    cv_scores = cross_val_score(best_rf, X_train, y_train, cv=5)
+    logging.info(f"Cross-validation scores: {cv_scores}")
+    logging.info(f"Mean CV score: {cv_scores.mean()}")
+
     y_pred = best_rf.predict(X_test)
 
     if len(np.unique(y_test)) == 1:
