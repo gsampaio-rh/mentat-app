@@ -317,16 +317,12 @@ def visualize_insights(df: pd.DataFrame) -> None:
         axs[3].set_ylabel("Average Throughput")
         axs[3].legend()
 
-        # Figure 5: System Load Average and CPU Utilization Ratio
-        # axs[4].scatter(df["CPU Utilization (%)"], df["System_Load_Average_Ratio"])
-        # axs[4].set_title("System Load Average vs. CPU Utilization Ratio")
-        # axs[4].set_xlabel("CPU Utilization (%)")
-        # axs[4].set_ylabel("System Load Average Ratio")
-
     except KeyError as e:
-        print(f"Key error: {e} - Check if the DataFrame contains the required columns.")
+        logging.error(
+            f"Key error: {e} - Check if the DataFrame contains the required columns."
+        )
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
 
     plt.tight_layout()
     plt.show()
@@ -352,7 +348,7 @@ def hyperparameter_tuning(X_train, y_train):
     # Define the parameter grid
     param_dist = {
         "n_estimators": [int(x) for x in np.linspace(start=100, stop=1000, num=10)],
-        "max_features": ["sqrt", "log2", None],  # Removed 'auto'
+        "max_features": ["sqrt", "log2", None],
         "max_depth": [int(x) for x in np.linspace(10, 110, num=11)],
         "min_samples_split": [2, 5, 10],
         "min_samples_leaf": [1, 2, 4],
@@ -489,7 +485,7 @@ def main():
     df = preprocess_data(df)
 
     # Display first few rows of the preprocessed data for verification
-    # logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
+    logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
 
     # Initial combined metrics plot
     plot_all_metrics_single_chart(df)
