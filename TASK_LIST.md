@@ -23,7 +23,7 @@ This project aims to optimize virtual machine (VM) performance and resource allo
 ## Task List for Achieving Predictive Model and Business Metrics
 
 ### 1. Data Preprocessing
-- [x] **Load and Rename Datasets:**
+- [ ] **Load and Rename Datasets:**
   - Ensure all datasets are loaded and columns are renamed as per the mappings.
 - [x] **Combine Datasets:**
   - Concatenate all the datasets to form a single combined dataframe.
