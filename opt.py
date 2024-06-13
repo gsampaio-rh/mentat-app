@@ -325,9 +325,6 @@ def visualize_bottlenecks(df: pd.DataFrame, model: RandomForestClassifier):
 
 
 def plot_feature_importance(model: RandomForestClassifier, feature_cols: list):
-    """
-    Plot the feature importance of the model.
-    """
     if hasattr(model, "feature_importances_"):
         feature_importance = pd.Series(model.feature_importances_, index=feature_cols)
         feature_importance = feature_importance.sort_values(ascending=False)
@@ -338,8 +335,41 @@ def plot_feature_importance(model: RandomForestClassifier, feature_cols: list):
         plt.xlabel("Importance")
         plt.ylabel("Feature")
         plt.show()
+
+        # Select the top features
+        selected_features = feature_importance[feature_importance > 0.01].index.tolist()
+        logging.info(f"Selected features: {selected_features}")
+        return selected_features
     else:
         logging.error("Model does not have feature_importances_ attribute.")
+        return feature_cols
+
+
+def evaluate_model(model, X_test, y_test):
+    y_prob = model.predict_proba(X_test)[:, 1]
+    thresholds = np.arange(0.0, 1.0, 0.01)
+    precisions = []
+    recalls = []
+
+    for threshold in thresholds:
+        y_pred = (y_prob >= threshold).astype(int)
+        precision = precision_score(y_test, y_pred)
+        recall = recall_score(y_test, y_pred)
+        precisions.append(precision)
+        recalls.append(recall)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(thresholds, precisions, label="Precision")
+    plt.plot(thresholds, recalls, label="Recall")
+    plt.xlabel("Threshold")
+    plt.ylabel("Score")
+    plt.title("Precision-Recall vs Threshold")
+    plt.legend()
+    plt.show()
+
+    best_threshold = thresholds[np.argmax(np.array(precisions) + np.array(recalls))]
+    logging.info(f"Best threshold: {best_threshold}")
+    return best_threshold
 
 
 def main():
@@ -357,11 +387,36 @@ def main():
         )
         return
 
+    selected_features = plot_feature_importance(model, feature_cols)
+
+    # Debug: Check if selected_features are in the original dataframe
+    logging.info(f"Columns in df: {df.columns.tolist()}")
+    logging.info(f"Selected features: {selected_features}")
+
+    if not all(feature in df.columns for feature in selected_features):
+        logging.error(
+            "Some selected features are not present in the original dataframe."
+        )
+        return
+
+    # Extract selected features from the original dataframe for X_test
+    X_test_selected = X_test[
+        :, [feature_cols.index(feat) for feat in selected_features]
+    ]
+    best_threshold = evaluate_model(model, X_test_selected, y_test)
+
+    y_prob = model.predict_proba(X_test_selected)[:, 1]
+    y_pred = (y_prob >= best_threshold).astype(int)
+
     plot_classification_results_with_clusters(
-        X_test, y_test, y_pred, df, X_test_indices
+        X_test_selected, y_test, y_pred, df, X_test_indices
     )
     visualize_bottlenecks(df, model)
-    plot_feature_importance(model, feature_cols)
+    plot_feature_importance(model, selected_features)
+
+    # Plot additional performance charts
+    # plot_precision_recall_curve(y_test, y_prob)
+    # plot_confusion_matrix(y_test, y_pred)
 
 
 if __name__ == "__main__":
