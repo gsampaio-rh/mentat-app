@@ -61,10 +61,67 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def plot_histograms(df: pd.DataFrame):
+    """
+    Plot histograms and KDE plots for key metrics.
+    """
+    key_metrics = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+    for metric in key_metrics:
+        plt.figure(figsize=(10, 6))
+        sns.histplot(df[metric], kde=True)
+        plt.title(f"Distribution of {metric}")
+        plt.xlabel(metric)
+        plt.ylabel("Frequency")
+        plt.show()
+
+
+def plot_boxplots(df: pd.DataFrame):
+    """
+    Plot box plots for key metrics to identify outliers.
+    """
+    key_metrics = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+    for metric in key_metrics:
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(x=df[metric])
+        plt.title(f"Box plot of {metric}")
+        plt.xlabel(metric)
+        plt.show()
+
+
+def generate_summary_statistics(df: pd.DataFrame):
+    """
+    Generate and log summary statistics for key metrics.
+    """
+    key_metrics = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+    summary_stats = df[key_metrics].describe()
+    logging.info(f"Summary statistics for key metrics:\n{summary_stats}")
+
+
 def main():
     filepath = os.path.join("data", "real_faang.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
+
+    # Exploratory Data Analysis (EDA)
+    plot_histograms(df)
+    plot_boxplots(df)
+    generate_summary_statistics(df)
+
     # Display first few rows of the preprocessed data for verification
     logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
 
