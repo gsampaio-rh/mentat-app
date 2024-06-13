@@ -232,20 +232,6 @@ def plot_ellipses(gmm, ax):
 def plot_classification_results_with_clusters(
     X_test, y_test, y_pred, df, X_test_indices
 ):
-    if "Number of Servers" not in df.columns:
-        logging.warning(
-            "Warning: 'Number of Servers' column not found. Adding placeholder values."
-        )
-        df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
-    else:
-        if (
-            df["Number of Servers"].isnull().any()
-            or (df["Number of Servers"] <= 0).any()
-        ):
-            logging.warning(
-                "Warning: 'Number of Servers' column has invalid values. Replacing with placeholder values."
-            )
-            df["Number of Servers"] = np.random.randint(1, 100, size=len(df))
 
     # Ensure the indices are aligned correctly
     try:
@@ -259,19 +245,17 @@ def plot_classification_results_with_clusters(
         X_test = X_test[np.isin(X_test_indices, df.index)]
         y_pred = y_pred[np.isin(X_test_indices, df.index)]
         X_test_indices = X_test_indices[np.isin(X_test_indices, df.index)]
-        
+
     n_components = min(len(X_test), 3)
     gmm = GaussianMixture(n_components=n_components, random_state=42)
     gmm.fit(X_test[:, :2])
 
     plt.figure(figsize=(10, 6))
     ax = plt.gca()
-    sizes = df_aligned["Number of Servers"] * 10
     scatter = ax.scatter(
         X_test[:, 0],
         X_test[:, 1],
         c=y_pred,
-        s=sizes,
         cmap="coolwarm",
         alpha=0.6,
         edgecolors="w",
@@ -283,7 +267,7 @@ def plot_classification_results_with_clusters(
     plt.title("Random Forest Classification Results with Server Counts and Clusters")
 
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
-    legend1 = ax.legend(handles, labels, loc="upper right", title="Number of Servers")
+    legend1 = ax.legend(handles, labels, loc="upper right", title="Prediction")
     ax.add_artist(legend1)
 
     handles, labels = scatter.legend_elements()
