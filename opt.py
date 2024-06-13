@@ -605,8 +605,11 @@ def perform_clustering_analysis(df: pd.DataFrame, n_clusters: int = 3):
         "Network I/O Throughput (Mbps)",
     ]
 
+    scaler = StandardScaler()
+    standardized_data = scaler.fit_transform(df[resource_columns])
+
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-    df["Cluster"] = kmeans.fit_predict(df[resource_columns])
+    df["Cluster"] = kmeans.fit_predict(standardized_data)
 
     logging.info(f"Cluster centers: {kmeans.cluster_centers_}")
 
@@ -645,6 +648,130 @@ def visualize_clustering_results(df: pd.DataFrame, cluster_centers):
     plt.grid(True)
     plt.show()
 
+
+def resource_utilization_analysis(df: pd.DataFrame):
+    """
+    Analyze and visualize resource utilization to identify bottlenecks.
+    """
+    resource_columns = [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Disk I/O Throughput (MB/s)",
+        "Network I/O Throughput (Mbps)",
+    ]
+
+    plt.figure(figsize=(12, 8))
+
+    for column in resource_columns:
+        sns.histplot(df[column], kde=True, label=column)
+
+    plt.title("Resource Utilization Analysis")
+    plt.xlabel("Utilization")
+    plt.ylabel("Frequency")
+    plt.legend()
+    plt.show()
+
+    logging.info("Resource Utilization Analysis completed.")
+
+
+def visualize_clusters_together(df: pd.DataFrame, cluster_centers):
+    """
+    Visualize overutilized, underutilized, and efficient VMs in one image.
+    """
+    plt.figure(figsize=(12, 8))
+
+    sns.scatterplot(
+        x="CPU Utilization (%)",
+        y="Memory Utilization (%)",
+        hue="Cluster",
+        data=df,
+        palette="viridis",
+        alpha=0.6,
+        edgecolor="w",
+    )
+
+    plt.scatter(
+        cluster_centers[:, 0],
+        cluster_centers[:, 1],
+        s=300,
+        c="red",
+        label="Cluster Centers",
+        edgecolors="black",
+    )
+
+    plt.title(
+        "Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs"
+    )
+    plt.xlabel("CPU Utilization (%)")
+    plt.ylabel("Memory Utilization (%)")
+    plt.legend(title="Cluster")
+    plt.grid(True)
+    plt.show()
+
+    logging.info(
+        "Cluster visualization with overutilized, underutilized, and efficient VMs completed."
+    )
+
+def visualize_cluster_distribution(df: pd.DataFrame):
+    """
+    Visualize the distribution of servers in each cluster.
+    """
+    cluster_counts = df["Cluster"].value_counts().sort_index()
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette="viridis")
+    plt.title("Number of Servers in Each Cluster")
+    plt.xlabel("Cluster")
+    plt.ylabel("Number of Servers")
+    plt.grid(True)
+    plt.show()
+
+    logging.info(f"Cluster counts: {cluster_counts.to_dict()}")
+
+
+def visualize_clusters_with_distribution(df: pd.DataFrame, cluster_centers):
+    """
+    Visualize overutilized, underutilized, and efficient VMs in one image along with the cluster distribution.
+    """
+    fig, axs = plt.subplots(1, 2, figsize=(20, 8))
+
+    # Scatter plot of clusters
+    sns.scatterplot(
+        x="CPU Utilization (%)",
+        y="Memory Utilization (%)",
+        hue="Cluster",
+        data=df,
+        palette="viridis",
+        alpha=0.6,
+        edgecolor="w",
+        ax=axs[0]
+    )
+
+    axs[0].scatter(
+        cluster_centers[:, 0],
+        cluster_centers[:, 1],
+        s=300,
+        c="red",
+        label="Cluster Centers",
+        edgecolors="black",
+    )
+
+    axs[0].set_title("Clustering Analysis of VMs: Overutilized, Underutilized, and Efficient VMs")
+    axs[0].set_xlabel("CPU Utilization (%)")
+    axs[0].set_ylabel("Memory Utilization (%)")
+    axs[0].legend(title='Cluster')
+    axs[0].grid(True)
+
+    # Bar plot of cluster distribution
+    cluster_counts = df["Cluster"].value_counts().sort_index()
+    sns.barplot(x=cluster_counts.index, y=cluster_counts.values, palette="viridis", ax=axs[1])
+    axs[1].set_title("Number of Servers in Each Cluster")
+    axs[1].set_xlabel("Cluster")
+    axs[1].set_ylabel("Number of Servers")
+    axs[1].grid(True)
+
+    plt.show()
+
+    logging.info(f"Cluster counts: {cluster_counts.to_dict()}")
 
 def main():
 
@@ -709,9 +836,13 @@ def main():
     bottleneck_df, resource_columns = analyze_resource_utilization(df)
     visualize_resource_utilization(bottleneck_df, resource_columns)
 
+    # Resource Utilization Analysis
+    bottleneck_df, resource_columns = analyze_resource_utilization(df)
+    visualize_resource_utilization(bottleneck_df, resource_columns)
+
     # Clustering Analysis
     clustered_df, cluster_centers = perform_clustering_analysis(df)
-    visualize_clustering_results(clustered_df, cluster_centers)
+    visualize_clusters_with_distribution(clustered_df, cluster_centers)
 
 if __name__ == "__main__":
     main()
