@@ -352,7 +352,7 @@ def hyperparameter_tuning(X_train, y_train):
     # Define the parameter grid
     param_dist = {
         "n_estimators": [int(x) for x in np.linspace(start=100, stop=1000, num=10)],
-        "max_features": ["auto", "sqrt"],
+        "max_features": ["sqrt", "log2", None],  # Removed 'auto'
         "max_depth": [int(x) for x in np.linspace(10, 110, num=11)],
         "min_samples_split": [2, 5, 10],
         "min_samples_leaf": [1, 2, 4],
