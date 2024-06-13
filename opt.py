@@ -332,11 +332,87 @@ def visualize_insights(df: pd.DataFrame) -> None:
     plt.show()
 
 
+def train_baseline_model(X_train, y_train):
+    """
+    Train a baseline Random Forest model.
+    """
+    rf = RandomForestRegressor(random_state=42)
+    rf.fit(X_train, y_train)
+
+    logging.info("Baseline model training completed.")
+    return rf
+
+
+def hyperparameter_tuning(X_train, y_train):
+    """
+    Tune hyperparameters using RandomizedSearchCV.
+    """
+    rf = RandomForestRegressor(random_state=42)
+
+    # Define the parameter grid
+    param_dist = {
+        "n_estimators": [int(x) for x in np.linspace(start=100, stop=1000, num=10)],
+        "max_features": ["auto", "sqrt"],
+        "max_depth": [int(x) for x in np.linspace(10, 110, num=11)],
+        "min_samples_split": [2, 5, 10],
+        "min_samples_leaf": [1, 2, 4],
+        "bootstrap": [True, False],
+    }
+
+    # Randomized search
+    rf_random = RandomizedSearchCV(
+        estimator=rf,
+        param_distributions=param_dist,
+        n_iter=100,
+        cv=3,
+        verbose=2,
+        random_state=42,
+        n_jobs=-1,
+    )
+    rf_random.fit(X_train, y_train)
+
+    logging.info("Hyperparameter tuning completed.")
+    return rf_random.best_estimator_
+
+
+def plot_model_performance(model, X_test, y_test):
+    """
+    Plot the model performance on the test set.
+    """
+    y_pred = model.predict(X_test)
+
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(x=y_test, y=y_pred)
+    plt.xlabel("Actual Values")
+    plt.ylabel("Predicted Values")
+    plt.title("Actual vs Predicted Values")
+    plt.grid(True)
+    plt.show()
+
+    logging.info(f"Mean Squared Error: {mean_squared_error(y_test, y_pred)}")
+    logging.info(f"R2 Score: {r2_score(y_test, y_pred)}")
+
+
+def validate_model(model, X_train, y_train):
+    """
+    Validate the model using KFold cross-validation.
+    """
+    kf = KFold(n_splits=5, shuffle=True, random_state=42)
+    cv_results = cross_val_score(model, X_train, y_train, cv=kf, scoring="r2")
+
+    logging.info(f"Cross-validation R2 scores: {cv_results}")
+    logging.info(f"Mean R2 score: {cv_results.mean()}")
+    return cv_results
+
+
 def main():
 
     filepath = os.path.join("data", "real_faang.csv")
     df = load_data(filepath)
     df = preprocess_data(df)
+
+    # Display first few rows of the preprocessed data for verification
+    # logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
 
     # Initial combined metrics plot
     plot_all_metrics_single_chart(df)
@@ -347,6 +423,8 @@ def main():
     # Feature engineering
     df = feature_engineering(df)
 
+    visualize_insights(df)
+
     # Data Splitting
     target_column = "Resource_Utilization_Efficiency"  # Using Resource Utilization Efficiency as the target column
     X_train, X_test, y_train, y_test = split_data(df, target_column)
@@ -356,11 +434,17 @@ def main():
         X_train, y_train
     )
 
-    visualize_insights(df)
+    # Train baseline model
+    baseline_model = train_baseline_model(X_train_balanced, y_train_balanced)
 
-    # Display first few rows of the preprocessed data for verification
-    logging.info(f"First few rows of the preprocessed data:\n{df.head()}")
+    # Hyperparameter tuning
+    best_model = hyperparameter_tuning(X_train_balanced, y_train_balanced)
 
+    # Validate model
+    validate_model(best_model, X_train_balanced, y_train_balanced)
+
+    # Plot model performance
+    plot_model_performance(best_model, X_test, y_test)
 
 if __name__ == "__main__":
     main()
