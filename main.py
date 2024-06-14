@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-import matplotlib.pyplot as plt
+from scipy.spatial import ConvexHull
 import seaborn as sns
 
 # Define constants for features and business metrics
@@ -73,12 +74,17 @@ def apply_kmeans_clustering(scaled_data, num_clusters=3):
     clusters = kmeans.fit_predict(scaled_data)
     return clusters, kmeans
 
+from scipy.spatial import ConvexHull
+
+
+from scipy.spatial import ConvexHull
+
 
 def visualize_clusters(data, features, clusters):
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(21, 7))  # Adjusted size for three subplots
 
     # First plot: unlabeled data
-    plt.subplot(1, 2, 1)
+    plt.subplot(1, 3, 1)
     scatter = plt.scatter(
         data[features[0]],
         data[features[1]],
@@ -98,7 +104,7 @@ def visualize_clusters(data, features, clusters):
     )
 
     # Second plot: labeled clusters
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 2)
     scatter = plt.scatter(
         data[features[0]],
         data[features[1]],
@@ -110,7 +116,37 @@ def visualize_clusters(data, features, clusters):
     plt.xlabel(features[0])
     plt.ylabel(features[1])
     plt.title("Labeled Clusters")
-    plt.legend(["Clusters", "Size: Network I/O Throughput"], loc="upper right")
+    plt.grid(True)
+
+    # Third plot: cluster boundaries
+    plt.subplot(1, 3, 3)
+    unique_clusters = np.unique(clusters)
+    for i, cluster in enumerate(unique_clusters):
+        cluster_data = data[clusters == cluster]
+        plt.scatter(
+            cluster_data[features[0]],
+            cluster_data[features[1]],
+            c=[i] * len(cluster_data),  # Use a single color per cluster
+            cmap="viridis",
+            alpha=0.6,
+            label=f"Cluster {cluster}",
+            edgecolors="w",  # Add a white edge to the points
+        )
+
+        if len(cluster_data) > 2:  # ConvexHull requires at least 3 points
+            hull = ConvexHull(cluster_data[features[:2]])
+            hull_points = np.append(hull.vertices, hull.vertices[0])
+            plt.plot(
+                cluster_data[features[0]].values[hull_points],
+                cluster_data[features[1]].values[hull_points],
+                c="black",  # Using black for hull edges for contrast
+                alpha=0.6,
+            )
+
+    plt.xlabel(features[0])  # Ensure the same x-axis label
+    plt.ylabel(features[1])  # Ensure the same y-axis label
+    plt.title("Cluster Plot with Boundaries")
+    plt.legend()
     plt.grid(True)
 
     plt.tight_layout()
