@@ -117,5 +117,5 @@ def generate_weekly_data():
 weekly_data = generate_weekly_data()
 
 # Save to CSV
-csv_file_path = "netflix_weekly_metrics.csv"
+csv_file_path = "data/netflix_weekly_metrics.csv"
 weekly_data.to_csv(csv_file_path, index=False)
