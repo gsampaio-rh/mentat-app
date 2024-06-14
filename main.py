@@ -108,14 +108,6 @@ def visualize_clusters(data, features, clusters, kmeans_model):
         cmap="viridis",
     )
     plt.colorbar(scatter, label="Cluster")
-    plt.scatter(
-        kmeans_model.cluster_centers_[:, 0],
-        kmeans_model.cluster_centers_[:, 1],
-        s=300,
-        c="red",
-        label="Centroids",
-        edgecolor="k",
-    )
     plt.xlabel(features[0])
     plt.ylabel(features[1])
     plt.title("Labeled Clusters")
