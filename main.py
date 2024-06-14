@@ -597,6 +597,58 @@ def identify_best_worst_clusters(cluster_profiles, metric):
     return best_cluster, worst_cluster
 
 
+def plot_resource_utilization_efficiency(cluster_profiles):
+    cluster_profiles[
+        [
+            "CPU Utilization (%)",
+            "Memory Utilization (%)",
+            "Network I/O Throughput (Mbps)",
+            "Disk I/O Throughput (MB/s)",
+        ]
+    ].plot(kind="bar", figsize=(14, 8), alpha=0.75, colormap="viridis")
+    plt.title("Resource Utilization Efficiency by Cluster", fontsize=16, weight="bold")
+    plt.xlabel("Cluster", fontsize=14)
+    plt.ylabel("Utilization", fontsize=14)
+    plt.legend(title="Metrics")
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+
+def plot_cost_benefit_analysis(cluster_profiles):
+    plt.figure(figsize=(14, 8))
+
+    # Scatter plot for Operational Costs vs. Customer Satisfaction
+    plt.scatter(
+        cluster_profiles["Operational Costs ($)"],
+        cluster_profiles["Customer Satisfaction (CSAT)"],
+        s=200,
+        alpha=0.75,
+        cmap="viridis",
+        label="CSAT vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    # Scatter plot for Operational Costs vs. Service Uptime
+    plt.scatter(
+        cluster_profiles["Operational Costs ($)"],
+        cluster_profiles["Service Uptime (%)"],
+        s=200,
+        alpha=0.75,
+        cmap="plasma",
+        label="Uptime vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    plt.title("Cost-Benefit Analysis", fontsize=16, weight="bold")
+    plt.xlabel("Operational Costs ($)", fontsize=14)
+    plt.ylabel("Performance Metrics", fontsize=14)
+    plt.legend()
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+
 def main():
     # Optional: Read data from a CSV file
     operational_file_path = (
@@ -692,6 +744,10 @@ def main():
     cluster_profiles = generate_cluster_profiles(
         combined_data, FEATURES, BUSINESS_METRICS
     )
+
+    plot_resource_utilization_efficiency(cluster_profiles)
+    
+    plot_cost_benefit_analysis(cluster_profiles)
 
     # Identify Best and Worst Performing Clusters
     best_cluster, worst_cluster = identify_best_worst_clusters(
