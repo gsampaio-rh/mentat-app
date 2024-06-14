@@ -178,3 +178,125 @@ def visualize_clusters(data, features, clusters):
 
     plt.tight_layout()
     plt.show()
+    
+def plot_resource_utilization_efficiency(cluster_profiles):
+    """
+    Plot resource utilization efficiency by cluster.
+
+    Args:
+    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
+    """
+    cluster_profiles[
+        [
+            "CPU Utilization (%)",
+            "Memory Utilization (%)",
+            "Network I/O Throughput (Mbps)",
+            "Disk I/O Throughput (MB/s)",
+        ]
+    ].plot(kind="bar", figsize=(14, 8), alpha=0.75, colormap="viridis")
+    plt.title("Resource Utilization Efficiency by Cluster", fontsize=16, weight="bold")
+    plt.xlabel("Cluster", fontsize=14)
+    plt.ylabel("Utilization", fontsize=14)
+    plt.legend(title="Metrics")
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+def plot_cost_benefit_analysis(cluster_profiles):
+    """
+    Plot cost-benefit analysis by cluster.
+
+    Args:
+    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
+    """
+    plt.figure(figsize=(14, 8))
+
+    # Scatter plot for Operational Costs vs. Customer Satisfaction
+    plt.scatter(
+        cluster_profiles["Operational Costs ($)"],
+        cluster_profiles["Customer Satisfaction (CSAT)"],
+        s=200,
+        alpha=0.75,
+        label="CSAT vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    # Scatter plot for Operational Costs vs. Service Uptime
+    plt.scatter(
+        cluster_profiles["Operational Costs ($)"],
+        cluster_profiles["Service Uptime (%)"],
+        s=200,
+        alpha=0.75,
+        label="Uptime vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    plt.title("Cost-Benefit Analysis", fontsize=16, weight="bold")
+    plt.xlabel("Operational Costs ($)", fontsize=14)
+    plt.ylabel("Performance Metrics", fontsize=14)
+    plt.legend()
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+def plot_server_config_metrics(server_config_summary):
+    """
+    Plot performance metrics by server configuration.
+
+    Args:
+    - server_config_summary (pd.DataFrame): DataFrame containing the server configuration summary.
+    """
+    server_config_summary[
+        [
+            "CPU Utilization (%)",
+            "Memory Utilization (%)",
+            "Network I/O Throughput (Mbps)",
+            "Disk I/O Throughput (MB/s)",
+        ]
+    ].plot(kind="bar", figsize=(14, 8), alpha=0.75, colormap="viridis")
+    plt.title("Average Performance Metrics by Server Configuration", fontsize=16, weight="bold")
+    plt.xlabel("Server Configuration", fontsize=14)
+    plt.ylabel("Average Metrics", fontsize=14)
+    plt.legend(title="Metrics")
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.xticks(rotation=45)
+    plt.show()
+
+def plot_cost_vs_performance(server_config_summary):
+    """
+    Plot cost vs performance metrics for each server configuration.
+
+    Args:
+    - server_config_summary (pd.DataFrame): DataFrame containing the server configuration summary.
+    """
+    plt.figure(figsize=(14, 8))
+
+    # Scatter plot for Operational Costs vs. Customer Satisfaction
+    plt.scatter(
+        server_config_summary["Operational Costs ($)"],
+        server_config_summary["Customer Satisfaction (CSAT)"],
+        s=200,
+        alpha=0.75,
+        label="CSAT vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    # Scatter plot for Operational Costs vs. Service Uptime
+    plt.scatter(
+        server_config_summary["Operational Costs ($)"],
+        server_config_summary["Service Uptime (%)"],
+        s=200,
+        alpha=0.75,
+        label="Uptime vs Costs",
+        edgecolor="w",
+        linewidth=0.5,
+    )
+
+    plt.title("Cost vs Performance Metrics by Server Configuration", fontsize=16, weight="bold")
+    plt.xlabel("Operational Costs ($)", fontsize=14)
+    plt.ylabel("Performance Metrics", fontsize=14)
+    plt.legend()
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.xticks(rotation=45)
+    plt.show()

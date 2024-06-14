@@ -4,10 +4,14 @@ from data_loader import read_csv_file
 from data_preprocessing import normalize_data, clean_and_scale_data
 from visualization import (
     plot_summary_statistics,
-    plot_temporal_trends,
     plot_all_metrics_single_chart,
     plot_bubble_chart,
     visualize_clusters,
+    plot_temporal_trends,
+    plot_resource_utilization_efficiency,
+    plot_cost_benefit_analysis,
+    plot_server_config_metrics,
+    plot_cost_vs_performance,
 )
 from clustering import apply_kmeans_clustering, apply_pca, get_pca_loadings, apply_tsne
 from analysis import (
@@ -130,6 +134,23 @@ def main():
     business_insights = generate_business_insights(cluster_business_summary)
     for insight in business_insights:
         print(insight)
+
+    # Step 14: Plot Resource Utilization Efficiency by Cluster
+    plot_resource_utilization_efficiency(cluster_profiles)
+
+    # Step 15: Plot Cost-Benefit Analysis by Cluster
+    plot_cost_benefit_analysis(cluster_profiles)
+
+    # Aggregate metrics by Server Configuration
+    server_config_summary = combined_data.groupby("Server Configuration")[
+        FEATURES + BUSINESS_METRICS
+    ].mean()
+
+    # Step 16: Plot Performance Metrics by Server Configuration
+    plot_server_config_metrics(server_config_summary)
+
+    # Step 17: Plot Cost vs Performance Metrics by Server Configuration
+    plot_cost_vs_performance(server_config_summary)
 
 
 if __name__ == "__main__":
