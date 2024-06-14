@@ -381,6 +381,24 @@ def apply_pca(scaled_data, clusters):
     return pca_df, pca
 
 
+def get_pca_loadings(pca, features):
+    loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
+    return loadings
+
+
+# Function to calculate and plot PCA loadings
+def plot_pca_loadings(pca, features):
+    loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
+    loadings.plot(kind="bar", figsize=(14, 8))
+    plt.title(
+        "PCA Loadings for Principal Components 1 and 2", fontsize=16, weight="bold"
+    )
+    plt.xlabel("Features", fontsize=14)
+    plt.ylabel("Contribution to Principal Component", fontsize=14)
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+
 def apply_tsne(scaled_data, clusters):
     tsne = TSNE(n_components=2, random_state=42)
     X_tsne = tsne.fit_transform(scaled_data)
@@ -424,11 +442,6 @@ def apply_tsne(scaled_data, clusters):
     return tsne_df
 
 
-def get_pca_loadings(pca, features):
-    loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
-    return loadings
-
-
 def main():
     # Optional: Read data from a CSV file
     file_path = "netflix_weekly_metrics.csv"  # Update this path to your actual CSV file
@@ -443,10 +456,10 @@ def main():
     plot_all_metrics_single_chart(normalizedData)
 
     # Display summary statistics
-    display_summary_statistics(simulated_data, FEATURES)
+    # display_summary_statistics(simulated_data, FEATURES)
 
     # Plot summary statistics
-    plot_summary_statistics(simulated_data, FEATURES)
+    # plot_summary_statistics(simulated_data, FEATURES)
 
     # Plot pairwise relationships and distributions
     # plot_pairwise_relationships(simulated_data)
@@ -466,10 +479,15 @@ def main():
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
-    tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
+    pca_loadings = get_pca_loadings(pca, FEATURES)
+    print("PCA Loadings:")
+    print(pca_loadings)
+    plot_pca_loadings(pca_loadings)
+
+    # tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
 
     # Step 6: Plot Distributions of Metrics within Clusters
-    plot_distributions(simulated_data, FEATURES)
+    # plot_distributions(simulated_data, FEATURES)
 
     # Step 7: Analyze Distributions and Variances
     analysis_results = analyze_distributions(simulated_data, FEATURES)
@@ -493,11 +511,6 @@ def main():
     business_insights = generate_business_insights(cluster_business_summary)
     for insight in business_insights:
         print(insight)
-
-    # Step 12: Display PCA Loadings
-    loadings = get_pca_loadings(pca, FEATURES)
-    print("PCA Loadings:")
-    print(loadings)
 
 
 if __name__ == "__main__":
