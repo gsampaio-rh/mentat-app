@@ -42,6 +42,46 @@ def read_csv_file(file_path):
         return None
 
 
+# Function to plot the summary statistics
+def plot_summary_statistics(data, features):
+    summary = data[features].describe().T
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Plot heatmap for the summary statistics
+    sns.heatmap(summary, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5, ax=ax)
+    plt.title("Summary Statistics of Server Metrics", fontsize=16, weight="bold")
+
+    plt.show()
+
+
+# Define a function to plot a combined bubble chart
+def plot_combined_bubble_chart(data, features):
+    plt.figure(figsize=(14, 10))
+
+    # Define colors for each metric
+    colors = ["red", "green", "blue", "purple"]
+
+    # Plot each feature as a separate scatter plot with different colors
+    for i, feature in enumerate(features):
+        plt.scatter(
+            data["CPU Utilization (%)"],
+            data["Memory Utilization (%)"],
+            s=(data[feature] / 500),  # Adjust size for better visualization
+            c=colors[i],
+            alpha=0.6,
+            label=feature,
+            edgecolor="w",
+            linewidth=0.5,
+        )
+
+    plt.xlabel("CPU Utilization (%)", fontsize=14)
+    plt.ylabel("Memory Utilization (%)", fontsize=14)
+    plt.title("Combined Bubble Chart of Server Metrics", fontsize=16, weight="bold")
+    plt.legend(title="Metrics")
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.show()
+
+
 def plot_bubble_chart(data):
     plt.figure(figsize=(14, 10))
     scatter = plt.scatter(
@@ -239,6 +279,30 @@ def simulate_business_metrics(data):
     return data
 
 
+# Function to plot pairwise relationships and distributions
+def plot_pairwise_relationships(data):
+    sns.set(style="whitegrid")
+    pair_plot = sns.pairplot(
+        data[FEATURES],
+        diag_kind="kde",
+        plot_kws={"alpha": 0.5, "s": 20, "edgecolor": "k"},
+    )
+    pair_plot.fig.suptitle(
+        "Pairwise Relationships and Distributions of Server Metrics",
+        y=1.02,
+        fontsize=16,
+        weight="bold",
+    )
+    plt.show()
+
+
+# Function to display summary statistics
+def display_summary_statistics(data, features):
+    summary = data[features].describe()
+    print("Summary Statistics:")
+    print(summary)
+
+
 def calculate_cluster_business_summary(data):
     cluster_business_summary = data.groupby("cluster")[BUSINESS_METRICS].mean()
     return cluster_business_summary
@@ -363,6 +427,20 @@ def main():
     # Optional: Read data from a CSV file
     file_path = "netflix_weekly_metrics.csv"  # Update this path to your actual CSV file
     simulated_data = read_csv_file(file_path)
+
+    # Step 1: Demonstrate the raw data that we have
+    
+    # Plot the combined bubble chart
+    # plot_combined_bubble_chart(simulated_data, FEATURES)
+    
+    # Display summary statistics
+    display_summary_statistics(simulated_data, FEATURES)
+
+    # Plot summary statistics
+    plot_summary_statistics(simulated_data, FEATURES)
+
+    # Plot pairwise relationships and distributions
+    plot_pairwise_relationships(simulated_data)
 
     # Plot the bubble chart
     plot_bubble_chart(simulated_data)
