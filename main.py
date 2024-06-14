@@ -16,6 +16,7 @@ from visualization import (
     plot_model_performance,
     plot_feature_importances,
     plot_residuals,
+    compare_model_performance,
 )
 from sklearn.impute import SimpleImputer
 
@@ -131,41 +132,49 @@ def main():
     rf_model, rf_mse, rf_r2 = random_forest(X_train, y_train, features, target)
     logger.info(f"Random Forest - MSE: {rf_mse}, R2: {rf_r2}")
 
-    # Visualize Random Forest Performance
+    # Visualize Random Forest Performance before tuning
     y_pred_train = rf_model.predict(X_train)
     y_pred_test = rf_model.predict(X_test)
     if isinstance(y_test, pd.DataFrame):
         y_test = y_test.squeeze()
 
-    plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, "Random Forest")
+    plot_model_performance(
+        y_train,
+        y_pred_train,
+        y_test,
+        y_pred_test,
+        "Random Forest - Before Hyperparameter Tuning",
+    )
     plot_feature_importances(rf_model, features, "Random Forest")
     plot_residuals(y_test, y_pred_test, "Random Forest")
 
     # Hyperparameter Tuning for Random Forest
     logger.info("Starting hyperparameter tuning for Random Forest.")
-    best_rf_model, rf_mse, rf_r2 = random_forest_with_hyperparameter_tuning(
+    best_rf_model, tuned_rf_mse, tuned_rf_r2 = random_forest_with_hyperparameter_tuning(
         X_train, y_train, features, target
     )
     logger.info(f"Best Random Forest Model: {best_rf_model}")
-    logger.info(f"Best Random Forest - MSE: {rf_mse}, R2: {rf_r2}")
+    logger.info(f"Best Random Forest - MSE: {tuned_rf_mse}, R2: {tuned_rf_r2}")
 
-    # Train and evaluate the XGBoost model
-    # xgb_model, xgb_mse, xgb_r2 = xgboost_regressor(X_train, y_train, features, target)
-    # logger.info(f"XGBoost - MSE: {xgb_mse}, R2: {xgb_r2}")
+    # Visualize Random Forest Performance after tuning
+    y_tuned_pred_train = best_rf_model.predict(X_train)
+    y_tuned_pred_test = best_rf_model.predict(X_test)
 
-    # # Visualize XGBoost Performance
-    # y_pred_train = xgb_model.predict(X_train)
-    # y_pred_test = xgb_model.predict(X_test)
-    # plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, "XGBoost")
-    # plot_feature_importances(xgb_model, features, "XGBoost")
-    # plot_residuals(y_test, y_pred_test, "XGBoost")
+    plot_model_performance(
+        y_train,
+        y_tuned_pred_train,
+        y_test,
+        y_tuned_pred_test,
+        "Random Forest - After Hyperparameter Tuning",
+    )
 
-    # # Hyperparameter Tuning for XGBoost
-    # best_xgb_model, xgb_mse, xgb_r2 = xgboost_with_hyperparameter_tuning(
-    #     X_train, y_train, features, target
-    # )
-    # logger.info(f"Best XGBoost Model: {best_xgb_model}")
-    # logger.info(f"Best XGBoost - MSE: {xgb_mse}, R2: {xgb_r2}")
+    # Compare before and after tuning
+    compare_model_performance(
+        y_test,
+        y_pred_test,
+        y_tuned_pred_test,
+        "Random Forest - Training Set Comparison",
+    )
 
 
 if __name__ == "__main__":

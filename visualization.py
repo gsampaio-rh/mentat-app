@@ -47,21 +47,19 @@ def plot_residuals(y_true, y_pred, model_name):
     plt.show()
 
 
-def plot_comparison(y_true, y_pred_before, y_pred_after, title):
-    plt.figure(figsize=(14, 6))
+def compare_model_performance(y_true, y_pred_before, y_pred_after, title):
+    plt.figure(figsize=(12, 6))
 
-    # Plot for Before Tuning
     plt.subplot(1, 2, 1)
-    sns.scatterplot(x=y_true, y=y_pred_before, alpha=0.5)
-    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--")
+    plt.scatter(y_true, y_pred_before, alpha=0.5)
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--", lw=2)
     plt.xlabel("Actual")
     plt.ylabel("Predicted")
     plt.title("Before Hyperparameter Tuning")
 
-    # Plot for After Tuning
     plt.subplot(1, 2, 2)
-    sns.scatterplot(x=y_true, y=y_pred_after, alpha=0.5)
-    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--")
+    plt.scatter(y_true, y_pred_after, alpha=0.5)
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--", lw=2)
     plt.xlabel("Actual")
     plt.ylabel("Predicted")
     plt.title("After Hyperparameter Tuning")
