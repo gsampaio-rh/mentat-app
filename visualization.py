@@ -189,6 +189,62 @@ def visualize_all_labelled_non_labelled_clusters(data, features, clusters):
     plt.show()
 
 
+def calculate_thresholds(data, features):
+    thresholds = {}
+    for feature in features:
+        thresholds[feature] = {
+            "low": data[feature].quantile(0.25),
+            "high": data[feature].quantile(0.75),
+        }
+    return thresholds
+
+
+def plot_shaded_regions(thresholds):
+    plt.axvspan(
+        0,
+        thresholds["CPU Utilization (%)"]["low"],
+        color="green",
+        alpha=0.2,
+        label="Low CPU Utilization",
+    )
+    plt.axvspan(
+        thresholds["CPU Utilization (%)"]["low"],
+        thresholds["CPU Utilization (%)"]["high"],
+        color="blue",
+        alpha=0.1,
+        label="Moderate CPU Utilization",
+    )
+    plt.axvspan(
+        thresholds["CPU Utilization (%)"]["high"],
+        1,
+        color="red",
+        alpha=0.2,
+        label="High CPU Utilization",
+    )
+
+    plt.axhspan(
+        0,
+        thresholds["Memory Utilization (%)"]["low"],
+        color="green",
+        alpha=0.2,
+        label="Low Memory Utilization",
+    )
+    plt.axhspan(
+        thresholds["Memory Utilization (%)"]["low"],
+        thresholds["Memory Utilization (%)"]["high"],
+        color="blue",
+        alpha=0.1,
+        label="Moderate Memory Utilization",
+    )
+    plt.axhspan(
+        thresholds["Memory Utilization (%)"]["high"],
+        1,
+        color="red",
+        alpha=0.2,
+        label="High Memory Utilization",
+    )
+
+
 def plot_resource_utilization_efficiency(avg_utilization_df):
     # Define thresholds for high and low utilization
     high_utilization_threshold = avg_utilization_df[['CPU Utilization (%)', 'Memory Utilization (%)']].quantile(0.75)
