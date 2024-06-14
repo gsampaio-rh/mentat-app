@@ -26,6 +26,11 @@ from analysis import (
 )
 
 import pandas as pd
+import os
+
+# Ensure the output directory exists
+OUTPUT_DIR = "output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Define constants for features and business metrics
 FEATURES = [
@@ -83,6 +88,9 @@ def main():
     print("PCA Loadings:")
     print(pca_loadings)
 
+    # Save PCA loadings
+    pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
+
     # Step 6: Analyze Distributions and Variances within Clusters
     analysis_results = analyze_distributions(operational_data, FEATURES)
 
@@ -90,8 +98,9 @@ def main():
     optimization_recommendations = generate_optimization_recommendations(
         analysis_results
     )
-    for rec in optimization_recommendations:
-        print(rec)
+    with open(os.path.join(OUTPUT_DIR, "optimization_recommendations.txt"), "w") as f:
+        for rec in optimization_recommendations:
+            f.write(rec + "\n")
 
     # Ensure the cluster labels are also in the business data
     business_data["cluster"] = operational_data["cluster"]
@@ -102,6 +111,11 @@ def main():
     )
     print("Cluster Business Summary:")
     print(cluster_business_summary)
+
+    # Save cluster business summary
+    cluster_business_summary.to_csv(
+        os.path.join(OUTPUT_DIR, "cluster_business_summary.csv")
+    )
 
     # Merge operational and business data for correlation analysis
     combined_data = pd.merge(
@@ -114,6 +128,9 @@ def main():
     correlation_matrix = generate_correlation_matrix(
         combined_data, BUSINESS_METRICS + FEATURES
     )
+
+    # Save correlation matrix
+    correlation_matrix.to_csv(os.path.join(OUTPUT_DIR, "correlation_matrix.csv"))
 
     # Step 10: Plot Temporal Trends of Business Metrics
     plot_temporal_trends(business_data, BUSINESS_METRICS)
@@ -133,10 +150,14 @@ def main():
     print(f"Best Performing Cluster: {best_cluster}")
     print(f"Worst Performing Cluster: {worst_cluster}")
 
+    # Save cluster profiles
+    cluster_profiles.to_csv(os.path.join(OUTPUT_DIR, "cluster_profiles.csv"))
+
     # Step 13: Generate Business Insights
     business_insights = generate_business_insights(cluster_business_summary)
-    for insight in business_insights:
-        print(insight)
+    with open(os.path.join(OUTPUT_DIR, "business_insights.txt"), "w") as f:
+        for insight in business_insights:
+            f.write(insight + "\n")
 
     # Step 14: Plot Resource Utilization Efficiency by Cluster
     plot_resource_utilization_efficiency(normalized_cluster_profiles)

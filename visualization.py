@@ -1,11 +1,12 @@
 # visualization.py
 
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
 from scipy.spatial import ConvexHull
-
+from utils import save_plot
 
 def plot_summary_statistics(data, features):
     """
@@ -19,6 +20,7 @@ def plot_summary_statistics(data, features):
     fig, ax = plt.subplots(figsize=(12, 8))
     sns.heatmap(summary, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5, ax=ax)
     plt.title("Summary Statistics of Server Metrics", fontsize=16, weight="bold")
+    save_plot(fig, "summary_statistics.png")
     plt.show()
 
 
@@ -30,7 +32,7 @@ def plot_all_metrics_single_chart(df, features):
     - df (pd.DataFrame): DataFrame containing the data.
     - features (list): List of features to plot.
     """
-    plt.figure(figsize=(14, 8))
+    fig = plt.figure(figsize=(14, 8))
     colors = ["red", "green", "blue", "purple"]
     markers = ["o", "s", "D", "X"]
 
@@ -44,6 +46,7 @@ def plot_all_metrics_single_chart(df, features):
     plt.ylabel("Normalized Value", fontsize=14)
     plt.legend()
     plt.grid(True, linestyle="--", linewidth=0.5)
+    save_plot(fig, "all_metrics_single_chart.png")
     plt.show()
 
 
@@ -54,7 +57,7 @@ def plot_bubble_chart(data):
     Args:
     - data (pd.DataFrame): DataFrame containing the data.
     """
-    plt.figure(figsize=(14, 10))
+    fig = plt.figure(figsize=(14, 10))
     scatter = plt.scatter(
         data["CPU Utilization (%)"],
         data["Memory Utilization (%)"],
@@ -72,19 +75,21 @@ def plot_bubble_chart(data):
     plt.xlim(20, 120)
     plt.ylim(10, 110)
     plt.grid(True, linestyle="--", linewidth=0.5)
+    save_plot(fig, "bubble_chart.png")
     plt.show()
 
 
 def plot_temporal_trends(data, metrics):
     data["Timestamp"] = pd.to_datetime(data["Timestamp"])
     data.set_index("Timestamp", inplace=True)
-    plt.figure(figsize=(14, 8))
+    fig = plt.figure(figsize=(14, 8))
     for metric in metrics:
         data[metric].resample("D").mean().plot(label=metric)
     plt.title("Temporal Trends of Business Metrics", fontsize=16)
     plt.xlabel("Time")
     plt.ylabel("Value")
     plt.legend()
+    save_plot(fig, "temporal_trends.png")
     plt.show()
 
 
@@ -97,7 +102,7 @@ def visualize_clusters(data, features, clusters):
     - features (list): List of features to plot.
     - clusters (array): Array of cluster labels.
     """
-    plt.figure(figsize=(21, 7))
+    fig = plt.figure(figsize=(21, 7))
     colors = sns.color_palette("Set2", len(np.unique(clusters)))
     sns.set(style="whitegrid")
 
@@ -177,8 +182,10 @@ def visualize_clusters(data, features, clusters):
     plt.grid(True)
 
     plt.tight_layout()
+    save_plot(fig, "visualize_clusters.png")
     plt.show()
-    
+
+
 def plot_resource_utilization_efficiency(cluster_profiles):
     """
     Plot resource utilization efficiency by cluster.
@@ -186,6 +193,7 @@ def plot_resource_utilization_efficiency(cluster_profiles):
     Args:
     - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
     """
+    fig, ax = plt.subplots(figsize=(14, 8))
     cluster_profiles[
         [
             "CPU Utilization (%)",
@@ -193,13 +201,18 @@ def plot_resource_utilization_efficiency(cluster_profiles):
             "Network I/O Throughput (Mbps)",
             "Disk I/O Throughput (MB/s)",
         ]
-    ].plot(kind="bar", figsize=(14, 8), alpha=0.75, colormap="viridis")
-    plt.title("Resource Utilization Efficiency by Cluster", fontsize=16, weight="bold")
-    plt.xlabel("Cluster", fontsize=14)
-    plt.ylabel("Utilization", fontsize=14)
-    plt.legend(title="Metrics")
-    plt.grid(True, linestyle="--", linewidth=0.5)
+    ].plot(kind="bar", ax=ax, alpha=0.75, colormap="viridis")
+    ax.set_title(
+        "Resource Utilization Efficiency by Cluster", fontsize=16, weight="bold"
+    )
+    ax.set_xlabel("Cluster", fontsize=14)
+    ax.set_ylabel("Utilization", fontsize=14)
+    ax.legend(title="Metrics")
+    ax.grid(True, linestyle="--", linewidth=0.5)
+    
+    save_plot(fig, "resource_utilization_efficiency.png")
     plt.show()
+
 
 def plot_cost_benefit_analysis(cluster_profiles):
     """
@@ -208,7 +221,7 @@ def plot_cost_benefit_analysis(cluster_profiles):
     Args:
     - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
     """
-    plt.figure(figsize=(14, 8))
+    fig=plt.figure(figsize=(14, 8))
 
     # Scatter plot for Operational Costs vs. Customer Satisfaction
     plt.scatter(
@@ -237,7 +250,11 @@ def plot_cost_benefit_analysis(cluster_profiles):
     plt.ylabel("Performance Metrics", fontsize=14)
     plt.legend()
     plt.grid(True, linestyle="--", linewidth=0.5)
+
+    # Save plot
+    save_plot(fig, "cost_benefit_analysis.png")
     plt.show()
+
 
 def plot_server_config_metrics(server_config_summary):
     """
@@ -246,6 +263,7 @@ def plot_server_config_metrics(server_config_summary):
     Args:
     - server_config_summary (pd.DataFrame): DataFrame containing the server configuration summary.
     """
+    fig, ax = plt.subplots(figsize=(14, 8))
     server_config_summary[
         [
             "CPU Utilization (%)",
@@ -253,14 +271,22 @@ def plot_server_config_metrics(server_config_summary):
             "Network I/O Throughput (Mbps)",
             "Disk I/O Throughput (MB/s)",
         ]
-    ].plot(kind="bar", figsize=(14, 8), alpha=0.75, colormap="viridis")
-    plt.title("Average Performance Metrics by Server Configuration", fontsize=16, weight="bold")
-    plt.xlabel("Server Configuration", fontsize=14)
-    plt.ylabel("Average Metrics", fontsize=14)
-    plt.legend(title="Metrics")
-    plt.grid(True, linestyle="--", linewidth=0.5)
-    plt.xticks(rotation=45)
+    ].plot(kind="bar", ax=ax, alpha=0.75, colormap="viridis")
+    ax.set_title(
+        "Average Performance Metrics by Server Configuration",
+        fontsize=16,
+        weight="bold",
+    )
+    ax.set_xlabel("Server Configuration", fontsize=14)
+    ax.set_ylabel("Average Metrics", fontsize=14)
+    ax.legend(title="Metrics")
+    ax.grid(True, linestyle="--", linewidth=0.5)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+
+    # Save plot
+    save_plot(fig, "server_config_metrics.png")
     plt.show()
+
 
 def plot_cost_vs_performance(server_config_summary):
     """
@@ -269,7 +295,7 @@ def plot_cost_vs_performance(server_config_summary):
     Args:
     - server_config_summary (pd.DataFrame): DataFrame containing the server configuration summary.
     """
-    plt.figure(figsize=(14, 8))
+    fig=plt.figure(figsize=(14, 8))
 
     # Scatter plot for Operational Costs vs. Customer Satisfaction
     plt.scatter(
@@ -293,10 +319,17 @@ def plot_cost_vs_performance(server_config_summary):
         linewidth=0.5,
     )
 
-    plt.title("Cost vs Performance Metrics by Server Configuration", fontsize=16, weight="bold")
+    plt.title(
+        "Cost vs Performance Metrics by Server Configuration",
+        fontsize=16,
+        weight="bold",
+    )
     plt.xlabel("Operational Costs ($)", fontsize=14)
     plt.ylabel("Performance Metrics", fontsize=14)
     plt.legend()
     plt.grid(True, linestyle="--", linewidth=0.5)
     plt.xticks(rotation=45)
+
+    # Save plot
+    save_plot(fig,"cost_vs_performance.png")
     plt.show()

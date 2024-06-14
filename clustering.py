@@ -7,6 +7,7 @@ from sklearn.manifold import TSNE
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from utils import save_plot
 
 
 def apply_kmeans_clustering(scaled_data, num_clusters=3):
@@ -43,7 +44,7 @@ def apply_pca(scaled_data, clusters):
     pca_df = pd.DataFrame(data=X_pca, columns=["PC1", "PC2"])
     pca_df["Cluster"] = clusters
 
-    plt.figure(figsize=(14, 10))
+    fig = plt.figure(figsize=(14, 10))
     sns.set(style="whitegrid")
     custom_palette = sns.color_palette("Set2", len(np.unique(clusters)))
     scatter = sns.scatterplot(
@@ -74,6 +75,7 @@ def apply_pca(scaled_data, clusters):
     plt.xticks(fontsize=12)
     plt.yticks(fontsize=12)
     plt.grid(True, linestyle="--", linewidth=0.5)
+    save_plot(fig, "apply_pca.png")
     plt.show()
 
     return pca_df, pca
@@ -110,7 +112,7 @@ def apply_tsne(scaled_data, clusters):
     tsne_df = pd.DataFrame(data=X_tsne, columns=["TSNE1", "TSNE2"])
     tsne_df["Cluster"] = clusters
 
-    plt.figure(figsize=(14, 10))
+    fig = plt.figure(figsize=(14, 10))
     sns.set(style="whitegrid")
     custom_palette = sns.color_palette("Set2", len(np.unique(clusters)))
     sns.scatterplot(
@@ -140,6 +142,7 @@ def apply_tsne(scaled_data, clusters):
         shadow=True,
         borderpad=1,
     )
+    save_plot(fig, "apply_tsne.png")
     plt.show()
 
     return tsne_df

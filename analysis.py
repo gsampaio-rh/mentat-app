@@ -3,6 +3,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from utils import save_plot
 
 
 def display_summary_statistics(data, features):
@@ -174,8 +175,9 @@ def generate_correlation_matrix(data, features):
     - pd.DataFrame: DataFrame containing the correlation matrix.
     """
     correlation_matrix = data[features].corr()
-    plt.figure(figsize=(12, 8))
+    fig = plt.figure(figsize=(12, 8))
     sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
     plt.title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
+    save_plot(fig, "correlation_matrix.png")
     plt.show()
     return correlation_matrix
