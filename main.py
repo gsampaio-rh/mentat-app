@@ -330,6 +330,7 @@ def generate_business_insights(cluster_business_summary):
     return insights
 
 
+# Function to apply PCA and plot the scatter plot
 def apply_pca(scaled_data, clusters):
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(scaled_data)
@@ -381,14 +382,14 @@ def apply_pca(scaled_data, clusters):
     return pca_df, pca
 
 
+# Function to get PCA loadings
 def get_pca_loadings(pca, features):
     loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
     return loadings
 
 
-# Function to calculate and plot PCA loadings
-def plot_pca_loadings(pca, features):
-    loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
+# Function to plot PCA loadings
+def plot_pca_loadings(loadings):
     loadings.plot(kind="bar", figsize=(14, 8))
     plt.title(
         "PCA Loadings for Principal Components 1 and 2", fontsize=16, weight="bold"
