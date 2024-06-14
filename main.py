@@ -41,6 +41,25 @@ def read_csv_file(file_path):
         return None
 
 
+def plot_bubble_chart(data):
+    plt.figure(figsize=(14, 10))
+    scatter = plt.scatter(
+        data["CPU Utilization (%)"],
+        data["Memory Utilization (%)"],
+        s=(data["Network I/O Throughput (Mbps)"] / 500),  # Adjusted for better visualization
+        c=data["Disk I/O Throughput (MB/s)"],
+        alpha=0.6,
+        cmap="viridis",
+    )
+    plt.colorbar(scatter, label="Disk I/O Throughput (MB/s)")
+    plt.xlabel("CPU Utilization (%)")
+    plt.ylabel("Memory Utilization (%)")
+    plt.title("Bubble Chart of Simulated Chaotic Server Metrics")
+    plt.xlim(20, 120)  # Adjusted x-axis limits for better spread
+    plt.ylim(10, 110)  # Adjusted y-axis limits for better spread
+    plt.show()
+
+
 def clean_and_scale_data(data, features):
     data[features] = data[features].apply(pd.to_numeric, errors="coerce")
     data = data.dropna(subset=features)
@@ -224,10 +243,33 @@ def get_pca_loadings(pca, features):
     return loadings
 
 
+# def plot_all_metrics_single_chart(df: pd.DataFrame):
+#     """
+#     Plot all key metrics in a single chart with different colors.
+#     """
+#     plt.figure(figsize=(12, 8))
+
+#     for metric, label in key_metrics.items():
+#         plt.scatter(df.index, df[metric], label=label, s=10)
+
+#     for metric in additional_metrics:
+#         plt.scatter(df.index, df[metric], label=metric, s=10)
+
+#     plt.title("All Key Metrics")
+#     plt.xlabel("Index")
+#     plt.ylabel("Value")
+#     plt.legend()
+#     plt.grid(True)
+#     plt.show()
+
+
 def main():
     # Optional: Read data from a CSV file
     file_path = "netflix_weekly_metrics.csv"  # Update this path to your actual CSV file
     simulated_data = read_csv_file(file_path)
+
+    # Plot the bubble chart
+    plot_bubble_chart(simulated_data)
 
     # Step 2: Clean and Scale Data
     simulated_data, X_scaled_cleaned = clean_and_scale_data(simulated_data, FEATURES)
