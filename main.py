@@ -10,6 +10,12 @@ from model_selection import (
     xgboost_regressor,
     k_means_clustering,
 )
+from visualization import (
+    plot_model_performance,
+    plot_feature_importances,
+    plot_residuals,
+)
+
 from sklearn.impute import SimpleImputer
 
 # Configure logging
@@ -120,21 +126,27 @@ def main():
     features = X_train.columns.tolist()
     target = "Target"
 
-    # # Linear Regression
-    # lr_model, lr_mse, lr_r2 = linear_regression(X_train, y_train, features, target)
-    # logger.info(f"Linear Regression - MSE: {lr_mse}, R2: {lr_r2}")
-
     # Random Forest
     rf_model, rf_mse, rf_r2 = random_forest(X_train, y_train, features, target)
     logger.info(f"Random Forest - MSE: {rf_mse}, R2: {rf_r2}")
+
+    # Visualize Random Forest Performance
+    y_pred_train = rf_model.predict(X_train)
+    y_pred_test = rf_model.predict(X_test)
+    plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, "Random Forest")
+    plot_feature_importances(rf_model, features, "Random Forest")
+    plot_residuals(y_test, y_pred_test, "Random Forest")
 
     # XGBoost
     xgb_model, xgb_mse, xgb_r2 = xgboost_regressor(X_train, y_train, features, target)
     logger.info(f"XGBoost - MSE: {xgb_mse}, R2: {xgb_r2}")
 
-    # K-Means Clustering
-    # k_means_model, df_clustered = k_means_clustering(df, features, n_clusters=3)
-    # logger.info(f"K-Means Clustering result:\n{df_clustered.head()}")
+    # Visualize XGBoost Performance
+    y_pred_train = xgb_model.predict(X_train)
+    y_pred_test = xgb_model.predict(X_test)
+    plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, "XGBoost")
+    plot_feature_importances(xgb_model, features, "XGBoost")
+    plot_residuals(y_test, y_pred_test, "XGBoost")
 
 
 if __name__ == "__main__":
