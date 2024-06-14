@@ -251,20 +251,48 @@ def apply_pca(scaled_data, clusters):
     X_pca = pca.fit_transform(scaled_data)
     pca_df = pd.DataFrame(data=X_pca, columns=["PC1", "PC2"])
     pca_df["Cluster"] = clusters
-    plt.figure(figsize=(12, 8))
-    sns.scatterplot(
+
+    plt.figure(figsize=(14, 10))
+    sns.set(style="whitegrid")
+
+    # Define a custom color palette for a clean look
+    custom_palette = sns.color_palette("Set2", 3)
+
+    # Create the scatter plot with improved aesthetics
+    scatter = sns.scatterplot(
         x="PC1",
         y="PC2",
         hue="Cluster",
-        palette="viridis",
+        palette=custom_palette,
         data=pca_df,
         s=100,
-        alpha=0.7,
+        alpha=0.8,
+        edgecolor="w",
+        linewidth=0.5,
     )
-    plt.title("PCA of Simulated Server Metrics with Clusters")
-    plt.xlabel("Principal Component 1")
-    plt.ylabel("Principal Component 2")
-    plt.legend(title="Cluster")
+
+    # Enhance the legend for better readability
+    legend = scatter.legend(
+        title="Cluster",
+        title_fontsize="13",
+        fontsize="11",
+        loc="upper right",
+        frameon=True,
+        shadow=True,
+        borderpad=1,
+    )
+
+    plt.title(
+        "PCA of Simulated Server Metrics with Clusters", fontsize=16, weight="bold"
+    )
+    plt.xlabel("Principal Component 1", fontsize=14)
+    plt.ylabel("Principal Component 2", fontsize=14)
+
+    # Customize ticks and grid for a cleaner look
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.grid(True, linestyle="--", linewidth=0.5)
+
     plt.show()
     return pca_df, pca
 
@@ -323,7 +351,7 @@ def main():
     simulated_data = read_csv_file(file_path)
 
     # Plot the bubble chart
-    # plot_bubble_chart(simulated_data)
+    plot_bubble_chart(simulated_data)
 
     # Step 2: Clean and Scale Data
     simulated_data, X_scaled_cleaned = clean_and_scale_data(simulated_data, FEATURES)
@@ -338,10 +366,10 @@ def main():
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
     # t-SNE visualization might take too long, so it's commented out
-    # tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
+    tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
 
     # Step 6: Plot Distributions of Metrics within Clusters
-    plot_distributions(simulated_data, FEATURES)
+    # plot_distributions(simulated_data, FEATURES)
 
     # Step 7: Analyze Distributions and Variances
     analysis_results = analyze_distributions(simulated_data, FEATURES)
