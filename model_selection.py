@@ -6,6 +6,8 @@ import xgboost as xgb
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import RandomizedSearchCV
+from scipy.stats import randint
 
 
 def linear_regression(X_train, y_train, features, target):
@@ -39,49 +41,33 @@ def random_forest(X_train, y_train, features, target):
 
 
 def random_forest_with_hyperparameter_tuning(X_train, y_train, features, target):
-    """
-    Trains a Random Forest model with hyperparameter tuning and returns the best model, MSE, and R2 score.
-
-    Args:
-        X_train (pd.DataFrame): Training features.
-        y_train (pd.Series): Training target.
-        features (list): List of feature column names.
-        target (str): Target column name.
-
-    Returns:
-        best_rf_model (RandomForestRegressor): Best Random Forest model.
-        mse (float): Mean Squared Error of the model.
-        r2 (float): R2 score of the model.
-    """
     X = X_train[features]
     y = y_train[target]
 
-    # Scaling the features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Define parameter grid
+    # Expanded parameter grid for more thorough search
     rf_param_grid = {
-        "n_estimators": [100, 200, 300],
-        "max_depth": [None, 10, 20, 30],
-        "min_samples_split": [2, 5, 10],
-        "min_samples_leaf": [1, 2, 4],
+        "n_estimators": randint(100, 500),
+        "max_depth": [None, 10, 20, 30, 40, 50],
+        "min_samples_split": randint(2, 11),
+        "min_samples_leaf": randint(1, 11),
+        "bootstrap": [True, False],
+        "max_features": ["auto", "sqrt", "log2"],
     }
 
-    # Grid Search with Cross-Validation
-    rf_grid_search = GridSearchCV(
+    rf_random_search = RandomizedSearchCV(
         estimator=RandomForestRegressor(random_state=42),
-        param_grid=rf_param_grid,
+        param_distributions=rf_param_grid,
+        n_iter=100,
         cv=3,
         scoring="neg_mean_squared_error",
-        verbose=2,  # Set verbosity level to 2
+        verbose=2,
         n_jobs=-1,
+        random_state=42,
     )
-    rf_grid_search.fit(X_scaled, y)
-    best_rf_model = rf_grid_search.best_estimator_
+    rf_random_search.fit(X, y)
+    best_rf_model = rf_random_search.best_estimator_
 
-    # Predictions on the training set
-    y_pred = best_rf_model.predict(X_scaled)
+    y_pred = best_rf_model.predict(X)
 
     mse = mean_squared_error(y, y_pred)
     r2 = r2_score(y, y_pred)
