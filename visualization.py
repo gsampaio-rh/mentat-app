@@ -294,12 +294,6 @@ def calculate_cost_reduction_thresholds(data):
 def plot_cost_reduction_opportunities(avg_cost_df):
     thresholds = calculate_cost_reduction_thresholds(avg_cost_df)
 
-    # Print out the server configuration names to debug the issue
-    print(
-        "Server Configurations in DataFrame:",
-        avg_cost_df["Server Configuration"].unique(),
-    )
-
     # Create a scatter plot
     fig = plt.figure(figsize=(12, 8))
 
@@ -311,10 +305,10 @@ def plot_cost_reduction_opportunities(avg_cost_df):
         "EC2 Database Servers (r5.large)": "D",
     }
     colors = {
-        "EC2 Recommendation System Servers (p3.2xlarge)": "red",
+        "EC2 Recommendation System Servers (p3.2xlarge)": "green",
         "EC2 API Servers (m5.large)": "orange",
         "EC2 Streaming Servers (c5.large)": "blue",
-        "EC2 Database Servers (r5.large)": "green",
+        "EC2 Database Servers (r5.large)": "red",
     }
 
     # Plot all data points
@@ -361,6 +355,28 @@ def plot_cost_reduction_opportunities(avg_cost_df):
             xytext=(0, 10),
             ha="center",
             color="red",
+        )
+
+    # Annotate each server configuration with insights based on their position
+    for i in range(len(avg_cost_df)):
+        x, y = (
+            avg_cost_df["Operational Costs ($)"][i],
+            avg_cost_df["Customer Satisfaction (CSAT)"][i],
+        )
+        if x > thresholds["high_cost"] and y < thresholds["low_impact_cs"]:
+            insight = "High Cost, Low Satisfaction"
+        elif x < thresholds["high_cost"] and y > thresholds["low_impact_cs"]:
+            insight = "Low Cost, High Satisfaction"
+        else:
+            insight = "Moderate Cost, Moderate Satisfaction"
+
+        plt.annotate(
+            insight,
+            (x, y),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center",
+            color=colors.get(avg_cost_df["Server Configuration"][i], "grey"),
         )
 
     plt.axvline(
