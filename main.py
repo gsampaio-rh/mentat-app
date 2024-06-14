@@ -22,30 +22,23 @@ BUSINESS_METRICS = [
 ]
 
 
-def simulate_realistic_metrics(num_samples, config_name):
-    np.random.seed(42)
-    data = {
-        "Server Configuration": [config_name] * num_samples,
-        "CPU Utilization (%)": np.random.normal(loc=65, scale=15, size=num_samples),
-        "Memory Utilization (%)": np.random.normal(loc=60, scale=10, size=num_samples),
-        "Network I/O Throughput (Mbps)": np.random.normal(
-            loc=40000, scale=10000, size=num_samples
-        ),
-        "Disk I/O Throughput (MB/s)": np.random.normal(
-            loc=200, scale=50, size=num_samples
-        ),
-    }
-    return pd.DataFrame(data)
+def read_csv_file(file_path):
+    """
+    Reads a CSV file and returns a DataFrame.
 
+    Args:
+    - file_path (str): Path to the CSV file.
 
-def generate_simulated_data():
-    num_samples = 1000
-    configurations = ["Server A", "Server B", "Server C"]
-    simulated_data = pd.concat(
-        [simulate_realistic_metrics(num_samples, config) for config in configurations],
-        ignore_index=True,
-    )
-    return simulated_data
+    Returns:
+    - pd.DataFrame: DataFrame containing the CSV data.
+    """
+    try:
+        data = pd.read_csv(file_path)
+        print(f"Successfully read the file: {file_path}")
+        return data
+    except Exception as e:
+        print(f"Error reading the file {file_path}: {e}")
+        return None
 
 
 def clean_and_scale_data(data, features):
@@ -232,8 +225,9 @@ def get_pca_loadings(pca, features):
 
 
 def main():
-    # Step 1: Generate Simulated Data
-    simulated_data = generate_simulated_data()
+    # Optional: Read data from a CSV file
+    file_path = "netflix_weekly_metrics.csv"  # Update this path to your actual CSV file
+    simulated_data = read_csv_file(file_path)
 
     # Step 2: Clean and Scale Data
     simulated_data, X_scaled_cleaned = clean_and_scale_data(simulated_data, FEATURES)
