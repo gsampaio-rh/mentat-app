@@ -106,7 +106,7 @@ def plot_bubble_chart(data):
     plt.xlabel("CPU Utilization (%)", fontsize=14)
     plt.ylabel("Memory Utilization (%)", fontsize=14)
     plt.title(
-        "Bubble Chart of Simulated Chaotic Server Metrics", fontsize=16, weight="bold"
+        "Bubble Chart of Chaotic Server Metrics", fontsize=16, weight="bold"
     )
     plt.xlim(20, 120)  # Adjusted x-axis limits for better spread
     plt.ylim(10, 110)  # Adjusted y-axis limits for better spread
@@ -272,19 +272,6 @@ def generate_optimization_recommendations(analysis_results):
     return recommendations
 
 
-def simulate_business_metrics(data):
-    np.random.seed(42)
-    data["Customer Satisfaction (CSAT)"] = np.random.normal(
-        loc=90, scale=5, size=len(data)
-    )
-    data["Operational Costs ($)"] = np.random.normal(
-        loc=1000, scale=200, size=len(data)
-    )
-    data["Service Uptime (%)"] = np.random.normal(loc=99, scale=0.5, size=len(data))
-    data["Response Time (ms)"] = np.random.normal(loc=200, scale=50, size=len(data))
-    return data
-
-
 # Function to plot pairwise relationships and distributions
 def plot_pairwise_relationships(data):
     sns.set(style="whitegrid")
@@ -310,6 +297,15 @@ def display_summary_statistics(data, features):
 
 
 def calculate_cluster_business_summary(data):
+    """
+    Calculates the mean of business metrics for each cluster.
+
+    Args:
+    - data (pd.DataFrame): DataFrame containing the business metrics and cluster labels.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing the mean of business metrics for each cluster.
+    """
     cluster_business_summary = data.groupby("cluster")[BUSINESS_METRICS].mean()
     return cluster_business_summary
 
@@ -372,7 +368,7 @@ def apply_pca(scaled_data, clusters):
     )
 
     plt.title(
-        "PCA of Simulated Server Metrics with Clusters", fontsize=16, weight="bold"
+        "PCA of Server Metrics with Clusters", fontsize=16, weight="bold"
     )
     plt.xlabel("Principal Component 1", fontsize=14)
     plt.ylabel("Principal Component 2", fontsize=14)
@@ -427,7 +423,7 @@ def apply_tsne(scaled_data, clusters):
         linewidth=0.5,
     )
     plt.title(
-        "t-SNE of Simulated Server Metrics with Clusters", fontsize=16, weight="bold"
+        "t-SNE of Server Metrics with Clusters", fontsize=16, weight="bold"
     )
     plt.xlabel("t-SNE Component 1", fontsize=14)
     plt.ylabel("t-SNE Component 2", fontsize=14)
@@ -568,38 +564,48 @@ def plot_business_insights_with_arrows(cluster_business_summary, business_insigh
 
 def main():
     # Optional: Read data from a CSV file
-    file_path = "netflix_weekly_metrics.csv"  # Update this path to your actual CSV file
-    simulated_data = read_csv_file(file_path)
+    operational_file_path = (
+        "data/netflix_operational_metrics.csv"  # Update this path to your actual CSV file
+    )
+    operational_data = read_csv_file(operational_file_path)
+
+    business_file_path = "data/netflix_business_metrics.csv"  # Update this path to your actual CSV file
+    business_data = read_csv_file(business_file_path)
+
+    # Ensure the columns are correctly read
+    print("Operational Data Columns:", operational_data.columns.tolist())
+    print("Business Data Columns:", business_data.columns.tolist())
 
     # Step 1: Demonstrate the raw data that we have
-
     # Normalize the data
-    normalizedData = normalize_data(simulated_data, FEATURES)
+    normalizedData = normalize_data(operational_data, FEATURES)
 
     # Plot the combined bubble chart
     plot_all_metrics_single_chart(normalizedData)
 
     # Display summary statistics
-    # display_summary_statistics(simulated_data, FEATURES)
+    # display_summary_statistics(operational_data, FEATURES)
 
     # Plot summary statistics
-    # plot_summary_statistics(simulated_data, FEATURES)
+    # plot_summary_statistics(operational_data, FEATURES)
 
     # Plot pairwise relationships and distributions
-    # plot_pairwise_relationships(simulated_data)
+    # plot_pairwise_relationships(operational_data)
 
     # Plot the bubble chart
-    plot_bubble_chart(simulated_data)
+    plot_bubble_chart(operational_data)
 
     # Step 2: Clean and Scale Data
-    simulated_data, X_scaled_cleaned = clean_and_scale_data(simulated_data, FEATURES)
+    operational_data, X_scaled_cleaned = clean_and_scale_data(
+        operational_data, FEATURES
+    )
 
     # Step 3: Apply K-Means Clustering
     clusters_cleaned, kmeans = apply_kmeans_clustering(X_scaled_cleaned)
-    simulated_data["cluster"] = clusters_cleaned
+    operational_data["cluster"] = clusters_cleaned
 
     # Step 4: Visualize Clusters
-    visualize_clusters(simulated_data, FEATURES, clusters_cleaned)
+    visualize_clusters(operational_data, FEATURES, clusters_cleaned)
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
@@ -611,10 +617,10 @@ def main():
     # tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
 
     # Step 6: Plot Distributions of Metrics within Clusters
-    # plot_distributions(simulated_data, FEATURES)
+    # plot_distributions(operational_data, FEATURES)
 
     # Step 7: Analyze Distributions and Variances
-    analysis_results = analyze_distributions(simulated_data, FEATURES)
+    analysis_results = analyze_distributions(operational_data, FEATURES)
 
     # Step 8: Generate Optimization Recommendations
     optimization_recommendations = generate_optimization_recommendations(
@@ -623,16 +629,15 @@ def main():
     for rec in optimization_recommendations:
         print(rec)
 
-    # Step 9: Simulate Business Metrics
-    simulated_data = simulate_business_metrics(simulated_data)
-    # print(simulated_data)
+    # Ensure the cluster labels are also in the business data
+    business_data['cluster'] = operational_data['cluster']
 
-    # Step 10: Calculate Cluster Business Summary
-    cluster_business_summary = calculate_cluster_business_summary(simulated_data)
+    # Step 9: Calculate Cluster Business Summary
+    cluster_business_summary = calculate_cluster_business_summary(business_data)
     print("Cluster Business Summary:")
     print(cluster_business_summary)
 
-    # Step 11: Generate Business Insights
+    # Step 10: Generate Business Insights
     business_insights = generate_business_insights(cluster_business_summary)
     # print(business_insights)
 
