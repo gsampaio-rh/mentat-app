@@ -65,3 +65,17 @@ def preprocess_for_utilization(merged_df):
         utilization_df.groupby("Server Configuration").mean().reset_index()
     )
     return avg_utilization_df
+
+
+def preprocess_for_cost_reduction(merged_df):
+    cost_df = merged_df[
+        [
+            "Server Configuration",
+            "Operational Costs ($)",
+            "Customer Satisfaction (CSAT)",
+            "Response Time (ms)",
+            "Service Uptime (%)",
+        ]
+    ]
+    avg_cost_df = cost_df.groupby("Server Configuration").mean().reset_index()
+    return avg_cost_df

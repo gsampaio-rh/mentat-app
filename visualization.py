@@ -279,6 +279,64 @@ def plot_resource_utilization_efficiency(avg_utilization_df):
     plt.show()
 
 
+def calculate_cost_reduction_thresholds(data):
+    thresholds = {
+        "high_cost": data["Operational Costs ($)"].quantile(0.75),
+        "low_impact": data[
+            ["Customer Satisfaction (CSAT)", "Response Time (ms)", "Service Uptime (%)"]
+        ].quantile(0.25),
+    }
+    return thresholds
+
+
+def plot_cost_reduction_opportunities(avg_cost_df):
+    thresholds = calculate_cost_reduction_thresholds(avg_cost_df)
+
+    # Create a scatter plot
+    fig = plt.figure(figsize=(10, 6))
+
+    # Highlight high cost and low impact configurations
+    avg_cost_df["Color"] = "blue"  # Default color
+    avg_cost_df.loc[
+        (avg_cost_df["Operational Costs ($)"] >= thresholds["high_cost"])
+        & (
+            avg_cost_df["Customer Satisfaction (CSAT)"]
+            <= thresholds["low_impact"]["Customer Satisfaction (CSAT)"]
+        )
+        & (
+            avg_cost_df["Response Time (ms)"]
+            >= thresholds["low_impact"]["Response Time (ms)"]
+        )
+        & (
+            avg_cost_df["Service Uptime (%)"]
+            <= thresholds["low_impact"]["Service Uptime (%)"]
+        ),
+        "Color",
+    ] = "red"
+
+    for i in range(len(avg_cost_df)):
+        plt.scatter(
+            avg_cost_df["Operational Costs ($)"][i],
+            avg_cost_df["Customer Satisfaction (CSAT)"][i],
+            color=avg_cost_df["Color"][i],
+        )
+        plt.text(
+            avg_cost_df["Operational Costs ($)"][i],
+            avg_cost_df["Customer Satisfaction (CSAT)"][i],
+            avg_cost_df["Server Configuration"][i],
+            fontsize=9,
+        )
+
+    plt.title("Operational Cost Reduction Opportunities")
+    plt.xlabel("Average Operational Costs ($)")
+    plt.ylabel("Customer Satisfaction (CSAT)")
+    plt.grid(True)
+    plt.legend(["High Cost & Low Impact (Red)"])
+    save_plot(fig, "cost_reduction_opportunities.png")
+    plt.show()
+
+
+
 def plot_cost_benefit_analysis(cluster_profiles):
     """
     Plot cost-benefit analysis by cluster.
