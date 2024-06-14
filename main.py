@@ -47,17 +47,24 @@ def plot_bubble_chart(data):
     scatter = plt.scatter(
         data["CPU Utilization (%)"],
         data["Memory Utilization (%)"],
-        s=(data["Network I/O Throughput (Mbps)"] / 500),  # Adjusted for better visualization
+        s=(
+            data["Network I/O Throughput (Mbps)"] / 500
+        ),  # Adjusted for better visualization
         c=data["Disk I/O Throughput (MB/s)"],
         alpha=0.6,
         cmap="viridis",
+        edgecolor="w",
+        linewidth=0.5,
     )
     plt.colorbar(scatter, label="Disk I/O Throughput (MB/s)")
-    plt.xlabel("CPU Utilization (%)")
-    plt.ylabel("Memory Utilization (%)")
-    plt.title("Bubble Chart of Simulated Chaotic Server Metrics")
+    plt.xlabel("CPU Utilization (%)", fontsize=14)
+    plt.ylabel("Memory Utilization (%)", fontsize=14)
+    plt.title(
+        "Bubble Chart of Simulated Chaotic Server Metrics", fontsize=16, weight="bold"
+    )
     plt.xlim(20, 120)  # Adjusted x-axis limits for better spread
     plt.ylim(10, 110)  # Adjusted y-axis limits for better spread
+    plt.grid(True, linestyle="--", linewidth=0.5)
     plt.show()
 
 
@@ -263,7 +270,7 @@ def apply_pca(scaled_data, clusters):
     sns.set(style="whitegrid")
 
     # Define a custom color palette for a clean look
-    custom_palette = sns.color_palette("Set2", 3)
+    custom_palette = sns.color_palette("Set2", len(np.unique(clusters)))
 
     # Create the scatter plot with improved aesthetics
     scatter = sns.scatterplot(
@@ -309,20 +316,40 @@ def apply_tsne(scaled_data, clusters):
     X_tsne = tsne.fit_transform(scaled_data)
     tsne_df = pd.DataFrame(data=X_tsne, columns=["TSNE1", "TSNE2"])
     tsne_df["Cluster"] = clusters
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(14, 10))
+    sns.set(style="whitegrid")
+
+    # Define a custom color palette for a clean look
+    custom_palette = sns.color_palette("Set2", len(np.unique(clusters)))
+
     sns.scatterplot(
         x="TSNE1",
         y="TSNE2",
         hue="Cluster",
-        palette="viridis",
+        palette=custom_palette,
         data=tsne_df,
         s=100,
-        alpha=0.7,
+        alpha=0.8,
+        edgecolor="w",
+        linewidth=0.5,
     )
-    plt.title("t-SNE of Simulated Server Metrics with Clusters")
-    plt.xlabel("t-SNE Component 1")
-    plt.ylabel("t-SNE Component 2")
-    plt.legend(title="Cluster")
+    plt.title(
+        "t-SNE of Simulated Server Metrics with Clusters", fontsize=16, weight="bold"
+    )
+    plt.xlabel("t-SNE Component 1", fontsize=14)
+    plt.ylabel("t-SNE Component 2", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.legend(
+        title="Cluster",
+        title_fontsize="13",
+        fontsize="11",
+        loc="upper right",
+        frameon=True,
+        shadow=True,
+        borderpad=1,
+    )
     plt.show()
     return tsne_df
 
@@ -330,26 +357,6 @@ def apply_tsne(scaled_data, clusters):
 def get_pca_loadings(pca, features):
     loadings = pd.DataFrame(pca.components_.T, columns=["PC1", "PC2"], index=features)
     return loadings
-
-
-# def plot_all_metrics_single_chart(df: pd.DataFrame):
-#     """
-#     Plot all key metrics in a single chart with different colors.
-#     """
-#     plt.figure(figsize=(12, 8))
-
-#     for metric, label in key_metrics.items():
-#         plt.scatter(df.index, df[metric], label=label, s=10)
-
-#     for metric in additional_metrics:
-#         plt.scatter(df.index, df[metric], label=metric, s=10)
-
-#     plt.title("All Key Metrics")
-#     plt.xlabel("Index")
-#     plt.ylabel("Value")
-#     plt.legend()
-#     plt.grid(True)
-#     plt.show()
 
 
 def main():
@@ -372,11 +379,10 @@ def main():
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
-    # t-SNE visualization might take too long, so it's commented out
     tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
 
     # Step 6: Plot Distributions of Metrics within Clusters
-    # plot_distributions(simulated_data, FEATURES)
+    plot_distributions(simulated_data, FEATURES)
 
     # Step 7: Analyze Distributions and Variances
     analysis_results = analyze_distributions(simulated_data, FEATURES)
