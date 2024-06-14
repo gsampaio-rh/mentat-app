@@ -93,6 +93,9 @@ def main():
     # Save PCA loadings
     pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
+    # Plot PCA Loadings
+    plot_pca_loadings(pca_loadings)
+
     # Step 6: Analyze Distributions and Variances within Clusters
     analysis_results = analyze_distributions(operational_data, FEATURES)
 
@@ -117,6 +120,11 @@ def main():
     # Save cluster business summary
     cluster_business_summary.to_csv(
         os.path.join(OUTPUT_DIR, "cluster_business_summary.csv")
+    )
+
+    # Plot Business Insights with Arrows
+    plot_business_insights_with_arrows(
+        cluster_business_summary, generate_business_insights(cluster_business_summary)
     )
 
     # Merge operational and business data for correlation analysis

@@ -349,7 +349,6 @@ def plot_pca_loadings(loadings):
     plt.show()
 
 
-# Function to plot business insights with arrows
 def plot_business_insights_with_arrows(cluster_business_summary, business_insights):
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     fig.suptitle("Cluster Business Summary Insights", fontsize=16)
@@ -412,7 +411,7 @@ def plot_business_insights_with_arrows(cluster_business_summary, business_insigh
         cluster_business_summary["Service Uptime (%)"],
         color="lightcoral",
     )
-    axes[1, 0].setTitle("Service Uptime (%)")
+    axes[1, 0].set_title("Service Uptime (%)")
     axes[1, 0].set_xlabel("Cluster")
     axes[1, 0].set_ylabel("Uptime (%)")
     if cluster_business_summary["Service Uptime (%)"].min() < 99:
@@ -435,7 +434,7 @@ def plot_business_insights_with_arrows(cluster_business_summary, business_insigh
         cluster_business_summary["Response Time (ms)"],
         color="lightblue",
     )
-    axes[1, 1].setTitle("Response Time (ms)")
+    axes[1, 1].set_title("Response Time (ms)")
     axes[1, 1].set_xlabel("Cluster")
     axes[1, 1].set_ylabel("Response Time (ms)")
     if cluster_business_summary["Response Time (ms)"].max() > 220:
