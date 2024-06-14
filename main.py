@@ -160,35 +160,39 @@ def generate_business_insights(cluster_business_summary):
     return insights
 
 
-def visualize_clusters(data, features, clusters):
-    plt.figure(figsize=(12, 8))
+def visualize_clusters(data, features, clusters, kmeans_model):
+    # First plot: unlabeled data
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
     plt.scatter(
         data[features[0]],
         data[features[1]],
         s=data[features[2]] / 100,
         c=data[features[3]],
         alpha=0.5,
-        cmap="viridis",
     )
     plt.colorbar(label=features[3])
     plt.xlabel(features[0])
     plt.ylabel(features[1])
-    plt.title("Bubble Chart of Simulated Realistic Server Metrics")
-    plt.show()
+    plt.title("Unlabeled Data")
 
-    plt.figure(figsize=(12, 8))
-    plt.scatter(
-        data[features[0]],
-        data[features[1]],
-        s=data[features[2]] / 100,
-        c=clusters,
+    # Second plot: labeled clusters
+    plt.subplot(1, 2, 2)
+    sns.scatterplot(
+        x=data[features[0]],
+        y=data[features[1]],
+        hue=clusters,
+        palette="viridis",
+        size=data[features[2]] / 100,
         alpha=0.5,
-        cmap="viridis",
+        legend=True,
     )
-    plt.colorbar(label="Cluster")
     plt.xlabel(features[0])
     plt.ylabel(features[1])
-    plt.title("Bubble Chart of Simulated Realistic Server Metrics with Clusters")
+    plt.title("Labeled Clusters")
+    plt.legend()
+
+    plt.tight_layout()
     plt.show()
 
 
@@ -279,7 +283,7 @@ def main():
     simulated_data["cluster"] = clusters_cleaned
 
     # Step 4: Visualize Clusters
-    visualize_clusters(simulated_data, FEATURES, clusters_cleaned)
+    visualize_clusters(simulated_data, FEATURES, clusters_cleaned, kmeans)
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
