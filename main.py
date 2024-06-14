@@ -646,6 +646,34 @@ def plot_cost_benefit_analysis(cluster_profiles):
     plt.grid(True, linestyle="--", linewidth=0.5)
     plt.show()
 
+# Bar chart for average performance metrics for each server configuration
+def plot_server_config_metrics(server_config_summary):
+    server_config_summary[FEATURES].plot(kind='bar', figsize=(14, 8), alpha=0.75, colormap='viridis')
+    plt.title('Average Performance Metrics by Server Configuration', fontsize=16, weight='bold')
+    plt.xlabel('Server Configuration', fontsize=14)
+    plt.ylabel('Average Metrics', fontsize=14)
+    plt.legend(title='Metrics')
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.xticks(rotation=45)
+    plt.show()
+
+# Scatter plot for Operational Costs vs. Key Performance Metrics for each server configuration
+def plot_cost_vs_performance(server_config_summary):
+    plt.figure(figsize=(14, 8))
+
+    # Scatter plot for Operational Costs vs. Customer Satisfaction
+    plt.scatter(server_config_summary['Operational Costs ($)'], server_config_summary['Customer Satisfaction (CSAT)'], s=200, alpha=0.75, label='CSAT vs Costs', edgecolor='w', linewidth=0.5)
+    
+    # Scatter plot for Operational Costs vs. Service Uptime
+    plt.scatter(server_config_summary['Operational Costs ($)'], server_config_summary['Service Uptime (%)'], s=200, alpha=0.75, label='Uptime vs Costs', edgecolor='w', linewidth=0.5)
+
+    plt.title('Cost vs Performance Metrics by Server Configuration', fontsize=16, weight='bold')
+    plt.xlabel('Operational Costs ($)', fontsize=14)
+    plt.ylabel('Performance Metrics', fontsize=14)
+    plt.legend()
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.xticks(rotation=45)
+    plt.show()
 
 def main():
     # Optional: Read data from a CSV file
@@ -744,7 +772,7 @@ def main():
     )
 
     plot_resource_utilization_efficiency(cluster_profiles)
-    
+
     plot_cost_benefit_analysis(cluster_profiles)
 
     # Identify Best and Worst Performing Clusters
@@ -761,6 +789,23 @@ def main():
     for insight in business_insights:
         print(insight)
 
+    # Aggregate metrics by Server Configuration
+    server_config_summary = combined_data.groupby("Server Configuration")[
+        FEATURES + BUSINESS_METRICS
+    ].mean()
+
+    # Display the summary
+    server_config_summary
+
+    scaler = MinMaxScaler()
+    normalized_server_config_summary = pd.DataFrame(
+        scaler.fit_transform(server_config_summary),
+        columns=server_config_summary.columns,
+        index=server_config_summary.index,
+    )
+
+    plot_server_config_metrics(normalized_server_config_summary)
+    plot_cost_vs_performance(server_config_summary)
 
 if __name__ == "__main__":
     main()
