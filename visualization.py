@@ -8,6 +8,7 @@ import pandas as pd
 from scipy.spatial import ConvexHull
 from utils import save_plot
 
+
 def plot_summary_statistics(data, features):
     """
     Plot summary statistics for the specified features.
@@ -16,10 +17,11 @@ def plot_summary_statistics(data, features):
     - data (pd.DataFrame): DataFrame containing the data.
     - features (list): List of features to plot summary statistics for.
     """
-    summary = data[features].describe().T
-    fig, ax = plt.subplots(figsize=(12, 8))
-    sns.heatmap(summary, annot=True, fmt=".2f", cmap="coolwarm", linewidths=0.5, ax=ax)
-    plt.title("Summary Statistics of Server Metrics", fontsize=16, weight="bold")
+    fig, axes = plt.subplots(len(features), 1, figsize=(10, 15))
+    for i, feature in enumerate(features):
+        sns.histplot(data[feature], kde=True, ax=axes[i])
+        axes[i].set_title(f"{feature} Distribution")
+    plt.tight_layout()
     save_plot(fig, "summary_statistics.png")
     plt.show()
 
@@ -80,20 +82,21 @@ def plot_bubble_chart(data):
 
 
 def plot_temporal_trends(data, metrics):
-    data["Timestamp"] = pd.to_datetime(data["Timestamp"])
-    data.set_index("Timestamp", inplace=True)
-    fig = plt.figure(figsize=(14, 8))
-    for metric in metrics:
-        data[metric].resample("D").mean().plot(label=metric)
-    plt.title("Temporal Trends of Business Metrics", fontsize=16)
-    plt.xlabel("Time")
-    plt.ylabel("Value")
-    plt.legend()
+    fig, axes = plt.subplots(len(metrics), 1, figsize=(10, 15))
+    for i, metric in enumerate(metrics):
+        data.plot(x="Timestamp", y=metric, ax=axes[i])
+        axes[i].set_title(f"Temporal Trend of {metric}")
+    plt.tight_layout()
     save_plot(fig, "temporal_trends.png")
     plt.show()
 
 
-def visualize_clusters(data, features, clusters):
+def visualize_clusters(data, cluster_labels, features):
+    sns.pairplot(data[features + [cluster_labels]], hue=cluster_labels)
+    plt.show()
+
+
+def visualize_all_labelled_non_labelled_clusters(data, features, clusters):
     """
     Visualize clusters using scatter plots.
 
