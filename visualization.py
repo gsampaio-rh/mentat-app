@@ -295,7 +295,7 @@ def plot_cost_reduction_opportunities(avg_cost_df):
     thresholds = calculate_cost_reduction_thresholds(avg_cost_df)
 
     # Create a scatter plot
-    fig = plt.figure(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     # Define marker shapes and colors
     markers = {
@@ -305,16 +305,16 @@ def plot_cost_reduction_opportunities(avg_cost_df):
         "EC2 Database Servers (r5.large)": "D",
     }
     colors = {
-        "EC2 Recommendation System Servers (p3.2xlarge)": "green",
+        "EC2 Recommendation System Servers (p3.2xlarge)": "red",
         "EC2 API Servers (m5.large)": "orange",
         "EC2 Streaming Servers (c5.large)": "blue",
-        "EC2 Database Servers (r5.large)": "red",
+        "EC2 Database Servers (r5.large)": "green",
     }
 
     # Plot all data points
     for i in range(len(avg_cost_df)):
         server_config = avg_cost_df["Server Configuration"][i]
-        plt.scatter(
+        ax.scatter(
             avg_cost_df["Operational Costs ($)"][i],
             avg_cost_df["Customer Satisfaction (CSAT)"][i],
             color=colors.get(server_config, "grey"),
@@ -322,7 +322,7 @@ def plot_cost_reduction_opportunities(avg_cost_df):
             s=100,
             label=server_config,
         )
-        plt.text(
+        ax.text(
             avg_cost_df["Operational Costs ($)"][i],
             avg_cost_df["Customer Satisfaction (CSAT)"][i],
             server_config,
@@ -338,14 +338,14 @@ def plot_cost_reduction_opportunities(avg_cost_df):
     ]
 
     for i in range(len(high_cost_low_impact)):
-        plt.scatter(
+        ax.scatter(
             high_cost_low_impact["Operational Costs ($)"].iloc[i],
             high_cost_low_impact["Customer Satisfaction (CSAT)"].iloc[i],
             color="red",
             marker="x",
             s=100,
         )
-        plt.annotate(
+        ax.annotate(
             "High Cost, Low Impact",
             (
                 high_cost_low_impact["Operational Costs ($)"].iloc[i],
@@ -370,7 +370,7 @@ def plot_cost_reduction_opportunities(avg_cost_df):
         else:
             insight = "Moderate Cost, Moderate Satisfaction"
 
-        plt.annotate(
+        ax.annotate(
             insight,
             (x, y),
             textcoords="offset points",
@@ -379,24 +379,27 @@ def plot_cost_reduction_opportunities(avg_cost_df):
             color=colors.get(avg_cost_df["Server Configuration"][i], "grey"),
         )
 
-    plt.axvline(
+    ax.axvline(
         thresholds["high_cost"],
         color="grey",
         linestyle="--",
         label="High Cost Threshold",
     )
-    plt.axhline(
+    ax.axhline(
         thresholds["low_impact_cs"],
         color="grey",
         linestyle="--",
         label="Low Impact Threshold (CSAT)",
     )
 
-    plt.title("Operational Cost Reduction Opportunities")
-    plt.xlabel("Average Operational Costs ($)")
-    plt.ylabel("Customer Satisfaction (CSAT)")
-    plt.grid(True)
-    plt.legend(loc="best")
+    ax.set_title("Operational Cost Reduction Opportunities")
+    ax.set_xlabel("Average Operational Costs ($)")
+    ax.set_ylabel("Customer Satisfaction (CSAT)")
+    ax.grid(True)
+
+    # Reposition legend to the right of the plot
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+
     save_plot(fig, "cost_reduction_opportunities.png")
     plt.show()
 
