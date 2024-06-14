@@ -7,6 +7,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from scipy.spatial import ConvexHull
 import seaborn as sns
+from sklearn.preprocessing import MinMaxScaler
 
 # Define constants for features and business metrics
 FEATURES = [
@@ -54,30 +55,34 @@ def plot_summary_statistics(data, features):
     plt.show()
 
 
-# Define a function to plot a combined bubble chart
-def plot_combined_bubble_chart(data, features):
-    plt.figure(figsize=(14, 10))
+# Function to normalize the data
+def normalize_data(df, features):
+    scaler = MinMaxScaler()
+    df[features] = scaler.fit_transform(df[features])
+    return df
 
-    # Define colors for each metric
+
+# Function to plot all key metrics in a single chart
+def plot_all_metrics_single_chart(df: pd.DataFrame):
+    """
+    Plot all key metrics in a single chart with different colors and markers.
+    """
+    plt.figure(figsize=(14, 8))
+
+    # Define colors and markers for each metric
     colors = ["red", "green", "blue", "purple"]
+    markers = ["o", "s", "D", "X"]
 
-    # Plot each feature as a separate scatter plot with different colors
-    for i, feature in enumerate(features):
+    # Plot each metric with a different color and marker
+    for i, metric in enumerate(FEATURES):
         plt.scatter(
-            data["CPU Utilization (%)"],
-            data["Memory Utilization (%)"],
-            s=(data[feature] / 500),  # Adjust size for better visualization
-            c=colors[i],
-            alpha=0.6,
-            label=feature,
-            edgecolor="w",
-            linewidth=0.5,
+            df.index, df[metric], label=metric, color=colors[i], marker=markers[i], s=10
         )
 
-    plt.xlabel("CPU Utilization (%)", fontsize=14)
-    plt.ylabel("Memory Utilization (%)", fontsize=14)
-    plt.title("Combined Bubble Chart of Server Metrics", fontsize=16, weight="bold")
-    plt.legend(title="Metrics")
+    plt.title("All Key Metrics (Normalized)", fontsize=16, weight="bold")
+    plt.xlabel("Index", fontsize=14)
+    plt.ylabel("Normalized Value", fontsize=14)
+    plt.legend()
     plt.grid(True, linestyle="--", linewidth=0.5)
     plt.show()
 
@@ -429,10 +434,13 @@ def main():
     simulated_data = read_csv_file(file_path)
 
     # Step 1: Demonstrate the raw data that we have
-    
+
+    # Normalize the data
+    data = normalize_data(simulated_data, FEATURES)
+
     # Plot the combined bubble chart
-    # plot_combined_bubble_chart(simulated_data, FEATURES)
-    
+    plot_all_metrics_single_chart(simulated_data)
+
     # Display summary statistics
     display_summary_statistics(simulated_data, FEATURES)
 
