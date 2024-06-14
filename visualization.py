@@ -67,3 +67,26 @@ def compare_model_performance(y_true, y_pred_before, y_pred_after, title):
     plt.suptitle(title)
     plt.tight_layout()
     plt.show()
+
+
+def plot_comparison_metrics(before_metrics, after_metrics, metric_names, title):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bar_width = 0.35
+    index = range(len(metric_names))
+
+    before_values = [before_metrics[metric] for metric in metric_names]
+    after_values = [after_metrics[metric] for metric in metric_names]
+
+    bar1 = plt.bar(index, before_values, bar_width, label="Before Tuning")
+    bar2 = plt.bar(
+        [i + bar_width for i in index], after_values, bar_width, label="After Tuning"
+    )
+
+    plt.xlabel("Metrics")
+    plt.ylabel("Values")
+    plt.title(title)
+    plt.xticks([i + bar_width / 2 for i in index], metric_names)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()

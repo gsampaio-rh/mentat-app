@@ -17,6 +17,7 @@ from visualization import (
     plot_feature_importances,
     plot_residuals,
     compare_model_performance,
+    plot_comparison_metrics,
 )
 from sklearn.impute import SimpleImputer
 
@@ -174,6 +175,16 @@ def main():
         y_pred_test,
         y_tuned_pred_test,
         "Random Forest - Training Set Comparison",
+    )
+
+    # Plot comparison of R2 and MSE
+    before_metrics = {"MSE": rf_mse, "R2": rf_r2}
+    after_metrics = {"MSE": tuned_rf_mse, "R2": tuned_rf_r2}
+    plot_comparison_metrics(
+        before_metrics,
+        after_metrics,
+        ["MSE", "R2"],
+        "Random Forest - Metrics Comparison",
     )
 
 
