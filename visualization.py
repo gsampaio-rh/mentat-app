@@ -333,3 +333,138 @@ def plot_cost_vs_performance(server_config_summary):
     # Save plot
     save_plot(fig,"cost_vs_performance.png")
     plt.show()
+
+
+# Function to plot PCA loadings
+def plot_pca_loadings(loadings):
+    fig, ax = plt.subplots(figsize=(14, 8))
+    loadings.plot(kind="bar", ax=ax)
+    ax.set_title(
+        "PCA Loadings for Principal Components 1 and 2", fontsize=16, weight="bold"
+    )
+    ax.set_xlabel("Features", fontsize=14)
+    ax.set_ylabel("Contribution to Principal Component", fontsize=14)
+    ax.grid(True, linestyle="--", linewidth=0.5)
+    save_plot(fig, "pca_loadings.png")
+    plt.show()
+
+
+# Function to plot business insights with arrows
+def plot_business_insights_with_arrows(cluster_business_summary, business_insights):
+    fig, axes = plt.subplots(2, 2, figsize=(14, 12))
+    fig.suptitle("Cluster Business Summary Insights", fontsize=16)
+
+    # Plot Customer Satisfaction (CSAT)
+    axes[0, 0].bar(
+        cluster_business_summary.index,
+        cluster_business_summary["Customer Satisfaction (CSAT)"],
+        color="skyblue",
+    )
+    axes[0, 0].set_title("Customer Satisfaction (CSAT)")
+    axes[0, 0].set_xlabel("Cluster")
+    axes[0, 0].set_ylabel("CSAT")
+    if cluster_business_summary["Customer Satisfaction (CSAT)"].min() < 90:
+        min_index = cluster_business_summary["Customer Satisfaction (CSAT)"].idxmin()
+        axes[0, 0].annotate(
+            "Lower satisfaction here",
+            xy=(
+                min_index,
+                cluster_business_summary["Customer Satisfaction (CSAT)"][min_index],
+            ),
+            xytext=(
+                min_index,
+                cluster_business_summary["Customer Satisfaction (CSAT)"][min_index] + 1,
+            ),
+            arrowprops=dict(facecolor="red", shrink=0.05),
+            fontsize=12,
+            color="red",
+        )
+
+    # Plot Operational Costs ($)
+    axes[0, 1].bar(
+        cluster_business_summary.index,
+        cluster_business_summary["Operational Costs ($)"],
+        color="lightgreen",
+    )
+    axes[0, 1].set_title("Operational Costs ($)")
+    axes[0, 1].set_xlabel("Cluster")
+    axes[0, 1].set_ylabel("Costs ($)")
+    if cluster_business_summary["Operational Costs ($)"].max() > 1100:
+        max_index = cluster_business_summary["Operational Costs ($)"].idxmax()
+        axes[0, 1].annotate(
+            "High operational cost",
+            xy=(
+                max_index,
+                cluster_business_summary["Operational Costs ($)"][max_index],
+            ),
+            xytext=(
+                max_index,
+                cluster_business_summary["Operational Costs ($)"][max_index] + 50,
+            ),
+            arrowprops=dict(facecolor="red", shrink=0.05),
+            fontsize=12,
+            color="red",
+        )
+
+    # Plot Service Uptime (%)
+    axes[1, 0].bar(
+        cluster_business_summary.index,
+        cluster_business_summary["Service Uptime (%)"],
+        color="lightcoral",
+    )
+    axes[1, 0].setTitle("Service Uptime (%)")
+    axes[1, 0].set_xlabel("Cluster")
+    axes[1, 0].set_ylabel("Uptime (%)")
+    if cluster_business_summary["Service Uptime (%)"].min() < 99:
+        min_index = cluster_business_summary["Service Uptime (%)"].idxmin()
+        axes[1, 0].annotate(
+            "Slightly lower uptime",
+            xy=(min_index, cluster_business_summary["Service Uptime (%)"][min_index]),
+            xytext=(
+                min_index,
+                cluster_business_summary["Service Uptime (%)"][min_index] + 0.3,
+            ),
+            arrowprops=dict(facecolor="red", shrink=0.05),
+            fontsize=12,
+            color="red",
+        )
+
+    # Plot Response Time (ms)
+    axes[1, 1].bar(
+        cluster_business_summary.index,
+        cluster_business_summary["Response Time (ms)"],
+        color="lightblue",
+    )
+    axes[1, 1].setTitle("Response Time (ms)")
+    axes[1, 1].set_xlabel("Cluster")
+    axes[1, 1].set_ylabel("Response Time (ms)")
+    if cluster_business_summary["Response Time (ms)"].max() > 220:
+        max_index = cluster_business_summary["Response Time (ms)"].idxmax()
+        axes[1, 1].annotate(
+            "High response time",
+            xy=(max_index, cluster_business_summary["Response Time (ms)"][max_index]),
+            xytext=(
+                max_index,
+                cluster_business_summary["Response Time (ms)"][max_index] + 20,
+            ),
+            arrowprops=dict(facecolor="red", shrink=0.05),
+            fontsize=12,
+            color="red",
+        )
+    elif cluster_business_summary["Response Time (ms)"].max() > 190:
+        max_index = cluster_business_summary["Response Time (ms)"].idxmax()
+        axes[1, 1].annotate(
+            "Moderate response time",
+            xy=(max_index, cluster_business_summary["Response Time (ms)"][max_index]),
+            xytext=(
+                max_index,
+                cluster_business_summary["Response Time (ms)"][max_index] + 20,
+            ),
+            arrowprops=dict(facecolor="orange", shrink=0.05),
+            fontsize=12,
+            color="orange",
+        )
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    save_plot(fig, "business_insights_with_arrows.png")
+    plt.show()

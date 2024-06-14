@@ -12,6 +12,8 @@ from visualization import (
     plot_cost_benefit_analysis,
     plot_server_config_metrics,
     plot_cost_vs_performance,
+    plot_pca_loadings,
+    plot_business_insights_with_arrows,
 )
 from clustering import apply_kmeans_clustering, apply_pca, get_pca_loadings, apply_tsne
 from analysis import (
