@@ -79,7 +79,9 @@ def visualize_clusters(data, features, clusters):
     plt.figure(figsize=(21, 7))  # Adjusted size for three subplots
 
     # Define a custom color palette for clusters
-    colors = ["blue", "red", "green"]
+    colors = sns.color_palette("Set2", len(np.unique(clusters)))
+
+    sns.set(style="whitegrid")
 
     # First plot: unlabeled data
     plt.subplot(1, 3, 1)
@@ -88,13 +90,15 @@ def visualize_clusters(data, features, clusters):
         data[features[1]],
         s=data[features[2]] / 500,
         c=data[features[3]],
-        alpha=0.6,
+        alpha=0.7,
         cmap="viridis",
+        edgecolor="w",
+        linewidth=0.5,
     )
     plt.colorbar(scatter, label=features[3])
-    plt.xlabel(features[0])
-    plt.ylabel(features[1])
-    plt.title("Unlabeled Data")
+    plt.xlabel(features[0], fontsize=14)
+    plt.ylabel(features[1], fontsize=14)
+    plt.title("Unlabeled Data", fontsize=16, weight="bold")
     plt.grid(True)
     plt.legend(
         ["Size: Network I/O Throughput", "Color: Disk I/O Throughput"],
@@ -108,15 +112,16 @@ def visualize_clusters(data, features, clusters):
         plt.scatter(
             cluster_data[features[0]],
             cluster_data[features[1]],
-            c=colors[i],
-            alpha=0.6,
+            c=[colors[i]],
+            alpha=0.7,
             label=f"Cluster {cluster}",
             edgecolors="w",  # Add a white edge to the points
+            linewidth=0.5,
         )
 
-    plt.xlabel(features[0])  # Ensure the same x-axis label
-    plt.ylabel(features[1])  # Ensure the same y-axis label
-    plt.title("Labeled Clusters")
+    plt.xlabel(features[0], fontsize=14)  # Ensure the same x-axis label
+    plt.ylabel(features[1], fontsize=14)  # Ensure the same y-axis label
+    plt.title("Labeled Clusters", fontsize=16, weight="bold")
     plt.legend()
     plt.grid(True)
 
@@ -127,10 +132,11 @@ def visualize_clusters(data, features, clusters):
         plt.scatter(
             cluster_data[features[0]],
             cluster_data[features[1]],
-            c=colors[i],
-            alpha=0.6,
+            c=[colors[i]],
+            alpha=0.7,
             label=f"Cluster {cluster}",
             edgecolors="w",  # Add a white edge to the points
+            linewidth=0.5,
         )
 
         if len(cluster_data) > 2:  # ConvexHull requires at least 3 points
@@ -140,7 +146,8 @@ def visualize_clusters(data, features, clusters):
                 cluster_data[features[0]].values[hull_points],
                 cluster_data[features[1]].values[hull_points],
                 c=colors[i],
-                alpha=0.6,
+                alpha=0.7,
+                linewidth=2,
             )
             # Fill the convex hull with a translucent color
             plt.fill(
@@ -150,9 +157,9 @@ def visualize_clusters(data, features, clusters):
                 alpha=0.2,
             )
 
-    plt.xlabel(features[0])  # Ensure the same x-axis label
-    plt.ylabel(features[1])  # Ensure the same y-axis label
-    plt.title("Cluster Plot with Boundaries")
+    plt.xlabel(features[0], fontsize=14)  # Ensure the same x-axis label
+    plt.ylabel(features[1], fontsize=14)  # Ensure the same y-axis label
+    plt.title("Cluster Plot with Boundaries", fontsize=16, weight="bold")
     plt.legend()
     plt.grid(True)
 
