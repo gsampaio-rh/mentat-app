@@ -174,10 +174,21 @@ def generate_correlation_matrix(data, features):
     Returns:
     - pd.DataFrame: DataFrame containing the correlation matrix.
     """
+    # Check if the specified features are in the DataFrame
+    for feature in features:
+        if feature not in data.columns:
+            raise ValueError(f"Feature '{feature}' not found in data columns")
+
+    # Calculate the correlation matrix
     correlation_matrix = data[features].corr()
-    fig = plt.figure(figsize=(12, 8))
-    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
-    plt.title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
+
+    # Plot the correlation matrix
+    fig, ax = plt.subplots(figsize=(12, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+    ax.set_title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
+
+    # Save the plot
     save_plot(fig, "correlation_matrix.png")
-    plt.show()
+    plt.close(fig)  # Close the figure to avoid displaying it inline
+
     return correlation_matrix

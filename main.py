@@ -143,7 +143,7 @@ def main():
     correlation_matrix.to_csv(os.path.join(OUTPUT_DIR, "correlation_matrix.csv"))
 
     # Step 10: Plot Temporal Trends of Business Metrics
-    plot_temporal_trends(business_data, BUSINESS_METRICS)
+    # plot_temporal_trends(business_data, BUSINESS_METRICS)
 
     # Step 11: Generate Cluster Profiles
     cluster_profiles = generate_cluster_profiles(
