@@ -10,10 +10,30 @@ from model_selection import (
     xgboost_regressor,
     k_means_clustering,
 )
+from sklearn.impute import SimpleImputer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def handle_missing_values(df):
+    # Separate numeric and non-numeric columns
+    numeric_columns = df.select_dtypes(include=["number"]).columns
+    non_numeric_columns = df.select_dtypes(exclude=["number"]).columns
+
+    # Impute numeric columns with mean strategy
+    imputer_numeric = SimpleImputer(strategy="mean")
+    df[numeric_columns] = imputer_numeric.fit_transform(df[numeric_columns])
+
+    # Impute non-numeric columns with most frequent strategy (if any non-numeric columns exist)
+    if len(non_numeric_columns) > 0:
+        imputer_non_numeric = SimpleImputer(strategy="most_frequent")
+        df[non_numeric_columns] = imputer_non_numeric.fit_transform(
+            df[non_numeric_columns]
+        )
+
+    return df
 
 
 def main():
@@ -23,6 +43,19 @@ def main():
 
     # Clean the data
     df = clean_data(df)
+
+    # Drop non-numeric columns
+    df = df.drop(columns=["timestamp", "Server Name"])
+
+    # Handle missing values
+    df = handle_missing_values(df)
+
+    # Ensure no remaining NaNs
+    if df.isnull().sum().sum() > 0:
+        logger.error(
+            "There are still missing values in the dataset after handling missing values."
+        )
+        return
 
     # Normalize the data
     try:

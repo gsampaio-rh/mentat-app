@@ -28,22 +28,22 @@ def visualize_data(df, target_column):
         linewidths=0.5,
         annot_kws={"size": 10},
     )
-    plt.title("Correlation Matrix of VM Performance Metrics", fontsize=16)
-    plt.xticks(rotation=45, ha="right", fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.show()
-    # Distribution of target column
-    plt.figure(figsize=(10, 6))
-    sns.histplot(df[target_column], kde=True)
-    plt.title(f"Distribution of {target_column}")
-    plt.xlabel(f"{target_column} (Standardized Units)")
-    plt.ylabel("Frequency")
-    plt.legend(labels=[f"{target_column} Distribution", "KDE"])
-    plt.show()
-    # Pairplot of features and target
-    plt.figure(figsize=(10, 6))
-    sns.pairplot(df, diag_kind="kde")
-    plt.show()
+    # plt.title("Correlation Matrix of VM Performance Metrics", fontsize=16)
+    # plt.xticks(rotation=45, ha="right", fontsize=12)
+    # plt.yticks(fontsize=12)
+    # plt.show()
+    # # Distribution of target column
+    # plt.figure(figsize=(10, 6))
+    # sns.histplot(df[target_column], kde=True)
+    # plt.title(f"Distribution of {target_column}")
+    # plt.xlabel(f"{target_column} (Standardized Units)")
+    # plt.ylabel("Frequency")
+    # plt.legend(labels=[f"{target_column} Distribution", "KDE"])
+    # plt.show()
+    # # Pairplot of features and target
+    # plt.figure(figsize=(10, 6))
+    # sns.pairplot(df, diag_kind="kde")
+    # plt.show()
 
 
 def identify_key_features(df, target_column):

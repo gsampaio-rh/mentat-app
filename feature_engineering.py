@@ -12,11 +12,17 @@ logger = logging.getLogger(__name__)
 
 def create_new_features(df):
     """Create new features based on domain knowledge."""
+    # Avoid division by zero or very small numbers by replacing them with NaN
+    df["RAM Memory (GiB)"].replace(0, np.nan, inplace=True)
+    df["CPU (GHz)"].replace(0, np.nan, inplace=True)
+
     df["CPU_to_Memory"] = df["CPU (GHz)"] / df["RAM Memory (GiB)"]
+    df["Memory Usage per CPU"] = df["Memory Usage (bytes)"] / df["CPU (GHz)"]
     df["Total_Network_IO"] = (
         df["Network Receive (bytes)"] + df["Network Transmit (bytes)"]
     )
     df["Total_Storage_IO"] = df["Storage Read (bytes)"] + df["Storage Write (bytes)"]
+
     return df
 
 
