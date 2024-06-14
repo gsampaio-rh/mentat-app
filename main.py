@@ -6,6 +6,7 @@ from data_preprocessing import (
     clean_and_scale_data,
     normalize_profiles,
     preprocess_for_utilization,
+    preprocess_for_cost_reduction,
 )
 from visualization import (
     plot_summary_statistics,
@@ -19,6 +20,7 @@ from visualization import (
     plot_cost_vs_performance,
     plot_pca_loadings,
     plot_business_insights_with_arrows,
+    plot_cost_reduction_opportunities,
 )
 from clustering import apply_kmeans_clustering, apply_pca, get_pca_loadings, apply_tsne
 from analysis import (
@@ -133,6 +135,12 @@ def main():
     # Visualize resource utilization efficiency
     avg_utilization_df = preprocess_for_utilization(combined_data)
     plot_resource_utilization_efficiency(avg_utilization_df)
+
+    # Preprocess for cost reduction analysis
+    avg_cost_df = preprocess_for_cost_reduction(combined_data)
+
+    # Plot cost reduction opportunities
+    plot_cost_reduction_opportunities(avg_cost_df)
 
     # Apply PCA and plot the results
     pca_df, pca = apply_pca(scaled_data, clustered_data)
