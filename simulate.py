@@ -8,17 +8,6 @@ def generate_time_series_data(start_date, periods, freq="T"):
 
 
 def simulate_random_events(data, event_prob=0.001, spike_magnitude_range=(1.5, 3)):
-    """
-    Introduces random events (spikes/drops) into the metrics.
-
-    Args:
-    - data (pd.DataFrame): DataFrame containing the simulated metrics.
-    - event_prob (float): Probability of an event occurring at any time point.
-    - spike_magnitude_range (tuple): Range of magnitudes for the spikes or drops.
-
-    Returns:
-    - pd.DataFrame: DataFrame with added random events.
-    """
     for column in [
         "CPU Utilization (%)",
         "Memory Utilization (%)",
@@ -34,7 +23,7 @@ def simulate_random_events(data, event_prob=0.001, spike_magnitude_range=(1.5, 3
         data.loc[event_indices, column] *= (
             np.random.choice([1, -1], size=event_indices.sum()) * spike_magnitudes
         )
-        data[column] = np.clip(data[column], 0, None)  # Ensure no negative values
+        data[column] = np.clip(data[column], 0, None)
 
     return data
 
@@ -44,7 +33,6 @@ def simulate_netflix_metrics(time_series):
     minutes_in_day = 24 * 60
     days_in_week = 7
 
-    # Sinusoidal patterns for daily and weekly trends
     daily_pattern = np.sin(
         2 * np.pi * (np.arange(len(time_series)) % minutes_in_day) / minutes_in_day
     )
@@ -105,17 +93,61 @@ def simulate_netflix_metrics(time_series):
     return df
 
 
+def simulate_business_metrics(df):
+    np.random.seed(42)
+
+    # Simulate business metrics
+    business_data = {
+        "Timestamp": df["Timestamp"],
+        "Server Configuration": df["Server Configuration"],
+        "Response Time (ms)": np.clip(
+            200
+            + 0.1 * df["CPU Utilization (%)"]
+            + 0.1 * df["Memory Utilization (%)"]
+            + np.random.normal(scale=20, size=len(df)),
+            0,
+            None,
+        ),
+    }
+    business_df = pd.DataFrame(business_data)
+
+    business_df["Customer Satisfaction (CSAT)"] = np.clip(
+        90
+        - 0.1 * business_df["Response Time (ms)"]
+        + np.random.normal(scale=5, size=len(business_df)),
+        0,
+        100,
+    )
+    business_df["Operational Costs ($)"] = (
+        5000
+        + 0.05 * df["Network I/O Throughput (Mbps)"]
+        + np.random.normal(scale=500, size=len(business_df))
+    )
+    business_df["Service Uptime (%)"] = np.clip(
+        99.9
+        - 0.01 * (df["CPU Utilization (%)"] > 80).astype(int)
+        + np.random.normal(scale=0.1, size=len(business_df)),
+        0,
+        100,
+    )
+
+    return business_df
+
+
 def generate_weekly_data():
     start_date = datetime.datetime.now() - datetime.timedelta(days=7)
     periods = 7 * 24 * 60  # One week of minute-level data
     time_series = generate_time_series_data(start_date, periods)
-    weekly_data = simulate_netflix_metrics(time_series)
-    return weekly_data
+    operational_data = simulate_netflix_metrics(time_series)
+    business_data = simulate_business_metrics(operational_data)
+    return operational_data, business_data
 
 
 # Generate the data
-weekly_data = generate_weekly_data()
+operational_data, business_data = generate_weekly_data()
 
 # Save to CSV
-csv_file_path = "data/netflix_weekly_metrics.csv"
-weekly_data.to_csv(csv_file_path, index=False)
+operational_csv_file_path = "data/netflix_operational_metrics.csv"
+business_csv_file_path = "data/netflix_business_metrics.csv"
+operational_data.to_csv(operational_csv_file_path, index=False)
+business_data.to_csv(business_csv_file_path, index=False)
