@@ -562,6 +562,41 @@ def plot_business_insights_with_arrows(cluster_business_summary, business_insigh
     plt.show()
 
 
+def generate_correlation_matrix(data, features):
+    correlation_matrix = data[features].corr()
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
+    plt.title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
+    plt.show()
+    return correlation_matrix
+
+
+def plot_temporal_trends(data, metrics):
+    data["Timestamp"] = pd.to_datetime(data["Timestamp"])
+    data.set_index("Timestamp", inplace=True)
+    plt.figure(figsize=(14, 8))
+    for metric in metrics:
+        data[metric].resample("D").mean().plot(label=metric)
+    plt.title("Temporal Trends of Business Metrics", fontsize=16)
+    plt.xlabel("Time")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.show()
+
+
+def generate_cluster_profiles(data, features, business_metrics):
+    cluster_profiles = data.groupby("cluster")[features + business_metrics].mean()
+    print("Cluster Profiles:")
+    print(cluster_profiles)
+    return cluster_profiles
+
+
+def identify_best_worst_clusters(cluster_profiles, metric):
+    best_cluster = cluster_profiles[metric].idxmax()
+    worst_cluster = cluster_profiles[metric].idxmin()
+    return best_cluster, worst_cluster
+
+
 def main():
     # Optional: Read data from a CSV file
     operational_file_path = (
@@ -638,6 +673,33 @@ def main():
     print(cluster_business_summary)
 
     # Step 10: Generate Business Insights
+    # Generate Correlation Matrix
+    # Merge operational and business data for correlation analysis
+    combined_data = pd.merge(
+        operational_data,
+        business_data,
+        on=["Timestamp", "Server Configuration", "cluster"],
+    )
+
+    correlation_matrix = generate_correlation_matrix(
+        combined_data, BUSINESS_METRICS + FEATURES
+    )
+
+    # Plot Temporal Trends
+    plot_temporal_trends(business_data, BUSINESS_METRICS)
+
+    # Generate Cluster Profiles
+    cluster_profiles = generate_cluster_profiles(
+        combined_data, FEATURES, BUSINESS_METRICS
+    )
+
+    # Identify Best and Worst Performing Clusters
+    best_cluster, worst_cluster = identify_best_worst_clusters(
+        cluster_profiles, "Customer Satisfaction (CSAT)"
+    )
+    print(f"Best Performing Cluster: {best_cluster}")
+    print(f"Worst Performing Cluster: {worst_cluster}")
+
     business_insights = generate_business_insights(cluster_business_summary)
     # print(business_insights)
 
