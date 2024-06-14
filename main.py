@@ -1,7 +1,7 @@
 # main.py
 
 from data_loader import read_csv_file
-from data_preprocessing import normalize_data, clean_and_scale_data
+from data_preprocessing import normalize_data, clean_and_scale_data, normalize_profiles
 from visualization import (
     plot_summary_statistics,
     plot_all_metrics_single_chart,
@@ -26,7 +26,6 @@ from analysis import (
 )
 
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 
 # Define constants for features and business metrics
 FEATURES = [
@@ -125,12 +124,7 @@ def main():
     )
 
     # Normalize cluster profiles for plotting
-    scaler = MinMaxScaler()
-    normalized_cluster_profiles = pd.DataFrame(
-        scaler.fit_transform(cluster_profiles),
-        columns=cluster_profiles.columns,
-        index=cluster_profiles.index,
-    )
+    normalized_cluster_profiles = normalize_profiles(cluster_profiles)
 
     # Step 12: Identify Best and Worst Performing Clusters
     best_cluster, worst_cluster = identify_best_worst_clusters(
@@ -156,11 +150,7 @@ def main():
     ].mean()
 
     # Normalize server configuration summary for plotting
-    normalized_server_config_summary = pd.DataFrame(
-        scaler.fit_transform(server_config_summary),
-        columns=server_config_summary.columns,
-        index=server_config_summary.index,
-    )
+    normalized_server_config_summary = normalize_profiles(server_config_summary)
 
     # Step 16: Plot Performance Metrics by Server Configuration
     plot_server_config_metrics(normalized_server_config_summary)

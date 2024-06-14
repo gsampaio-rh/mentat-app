@@ -38,3 +38,20 @@ def clean_and_scale_data(data, features):
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(data[features])
     return data, scaled_data
+
+
+def normalize_profiles(profiles):
+    """
+    Normalize the profiles DataFrame.
+
+    Args:
+    - profiles (pd.DataFrame): DataFrame containing the profiles.
+
+    Returns:
+    - pd.DataFrame: Normalized profiles DataFrame.
+    """
+    scaler = MinMaxScaler()
+    normalized_profiles = pd.DataFrame(
+        scaler.fit_transform(profiles), columns=profiles.columns, index=profiles.index
+    )
+    return normalized_profiles
