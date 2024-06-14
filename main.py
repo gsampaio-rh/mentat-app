@@ -75,36 +75,52 @@ def apply_kmeans_clustering(scaled_data, num_clusters=3):
 
 
 def visualize_clusters(data, features, clusters, kmeans_model):
+    plt.figure(figsize=(14, 7))
+
     # First plot: unlabeled data
-    plt.figure(figsize=(12, 6))
     plt.subplot(1, 2, 1)
-    plt.scatter(
+    scatter = plt.scatter(
         data[features[0]],
         data[features[1]],
-        s=data[features[2]] / 100,
+        s=data[features[2]] / 500,
         c=data[features[3]],
-        alpha=0.5,
+        alpha=0.6,
+        cmap="viridis",
     )
-    plt.colorbar(label=features[3])
+    plt.colorbar(scatter, label=features[3])
     plt.xlabel(features[0])
     plt.ylabel(features[1])
     plt.title("Unlabeled Data")
+    plt.grid(True)
+    plt.legend(
+        ["Size: Network I/O Throughput", "Color: Disk I/O Throughput"],
+        loc="upper right",
+    )
 
     # Second plot: labeled clusters
     plt.subplot(1, 2, 2)
-    sns.scatterplot(
-        x=data[features[0]],
-        y=data[features[1]],
-        hue=clusters,
-        palette="viridis",
-        size=data[features[2]] / 100,
-        alpha=0.5,
-        legend=True,
+    scatter = plt.scatter(
+        data[features[0]],
+        data[features[1]],
+        s=data[features[2]] / 500,
+        c=clusters,
+        alpha=0.6,
+        cmap="viridis",
+    )
+    plt.colorbar(scatter, label="Cluster")
+    plt.scatter(
+        kmeans_model.cluster_centers_[:, 0],
+        kmeans_model.cluster_centers_[:, 1],
+        s=300,
+        c="red",
+        label="Centroids",
+        edgecolor="k",
     )
     plt.xlabel(features[0])
     plt.ylabel(features[1])
     plt.title("Labeled Clusters")
     plt.legend()
+    plt.grid(True)
 
     plt.tight_layout()
     plt.show()
@@ -273,7 +289,7 @@ def main():
     simulated_data = read_csv_file(file_path)
 
     # Plot the bubble chart
-    plot_bubble_chart(simulated_data)
+    # plot_bubble_chart(simulated_data)
 
     # Step 2: Clean and Scale Data
     simulated_data, X_scaled_cleaned = clean_and_scale_data(simulated_data, FEATURES)
