@@ -26,6 +26,7 @@ from analysis import (
 )
 
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 # Define constants for features and business metrics
 FEATURES = [
@@ -123,6 +124,14 @@ def main():
         combined_data, FEATURES, BUSINESS_METRICS
     )
 
+    # Normalize cluster profiles for plotting
+    scaler = MinMaxScaler()
+    normalized_cluster_profiles = pd.DataFrame(
+        scaler.fit_transform(cluster_profiles),
+        columns=cluster_profiles.columns,
+        index=cluster_profiles.index,
+    )
+
     # Step 12: Identify Best and Worst Performing Clusters
     best_cluster, worst_cluster = identify_best_worst_clusters(
         cluster_profiles, "Customer Satisfaction (CSAT)"
@@ -136,7 +145,7 @@ def main():
         print(insight)
 
     # Step 14: Plot Resource Utilization Efficiency by Cluster
-    plot_resource_utilization_efficiency(cluster_profiles)
+    plot_resource_utilization_efficiency(normalized_cluster_profiles)
 
     # Step 15: Plot Cost-Benefit Analysis by Cluster
     plot_cost_benefit_analysis(cluster_profiles)
@@ -146,8 +155,15 @@ def main():
         FEATURES + BUSINESS_METRICS
     ].mean()
 
+    # Normalize server configuration summary for plotting
+    normalized_server_config_summary = pd.DataFrame(
+        scaler.fit_transform(server_config_summary),
+        columns=server_config_summary.columns,
+        index=server_config_summary.index,
+    )
+
     # Step 16: Plot Performance Metrics by Server Configuration
-    plot_server_config_metrics(server_config_summary)
+    plot_server_config_metrics(normalized_server_config_summary)
 
     # Step 17: Plot Cost vs Performance Metrics by Server Configuration
     plot_cost_vs_performance(server_config_summary)
