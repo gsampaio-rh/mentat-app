@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 
 def plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, model_name):
@@ -42,5 +43,29 @@ def plot_residuals(y_true, y_pred, model_name):
     plt.xlabel("Predicted")
     plt.ylabel("Residuals")
     plt.title(f"Residuals Plot - {model_name}")
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_comparison(y_true, y_pred_before, y_pred_after, title):
+    plt.figure(figsize=(14, 6))
+
+    # Plot for Before Tuning
+    plt.subplot(1, 2, 1)
+    sns.scatterplot(x=y_true, y=y_pred_before, alpha=0.5)
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--")
+    plt.xlabel("Actual")
+    plt.ylabel("Predicted")
+    plt.title("Before Hyperparameter Tuning")
+
+    # Plot for After Tuning
+    plt.subplot(1, 2, 2)
+    sns.scatterplot(x=y_true, y=y_pred_after, alpha=0.5)
+    plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "r--")
+    plt.xlabel("Actual")
+    plt.ylabel("Predicted")
+    plt.title("After Hyperparameter Tuning")
+
+    plt.suptitle(title)
     plt.tight_layout()
     plt.show()

@@ -63,10 +63,10 @@ def feature_selection(X_train, y_train):
     )
 
     # Plot feature importances
-    plt.figure(figsize=(12, 8))
-    sns.barplot(x="Importance", y="Feature", data=feature_importances)
-    plt.title("Feature Importances")
-    plt.show()
+    # plt.figure(figsize=(12, 8))
+    # sns.barplot(x="Importance", y="Feature", data=feature_importances)
+    # plt.title("Feature Importances")
+    # plt.show()
 
     logger.info(f"Feature importances:\n{feature_importances}")
     return feature_importances
