@@ -55,3 +55,13 @@ def normalize_profiles(profiles):
         scaler.fit_transform(profiles), columns=profiles.columns, index=profiles.index
     )
     return normalized_profiles
+
+
+def preprocess_for_utilization(merged_df):
+    utilization_df = merged_df[
+        ["Server Configuration", "CPU Utilization (%)", "Memory Utilization (%)"]
+    ]
+    avg_utilization_df = (
+        utilization_df.groupby("Server Configuration").mean().reset_index()
+    )
+    return avg_utilization_df

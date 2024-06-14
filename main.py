@@ -1,7 +1,12 @@
 # main.py
 
 from data_loader import read_csv_file
-from data_preprocessing import normalize_data, clean_and_scale_data, normalize_profiles
+from data_preprocessing import (
+    normalize_data,
+    clean_and_scale_data,
+    normalize_profiles,
+    preprocess_for_utilization,
+)
 from visualization import (
     plot_summary_statistics,
     plot_all_metrics_single_chart,
@@ -51,6 +56,7 @@ BUSINESS_METRICS = [
 # Combined features for clustering
 CLUSTERING_FEATURES = FEATURES + BUSINESS_METRICS
 
+
 def main():
     # Read data from CSV files
     operational_file_path = "data/netflix_operational_metrics.csv"  # Update this path to your actual CSV file
@@ -69,11 +75,20 @@ def main():
     normalized_operational_data = normalize_data(operational_data, FEATURES)
     normalized_business_data = normalize_data(business_data, BUSINESS_METRICS)
 
-    print("Operational Data Columns:", normalized_operational_data.columns.tolist())
-    print("Business Data Columns:", normalized_business_data.columns.tolist())
+    print(
+        "Normalized Operational Data Columns:",
+        normalized_operational_data.columns.tolist(),
+    )
+    print(
+        "Normalized Business Data Columns:", normalized_business_data.columns.tolist()
+    )
 
     # Merge the data on Timestamp and Server Configuration
-    combined_data = pd.merge(normalized_operational_data, normalized_business_data, on=["Timestamp", "Server Configuration"])
+    combined_data = pd.merge(
+        normalized_operational_data,
+        normalized_business_data,
+        on=["Timestamp", "Server Configuration"],
+    )
 
     # Display the head of the merged data to verify
     print("Combined Data Columns:", combined_data.columns.tolist())
@@ -115,8 +130,9 @@ def main():
     # Plot temporal trends
     plot_temporal_trends(business_data, BUSINESS_METRICS)
 
-    # Visualize clusters
-    # visualize_clusters(cleaned_data, "cluster", FEATURES + BUSINESS_METRICS)
+    # Visualize resource utilization efficiency
+    avg_utilization_df = preprocess_for_utilization(combined_data)
+    plot_resource_utilization_efficiency(avg_utilization_df)
 
     # Apply PCA and plot the results
     pca_df, pca = apply_pca(scaled_data, clustered_data)
@@ -126,26 +142,6 @@ def main():
     # Save PCA loadings
     pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
-    # Identify Best and Worst Performing Clusters
-    best_cluster, worst_cluster = identify_best_worst_clusters(
-        cluster_profiles, "Customer Satisfaction (CSAT)"
-    )
-    print(f"Best Performing Cluster: {best_cluster}")
-    print(f"Worst Performing Cluster: {worst_cluster}")
-
-    # Generate Business Insights
-    business_insights = generate_business_insights(cluster_profiles)
-    with open(os.path.join(OUTPUT_DIR, "business_insights.txt"), "w") as f:
-        for insight in business_insights:
-            f.write(insight + "\n")
-
-    # Generate Optimization Recommendations
-    optimization_recommendations = generate_optimization_recommendations(
-        cluster_profiles
-    )
-    with open(os.path.join(OUTPUT_DIR, "optimization_recommendations.txt"), "w") as f:
-        for rec in optimization_recommendations:
-            f.write(rec + "\n")
 
 if __name__ == "__main__":
     main()
