@@ -57,9 +57,10 @@ def plot_summary_statistics(data, features):
 
 # Function to normalize the data
 def normalize_data(df, features):
+    df_normalized = df.copy()
     scaler = MinMaxScaler()
-    df[features] = scaler.fit_transform(df[features])
-    return df
+    df_normalized[features] = scaler.fit_transform(df_normalized[features])
+    return df_normalized
 
 
 # Function to plot all key metrics in a single chart
@@ -436,10 +437,10 @@ def main():
     # Step 1: Demonstrate the raw data that we have
 
     # Normalize the data
-    data = normalize_data(simulated_data, FEATURES)
+    normalizedData = normalize_data(simulated_data, FEATURES)
 
     # Plot the combined bubble chart
-    plot_all_metrics_single_chart(simulated_data)
+    plot_all_metrics_single_chart(normalizedData)
 
     # Display summary statistics
     display_summary_statistics(simulated_data, FEATURES)
@@ -448,7 +449,7 @@ def main():
     plot_summary_statistics(simulated_data, FEATURES)
 
     # Plot pairwise relationships and distributions
-    plot_pairwise_relationships(simulated_data)
+    # plot_pairwise_relationships(simulated_data)
 
     # Plot the bubble chart
     plot_bubble_chart(simulated_data)
