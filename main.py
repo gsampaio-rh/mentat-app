@@ -15,7 +15,6 @@ from visualization import (
     plot_feature_importances,
     plot_residuals,
 )
-
 from sklearn.impute import SimpleImputer
 
 # Configure logging
@@ -133,6 +132,11 @@ def main():
     # Visualize Random Forest Performance
     y_pred_train = rf_model.predict(X_train)
     y_pred_test = rf_model.predict(X_test)
+
+    # Convert y_test to a Series if it's not already
+    if isinstance(y_test, pd.DataFrame):
+        y_test = y_test.squeeze()
+
     plot_model_performance(y_train, y_pred_train, y_test, y_pred_test, "Random Forest")
     plot_feature_importances(rf_model, features, "Random Forest")
     plot_residuals(y_test, y_pred_test, "Random Forest")

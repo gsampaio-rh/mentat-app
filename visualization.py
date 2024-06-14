@@ -38,9 +38,9 @@ def plot_residuals(y_true, y_pred, model_name):
     residuals = y_true - y_pred
     plt.figure(figsize=(10, 6))
     plt.scatter(y_pred, residuals, alpha=0.3)
-    plt.axhline(y=0, color='r', linestyle='--')
-    plt.xlabel('Predicted')
-    plt.ylabel('Residuals')
-    plt.title(f'Residuals Plot - {model_name}')
+    plt.axhline(y=0, color="r", linestyle="--")
+    plt.xlabel("Predicted")
+    plt.ylabel("Residuals")
+    plt.title(f"Residuals Plot - {model_name}")
     plt.tight_layout()
     plt.show()
