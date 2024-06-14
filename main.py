@@ -74,6 +74,42 @@ def apply_kmeans_clustering(scaled_data, num_clusters=3):
     return clusters, kmeans
 
 
+def visualize_clusters(data, features, clusters, kmeans_model):
+    # First plot: unlabeled data
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 2, 1)
+    plt.scatter(
+        data[features[0]],
+        data[features[1]],
+        s=data[features[2]] / 100,
+        c=data[features[3]],
+        alpha=0.5,
+    )
+    plt.colorbar(label=features[3])
+    plt.xlabel(features[0])
+    plt.ylabel(features[1])
+    plt.title("Unlabeled Data")
+
+    # Second plot: labeled clusters
+    plt.subplot(1, 2, 2)
+    sns.scatterplot(
+        x=data[features[0]],
+        y=data[features[1]],
+        hue=clusters,
+        palette="viridis",
+        size=data[features[2]] / 100,
+        alpha=0.5,
+        legend=True,
+    )
+    plt.xlabel(features[0])
+    plt.ylabel(features[1])
+    plt.title("Labeled Clusters")
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
 def plot_distributions(data, features, cluster_col="cluster"):
     for feature in features:
         plt.figure(figsize=(10, 6))
@@ -158,42 +194,6 @@ def generate_business_insights(cluster_business_summary):
             cluster_insights += "\n- Low service uptime detected, investigate and address potential causes to improve reliability."
         insights.append(cluster_insights)
     return insights
-
-
-def visualize_clusters(data, features, clusters, kmeans_model):
-    # First plot: unlabeled data
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 2, 1)
-    plt.scatter(
-        data[features[0]],
-        data[features[1]],
-        s=data[features[2]] / 100,
-        c=data[features[3]],
-        alpha=0.5,
-    )
-    plt.colorbar(label=features[3])
-    plt.xlabel(features[0])
-    plt.ylabel(features[1])
-    plt.title("Unlabeled Data")
-
-    # Second plot: labeled clusters
-    plt.subplot(1, 2, 2)
-    sns.scatterplot(
-        x=data[features[0]],
-        y=data[features[1]],
-        hue=clusters,
-        palette="viridis",
-        size=data[features[2]] / 100,
-        alpha=0.5,
-        legend=True,
-    )
-    plt.xlabel(features[0])
-    plt.ylabel(features[1])
-    plt.title("Labeled Clusters")
-    plt.legend()
-
-    plt.tight_layout()
-    plt.show()
 
 
 def apply_pca(scaled_data, clusters):
