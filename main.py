@@ -120,8 +120,11 @@ def main():
 
     # Apply PCA and plot the results
     pca_df, pca = apply_pca(scaled_data, clustered_data)
-    pca_loadings = get_pca_loadings(pca, FEATURES)
+    pca_loadings = get_pca_loadings(pca, CLUSTERING_FEATURES)
     print("PCA Loadings:\n", pca_loadings)
+
+    # Save PCA loadings
+    pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
 
 if __name__ == "__main__":
