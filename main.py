@@ -102,7 +102,6 @@ def visualize_clusters(data, features, clusters):
     scatter = plt.scatter(
         data[features[0]],
         data[features[1]],
-        s=data[features[2]] / 500,
         c=clusters,
         alpha=0.6,
         cmap="viridis",
@@ -111,7 +110,7 @@ def visualize_clusters(data, features, clusters):
     plt.xlabel(features[0])
     plt.ylabel(features[1])
     plt.title("Labeled Clusters")
-    plt.legend()
+    plt.legend(["Clusters", "Size: Network I/O Throughput"], loc="upper right")
     plt.grid(True)
 
     plt.tight_layout()
