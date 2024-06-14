@@ -247,7 +247,7 @@ def main():
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
-    # Commented out due to performance issues
+    # t-SNE visualization might take too long, so it's commented out
     # tsne_df = apply_tsne(X_scaled_cleaned, clusters_cleaned)
 
     # Step 6: Plot Distributions of Metrics within Clusters
@@ -268,11 +268,7 @@ def main():
 
     # Step 10: Calculate Cluster Business Summary
     cluster_business_summary = calculate_cluster_business_summary(simulated_data)
-    import ace_tools as tools
-
-    tools.display_dataframe_to_user(
-        name="Cluster Business Summary", dataframe=cluster_business_summary
-    )
+    print("Cluster Business Summary:")
     print(cluster_business_summary)
 
     # Step 11: Generate Business Insights
@@ -282,7 +278,7 @@ def main():
 
     # Step 12: Display PCA Loadings
     loadings = get_pca_loadings(pca, FEATURES)
-    tools.display_dataframe_to_user(name="PCA Loadings", dataframe=loadings)
+    print("PCA Loadings:")
     print(loadings)
 
 
