@@ -318,14 +318,18 @@ def generate_business_insights(cluster_business_summary):
     insights = []
     for cluster in cluster_business_summary.index:
         cluster_insights = f"\nCluster {cluster} Insights:"
-        if cluster_business_summary.loc[cluster, "Response Time (ms)"] > 250:
+        if cluster_business_summary.loc[cluster, "Response Time (ms)"] > 220:
             cluster_insights += "\n- High response time detected, consider optimizing server configurations to reduce response time."
-        if cluster_business_summary.loc[cluster, "Customer Satisfaction (CSAT)"] < 85:
-            cluster_insights += "\n- Low customer satisfaction detected, investigate potential causes related to server performance."
-        if cluster_business_summary.loc[cluster, "Operational Costs ($)"] > 1200:
+        elif cluster_business_summary.loc[cluster, "Response Time (ms)"] > 190:
+            cluster_insights += "\n- Response time could be improved. Analyze server performance and network latency."
+        if cluster_business_summary.loc[cluster, "Customer Satisfaction (CSAT)"] < 90:
+            cluster_insights += "\n- Customer satisfaction is lower than other clusters, investigate potential causes and gather customer feedback."
+        if cluster_business_summary.loc[cluster, "Operational Costs ($)"] > 1100:
             cluster_insights += "\n- High operational costs detected, consider optimizing resource usage to reduce costs."
-        if cluster_business_summary.loc[cluster, "Service Uptime (%)"] < 98:
-            cluster_insights += "\n- Low service uptime detected, investigate and address potential causes to improve reliability."
+        elif cluster_business_summary.loc[cluster, "Operational Costs ($)"] > 1000:
+            cluster_insights += "\n- Operational costs are relatively high. Investigate cost-saving measures without compromising service quality."
+        if cluster_business_summary.loc[cluster, "Service Uptime (%)"] < 99:
+            cluster_insights += "\n- Service uptime could be improved. Investigate and address potential causes to enhance reliability."
         insights.append(cluster_insights)
     return insights
 
@@ -502,6 +506,7 @@ def main():
 
     # Step 9: Simulate Business Metrics
     simulated_data = simulate_business_metrics(simulated_data)
+    # print(simulated_data)
 
     # Step 10: Calculate Cluster Business Summary
     cluster_business_summary = calculate_cluster_business_summary(simulated_data)
@@ -510,6 +515,7 @@ def main():
 
     # Step 11: Generate Business Insights
     business_insights = generate_business_insights(cluster_business_summary)
+    # print(business_insights)
     for insight in business_insights:
         print(insight)
 
