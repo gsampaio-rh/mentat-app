@@ -126,6 +126,26 @@ def main():
     # Save PCA loadings
     pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
+    # Identify Best and Worst Performing Clusters
+    best_cluster, worst_cluster = identify_best_worst_clusters(
+        cluster_profiles, "Customer Satisfaction (CSAT)"
+    )
+    print(f"Best Performing Cluster: {best_cluster}")
+    print(f"Worst Performing Cluster: {worst_cluster}")
+
+    # Generate Business Insights
+    business_insights = generate_business_insights(cluster_profiles)
+    with open(os.path.join(OUTPUT_DIR, "business_insights.txt"), "w") as f:
+        for insight in business_insights:
+            f.write(insight + "\n")
+
+    # Generate Optimization Recommendations
+    optimization_recommendations = generate_optimization_recommendations(
+        cluster_profiles
+    )
+    with open(os.path.join(OUTPUT_DIR, "optimization_recommendations.txt"), "w") as f:
+        for rec in optimization_recommendations:
+            f.write(rec + "\n")
 
 if __name__ == "__main__":
     main()

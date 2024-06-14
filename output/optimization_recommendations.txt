@@ -1,24 +1,35 @@
-Cluster 1 Optimization Recommendations:
-- CPU Utilization (%): High variance detected, consider optimizing this metric.
-- Memory Utilization (%): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High network throughput, consider increasing network bandwidth.
-- Disk I/O Throughput (MB/s): High variance detected, consider optimizing this metric.
-- Disk I/O Throughput (MB/s): High disk throughput, consider using faster storage solutions.
+Cluster 0 Recommendations:
+ - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
+ - Low memory utilization. Evaluate if resources can be scaled down to save costs.
+ - Low network throughput. Evaluate if network resources are over-provisioned.
+ - Low disk I/O. Evaluate if storage resources are over-provisioned.
+ - Low service uptime. Investigate causes of downtime and improve reliability.
 
-Cluster 0 Optimization Recommendations:
-- CPU Utilization (%): High variance detected, consider optimizing this metric.
-- Memory Utilization (%): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High network throughput, consider increasing network bandwidth.
-- Disk I/O Throughput (MB/s): High variance detected, consider optimizing this metric.
-- Disk I/O Throughput (MB/s): High disk throughput, consider using faster storage solutions.
+Cluster 1 Recommendations:
+ - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
+ - Low memory utilization. Evaluate if resources can be scaled down to save costs.
+ - Low network throughput. Evaluate if network resources are over-provisioned.
+ - Low disk I/O. Evaluate if storage resources are over-provisioned.
+ - Low service uptime. Investigate causes of downtime and improve reliability.
 
-Cluster 2 Optimization Recommendations:
-- CPU Utilization (%): High variance detected, consider optimizing this metric.
-- Memory Utilization (%): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High variance detected, consider optimizing this metric.
-- Network I/O Throughput (Mbps): High network throughput, consider increasing network bandwidth.
-- Disk I/O Throughput (MB/s): High variance detected, consider optimizing this metric.
-- Disk I/O Throughput (MB/s): High disk throughput, consider using faster storage solutions.
+Cluster 2 Recommendations:
+ - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
+ - Low memory utilization. Evaluate if resources can be scaled down to save costs.
+ - Low network throughput. Evaluate if network resources are over-provisioned.
+ - Low disk I/O. Evaluate if storage resources are over-provisioned.
+ - Low service uptime. Investigate causes of downtime and improve reliability.
+
+Cluster 3 Recommendations:
+ - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
+ - Low memory utilization. Evaluate if resources can be scaled down to save costs.
+ - Low network throughput. Evaluate if network resources are over-provisioned.
+ - Low disk I/O. Evaluate if storage resources are over-provisioned.
+ - Low service uptime. Investigate causes of downtime and improve reliability.
+
+Cluster 4 Recommendations:
+ - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
+ - Low memory utilization. Evaluate if resources can be scaled down to save costs.
+ - Low network throughput. Evaluate if network resources are over-provisioned.
+ - Low disk I/O. Evaluate if storage resources are over-provisioned.
+ - Low service uptime. Investigate causes of downtime and improve reliability.
 

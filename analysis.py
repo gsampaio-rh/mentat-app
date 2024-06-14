@@ -46,40 +46,69 @@ def analyze_distributions(data, features, cluster_col="cluster"):
     return analysis_results
 
 
-def generate_optimization_recommendations(analysis_results):
+def generate_optimization_recommendations(cluster_profiles):
     """
-    Generate optimization recommendations based on analysis results.
+    Generate optimization recommendations based on cluster profiles.
 
     Args:
-    - analysis_results (dict): Dictionary containing analysis results.
+    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
 
     Returns:
     - list: List of optimization recommendations.
     """
     recommendations = []
-    for cluster, metrics in analysis_results.items():
-        rec = f"Cluster {cluster} Optimization Recommendations:\n"
-        for feature, stats in metrics.items():
-            if stats["variance"] > 50:
-                rec += f"- {feature}: High variance detected, consider optimizing this metric.\n"
-            if feature == "CPU Utilization (%)" and stats["distribution"]["mean"] > 80:
-                rec += f"- {feature}: High average utilization, consider adding more CPU resources.\n"
-            if (
-                feature == "Memory Utilization (%)"
-                and stats["distribution"]["mean"] > 70
-            ):
-                rec += f"- {feature}: High average utilization, consider adding more memory or optimizing memory usage.\n"
-            if (
-                feature == "Network I/O Throughput (Mbps)"
-                and stats["distribution"]["mean"] > 30000
-            ):
-                rec += f"- {feature}: High network throughput, consider increasing network bandwidth.\n"
-            if (
-                feature == "Disk I/O Throughput (MB/s)"
-                and stats["distribution"]["mean"] > 100
-            ):
-                rec += f"- {feature}: High disk throughput, consider using faster storage solutions.\n"
-        recommendations.append(rec)
+    for cluster in cluster_profiles.index:
+        profile = cluster_profiles.loc[cluster]
+        recommendations.append(f"Cluster {cluster} Recommendations:")
+
+        if profile["CPU Utilization (%)"] > 80:
+            recommendations.append(
+                " - High CPU utilization. Consider load balancing or upgrading CPU resources."
+            )
+        elif profile["CPU Utilization (%)"] < 20:
+            recommendations.append(
+                " - Low CPU utilization. Evaluate if resources can be scaled down to save costs."
+            )
+
+        if profile["Memory Utilization (%)"] > 80:
+            recommendations.append(
+                " - High memory utilization. Consider adding more memory or optimizing memory usage."
+            )
+        elif profile["Memory Utilization (%)"] < 20:
+            recommendations.append(
+                " - Low memory utilization. Evaluate if resources can be scaled down to save costs."
+            )
+
+        if profile["Network I/O Throughput (Mbps)"] > 1000:
+            recommendations.append(
+                " - High network throughput. Ensure network infrastructure can handle the load."
+            )
+        elif profile["Network I/O Throughput (Mbps)"] < 100:
+            recommendations.append(
+                " - Low network throughput. Evaluate if network resources are over-provisioned."
+            )
+
+        if profile["Disk I/O Throughput (MB/s)"] > 500:
+            recommendations.append(
+                " - High disk I/O. Consider using faster storage solutions or optimizing disk access patterns."
+            )
+        elif profile["Disk I/O Throughput (MB/s)"] < 50:
+            recommendations.append(
+                " - Low disk I/O. Evaluate if storage resources are over-provisioned."
+            )
+
+        if profile["Service Uptime (%)"] < 95:
+            recommendations.append(
+                " - Low service uptime. Investigate causes of downtime and improve reliability."
+            )
+
+        if profile["Response Time (ms)"] > 1000:
+            recommendations.append(
+                " - High response time. Optimize application performance to reduce response time."
+            )
+
+        recommendations.append("")  # Add a newline for better readability
+
     return recommendations
 
 
@@ -99,32 +128,45 @@ def calculate_cluster_business_summary(data, business_metrics, cluster_col="clus
     return cluster_business_summary
 
 
-def generate_business_insights(cluster_business_summary):
+def generate_business_insights(cluster_profiles):
     """
-    Generate business insights based on the cluster business summary.
+    Generate actionable business insights based on cluster profiles.
 
     Args:
-    - cluster_business_summary (pd.DataFrame): DataFrame containing the cluster business summary.
+    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
 
     Returns:
     - list: List of business insights.
     """
     insights = []
-    for cluster in cluster_business_summary.index:
-        cluster_insights = f"\nCluster {cluster} Insights:"
-        if cluster_business_summary.loc[cluster, "Response Time (ms)"] > 220:
-            cluster_insights += "\n- High response time detected, consider optimizing server configurations to reduce response time."
-        elif cluster_business_summary.loc[cluster, "Response Time (ms)"] > 190:
-            cluster_insights += "\n- Response time could be improved. Analyze server performance and network latency."
-        if cluster_business_summary.loc[cluster, "Customer Satisfaction (CSAT)"] < 90:
-            cluster_insights += "\n- Customer satisfaction is lower than other clusters, investigate potential causes and gather customer feedback."
-        if cluster_business_summary.loc[cluster, "Operational Costs ($)"] > 1100:
-            cluster_insights += "\n- High operational costs detected, consider optimizing resource usage to reduce costs."
-        elif cluster_business_summary.loc[cluster, "Operational Costs ($)"] > 1000:
-            cluster_insights += "\n- Operational costs are relatively high. Investigate cost-saving measures without compromising service quality."
-        if cluster_business_summary.loc[cluster, "Service Uptime (%)"] < 99:
-            cluster_insights += "\n- Service uptime could be improved. Investigate and address potential causes to enhance reliability."
-        insights.append(cluster_insights)
+    for cluster in cluster_profiles.index:
+        profile = cluster_profiles.loc[cluster]
+        insights.append(f"Cluster {cluster} Insights:")
+        if profile["Customer Satisfaction (CSAT)"] > 80:
+            insights.append(
+                " - High customer satisfaction. Continue current practices."
+            )
+        elif profile["Customer Satisfaction (CSAT)"] < 50:
+            insights.append(
+                " - Low customer satisfaction. Investigate and address issues."
+            )
+
+        if profile["Operational Costs ($)"] > 10000:
+            insights.append(
+                " - High operational costs. Look for optimization opportunities."
+            )
+        elif profile["Operational Costs ($)"] < 5000:
+            insights.append(
+                " - Low operational costs. Evaluate if cost savings are affecting performance."
+            )
+
+        if profile["Service Uptime (%)"] < 95:
+            insights.append(
+                " - Low service uptime. Improve reliability and reduce downtimes."
+            )
+
+        insights.append("")  # Add a newline for better readability
+
     return insights
 
 
