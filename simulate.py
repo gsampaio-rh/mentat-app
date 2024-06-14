@@ -4,44 +4,90 @@ import datetime
 
 
 def generate_time_series_data(start_date, periods, freq="T"):
-    """
-    Generates a time series with the given frequency.
-
-    Args:
-    - start_date (datetime): The start date and time for the series.
-    - periods (int): Number of periods to generate.
-    - freq (str): Frequency string (e.g., 'T' for minutes).
-
-    Returns:
-    - pd.DatetimeIndex: Generated time series.
-    """
     return pd.date_range(start=start_date, periods=periods, freq=freq)
 
 
-def simulate_netflix_metrics(time_series):
+def simulate_random_events(data, event_prob=0.001, spike_magnitude_range=(1.5, 3)):
     """
-    Simulates Netflix server metrics for the given time series.
+    Introduces random events (spikes/drops) into the metrics.
 
     Args:
-    - time_series (pd.DatetimeIndex): Time series for which to generate metrics.
+    - data (pd.DataFrame): DataFrame containing the simulated metrics.
+    - event_prob (float): Probability of an event occurring at any time point.
+    - spike_magnitude_range (tuple): Range of magnitudes for the spikes or drops.
 
     Returns:
-    - pd.DataFrame: DataFrame containing the simulated metrics.
+    - pd.DataFrame: DataFrame with added random events.
     """
+    for column in [
+        "CPU Utilization (%)",
+        "Memory Utilization (%)",
+        "Network I/O Throughput (Mbps)",
+        "Disk I/O Throughput (MB/s)",
+    ]:
+        event_indices = np.random.choice(
+            [False, True], size=len(data), p=[1 - event_prob, event_prob]
+        )
+        spike_magnitudes = np.random.uniform(
+            spike_magnitude_range[0], spike_magnitude_range[1], size=event_indices.sum()
+        )
+        data.loc[event_indices, column] *= (
+            np.random.choice([1, -1], size=event_indices.sum()) * spike_magnitudes
+        )
+        data[column] = np.clip(data[column], 0, None)  # Ensure no negative values
+
+    return data
+
+
+def simulate_netflix_metrics(time_series):
     np.random.seed(42)
+    minutes_in_day = 24 * 60
+    days_in_week = 7
+
+    # Sinusoidal patterns for daily and weekly trends
+    daily_pattern = np.sin(
+        2 * np.pi * (np.arange(len(time_series)) % minutes_in_day) / minutes_in_day
+    )
+    weekly_pattern = np.sin(
+        2
+        * np.pi
+        * (np.arange(len(time_series)) % (minutes_in_day * days_in_week))
+        / (minutes_in_day * days_in_week)
+    )
+
     data = {
         "Timestamp": time_series,
-        "CPU Utilization (%)": np.random.normal(
-            loc=70, scale=10, size=len(time_series)
+        "CPU Utilization (%)": np.clip(
+            70
+            + 10 * np.random.normal(size=len(time_series))
+            + 5 * daily_pattern
+            + 2 * weekly_pattern,
+            0,
+            100,
         ),
-        "Memory Utilization (%)": np.random.normal(
-            loc=60, scale=10, size=len(time_series)
+        "Memory Utilization (%)": np.clip(
+            60
+            + 10 * np.random.normal(size=len(time_series))
+            + 4 * daily_pattern
+            + 1.5 * weekly_pattern,
+            0,
+            100,
         ),
-        "Network I/O Throughput (Mbps)": np.random.normal(
-            loc=40000, scale=10000, size=len(time_series)
+        "Network I/O Throughput (Mbps)": np.clip(
+            40000
+            + 10000 * np.random.normal(size=len(time_series))
+            + 3000 * daily_pattern
+            + 1000 * weekly_pattern,
+            0,
+            None,
         ),
-        "Disk I/O Throughput (MB/s)": np.random.normal(
-            loc=150, scale=50, size=len(time_series)
+        "Disk I/O Throughput (MB/s)": np.clip(
+            150
+            + 50 * np.random.normal(size=len(time_series))
+            + 20 * daily_pattern
+            + 10 * weekly_pattern,
+            0,
+            None,
         ),
         "Server Configuration": np.random.choice(
             [
@@ -53,16 +99,13 @@ def simulate_netflix_metrics(time_series):
             size=len(time_series),
         ),
     }
-    return pd.DataFrame(data)
+
+    df = pd.DataFrame(data)
+    df = simulate_random_events(df)
+    return df
 
 
 def generate_weekly_data():
-    """
-    Generates one week of simulated Netflix server metrics data with minute-level granularity.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing the weekly metrics.
-    """
     start_date = datetime.datetime.now() - datetime.timedelta(days=7)
     periods = 7 * 24 * 60  # One week of minute-level data
     time_series = generate_time_series_data(start_date, periods)
@@ -76,5 +119,3 @@ weekly_data = generate_weekly_data()
 # Save to CSV
 csv_file_path = "netflix_weekly_metrics.csv"
 weekly_data.to_csv(csv_file_path, index=False)
-
-print(f"CSV file saved as {csv_file_path}")
