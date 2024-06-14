@@ -282,9 +282,11 @@ def plot_resource_utilization_efficiency(avg_utilization_df):
 def calculate_cost_reduction_thresholds(data):
     thresholds = {
         "high_cost": data["Operational Costs ($)"].quantile(0.75),
-        "low_impact": data[
-            ["Customer Satisfaction (CSAT)", "Response Time (ms)", "Service Uptime (%)"]
-        ].quantile(0.25),
+        "low_impact_cs": data["Customer Satisfaction (CSAT)"].quantile(0.25),
+        "high_impact_rt": data["Response Time (ms)"].quantile(
+            0.75
+        ),  # Higher response time is worse
+        "low_impact_uptime": data["Service Uptime (%)"].quantile(0.25),
     }
     return thresholds
 
@@ -292,49 +294,95 @@ def calculate_cost_reduction_thresholds(data):
 def plot_cost_reduction_opportunities(avg_cost_df):
     thresholds = calculate_cost_reduction_thresholds(avg_cost_df)
 
+    # Print out the server configuration names to debug the issue
+    print(
+        "Server Configurations in DataFrame:",
+        avg_cost_df["Server Configuration"].unique(),
+    )
+
     # Create a scatter plot
-    fig = plt.figure(figsize=(10, 6))
+    fig = plt.figure(figsize=(12, 8))
 
-    # Highlight high cost and low impact configurations
-    avg_cost_df["Color"] = "blue"  # Default color
-    avg_cost_df.loc[
-        (avg_cost_df["Operational Costs ($)"] >= thresholds["high_cost"])
-        & (
-            avg_cost_df["Customer Satisfaction (CSAT)"]
-            <= thresholds["low_impact"]["Customer Satisfaction (CSAT)"]
-        )
-        & (
-            avg_cost_df["Response Time (ms)"]
-            >= thresholds["low_impact"]["Response Time (ms)"]
-        )
-        & (
-            avg_cost_df["Service Uptime (%)"]
-            <= thresholds["low_impact"]["Service Uptime (%)"]
-        ),
-        "Color",
-    ] = "red"
+    # Define marker shapes and colors
+    markers = {
+        "EC2 Recommendation System Servers (p3.2xlarge)": "o",
+        "EC2 API Servers (m5.large)": "s",
+        "EC2 Streaming Servers (c5.large)": "^",
+        "EC2 Database Servers (r5.large)": "D",
+    }
+    colors = {
+        "EC2 Recommendation System Servers (p3.2xlarge)": "red",
+        "EC2 API Servers (m5.large)": "orange",
+        "EC2 Streaming Servers (c5.large)": "blue",
+        "EC2 Database Servers (r5.large)": "green",
+    }
 
+    # Plot all data points
     for i in range(len(avg_cost_df)):
+        server_config = avg_cost_df["Server Configuration"][i]
         plt.scatter(
             avg_cost_df["Operational Costs ($)"][i],
             avg_cost_df["Customer Satisfaction (CSAT)"][i],
-            color=avg_cost_df["Color"][i],
+            color=colors.get(server_config, "grey"),
+            marker=markers.get(server_config, "o"),
+            s=100,
+            label=server_config,
         )
         plt.text(
             avg_cost_df["Operational Costs ($)"][i],
             avg_cost_df["Customer Satisfaction (CSAT)"][i],
-            avg_cost_df["Server Configuration"][i],
+            server_config,
             fontsize=9,
         )
+
+    # Highlight high cost and low impact points
+    high_cost_low_impact = avg_cost_df.loc[
+        (avg_cost_df["Operational Costs ($)"] >= thresholds["high_cost"])
+        & (avg_cost_df["Customer Satisfaction (CSAT)"] <= thresholds["low_impact_cs"])
+        & (avg_cost_df["Response Time (ms)"] >= thresholds["high_impact_rt"])
+        & (avg_cost_df["Service Uptime (%)"] <= thresholds["low_impact_uptime"])
+    ]
+
+    for i in range(len(high_cost_low_impact)):
+        plt.scatter(
+            high_cost_low_impact["Operational Costs ($)"].iloc[i],
+            high_cost_low_impact["Customer Satisfaction (CSAT)"].iloc[i],
+            color="red",
+            marker="x",
+            s=100,
+        )
+        plt.annotate(
+            "High Cost, Low Impact",
+            (
+                high_cost_low_impact["Operational Costs ($)"].iloc[i],
+                high_cost_low_impact["Customer Satisfaction (CSAT)"].iloc[i],
+            ),
+            textcoords="offset points",
+            xytext=(0, 10),
+            ha="center",
+            color="red",
+        )
+
+    plt.axvline(
+        thresholds["high_cost"],
+        color="grey",
+        linestyle="--",
+        label="High Cost Threshold",
+    )
+    plt.axhline(
+        thresholds["low_impact_cs"],
+        color="grey",
+        linestyle="--",
+        label="Low Impact Threshold (CSAT)",
+    )
 
     plt.title("Operational Cost Reduction Opportunities")
     plt.xlabel("Average Operational Costs ($)")
     plt.ylabel("Customer Satisfaction (CSAT)")
     plt.grid(True)
-    plt.legend(["High Cost & Low Impact (Red)"])
+    plt.legend(loc="best")
     save_plot(fig, "cost_reduction_opportunities.png")
     plt.show()
-
 
 
 def plot_cost_benefit_analysis(cluster_profiles):
