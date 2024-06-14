@@ -74,7 +74,7 @@ def apply_kmeans_clustering(scaled_data, num_clusters=3):
     return clusters, kmeans
 
 
-def visualize_clusters(data, features, clusters, kmeans_model):
+def visualize_clusters(data, features, clusters):
     plt.figure(figsize=(14, 7))
 
     # First plot: unlabeled data
@@ -291,7 +291,7 @@ def main():
     simulated_data["cluster"] = clusters_cleaned
 
     # Step 4: Visualize Clusters
-    visualize_clusters(simulated_data, FEATURES, clusters_cleaned, kmeans)
+    visualize_clusters(simulated_data, FEATURES, clusters_cleaned)
 
     # Step 5: Apply PCA and t-SNE for Visualization
     pca_df, pca = apply_pca(X_scaled_cleaned, clusters_cleaned)
