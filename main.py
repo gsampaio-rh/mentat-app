@@ -61,7 +61,9 @@ CLUSTERING_FEATURES = FEATURES + BUSINESS_METRICS
 
 def main():
     # Read data from CSV files
-    operational_file_path = "data/netflix_operational_metrics.csv"  # Update this path to your actual CSV file
+    operational_file_path = (
+        "data/netflix_operational_metrics.csv"  # Update this path to your actual CSV file
+    )
     business_file_path = (
         "data/netflix_business_metrics.csv"  # Update this path to your actual CSV file
     )
