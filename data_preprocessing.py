@@ -33,10 +33,34 @@ def clean_and_scale_data(data, features):
     - pd.DataFrame: Cleaned DataFrame
     - np.array: Scaled data
     """
+    # Initial Data Shape
+    initial_shape = data.shape
+    print(f"Initial Data Shape: {initial_shape}")
+
+    # Missing Values before Cleaning
+    missing_values_before = data[features].isnull().sum()
+    print(f"Missing Values Before Cleaning:\n{missing_values_before}")
+
+    # Cleaning Data
     data[features] = data[features].apply(pd.to_numeric, errors="coerce")
     data = data.dropna(subset=features)
+
+    # Rows Dropped
+    rows_dropped = initial_shape[0] - data.shape[0]
+    print(f"Rows Dropped: {rows_dropped}")
+
+    # Missing Values after Cleaning
+    missing_values_after = data[features].isnull().sum()
+    print(f"Missing Values After Cleaning:\n{missing_values_after}")
+
+    # Final Data Shape
+    final_shape = data.shape
+    print(f"Final Data Shape: {final_shape}")
+
+    # Scaling Data
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(data[features])
+
     return data, scaled_data
 
 
