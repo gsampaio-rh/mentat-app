@@ -60,25 +60,20 @@ CLUSTERING_FEATURES = FEATURES + BUSINESS_METRICS
 
 
 def main():
-    # Read data from CSV files
-    operational_file_path = (
-        "data/netflix_operational_metrics.csv"  # Update this path to your actual CSV file
-    )
-    business_file_path = (
-        "data/netflix_business_metrics.csv"  # Update this path to your actual CSV file
-    )
+    # File paths
+    operational_file_path = "data/netflix_operational_metrics.csv"
+    business_file_path = "data/netflix_business_metrics.csv"
 
+    # Step 1: Read Data
     operational_data = read_csv_file(operational_file_path)
     business_data = read_csv_file(business_file_path)
-
-    # Ensure the columns are correctly read
+    print("Successfully read the files.")
     print("Operational Data Columns:", operational_data.columns.tolist())
     print("Business Data Columns:", business_data.columns.tolist())
 
-    # Step 1: Normalize the data
+    # Step 2: Normalize Data
     normalized_operational_data = normalize_data(operational_data, FEATURES)
     normalized_business_data = normalize_data(business_data, BUSINESS_METRICS)
-
     print(
         "Normalized Operational Data Columns:",
         normalized_operational_data.columns.tolist(),
@@ -87,19 +82,21 @@ def main():
         "Normalized Business Data Columns:", normalized_business_data.columns.tolist()
     )
 
-    # Merge the data on Timestamp and Server Configuration
+    # Step 3: Merge Data
     combined_data = pd.merge(
         normalized_operational_data,
         normalized_business_data,
         on=["Timestamp", "Server Configuration"],
     )
-
-    # Display the head of the merged data to verify
     print("Combined Data Columns:", combined_data.columns.tolist())
     print("Combined Data Head:\n", combined_data.head())
 
-    # Clean and scale the data
+    # Step 4: Clean and Scale Data
     cleaned_data, scaled_data = clean_and_scale_data(combined_data, CLUSTERING_FEATURES)
+    print("Cleaned Data Shape:", cleaned_data.shape)
+
+    # Step 5: Display Final KPIs
+    print("Data Preprocessing Completed Successfully.")
 
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
