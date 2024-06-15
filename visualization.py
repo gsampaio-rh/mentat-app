@@ -25,7 +25,7 @@ def plot_summary_statistics(data, features):
     colors = sns.color_palette("husl", num_features)
 
     # Adjust the figure size to fit a MacBook 15" screen
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 1.5))
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 1.1))
 
     for i, feature in enumerate(features):
         row, col = divmod(i, num_cols)

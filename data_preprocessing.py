@@ -116,33 +116,6 @@ def preprocess_for_cost_reduction(merged_df):
     return avg_cost_df
 
 
-def handle_outliers(df, features, method="IQR"):
-    """
-    Handle outliers in the DataFrame.
-
-    Args:
-    - df (pd.DataFrame): DataFrame containing the data.
-    - features (list): List of features to handle outliers.
-    - method (str): Method to handle outliers ('IQR' or 'z-score').
-
-    Returns:
-    - pd.DataFrame: DataFrame with outliers handled.
-    """
-    if method == "IQR":
-        for feature in features:
-            Q1 = df[feature].quantile(0.25)
-            Q3 = df[feature].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            df = df[(df[feature] >= lower_bound) & (df[feature] <= upper_bound)]
-    elif method == "z-score":
-        from scipy import stats
-
-        df = df[(np.abs(stats.zscore(df[features])) < 3).all(axis=1)]
-    return df
-
-
 def add_new_features(df):
     """
     Add new features to the DataFrame.
@@ -153,19 +126,47 @@ def add_new_features(df):
     Returns:
     - pd.DataFrame: DataFrame with new features added.
     """
-    df["CPU_to_Memory_Ratio"] = df["CPU Utilization (%)"] / df["Memory Utilization (%)"]
-    df["Disk_to_Network_Throughput_Ratio"] = (
-        df["Disk I/O Throughput (MB/s)"] / df["Network I/O Throughput (Mbps)"]
+    # Convert Timestamp to DatetimeIndex
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"])
+    df.set_index("Timestamp", inplace=True)
+
+    # Resource Utilization Ratios
+    df["CPU_to_Network_Ratio"] = (
+        df["CPU Utilization (%)"] / df["Network I/O Throughput (Mbps)"]
     )
-    df["Cost_per_Satisfaction"] = (
-        df["Operational Costs ($)"] / df["Customer Satisfaction (CSAT)"]
+    df["Memory_to_Disk_Ratio"] = (
+        df["Memory Utilization (%)"] / df["Disk I/O Throughput (MB/s)"]
     )
-    df["Response_Time_per_Satisfaction"] = (
-        df["Response Time (ms)"] / df["Customer Satisfaction (CSAT)"]
+
+    # Efficiency Metrics
+    df["Cost_per_Throughput"] = df["Operational Costs ($)"] / (
+        df["Network I/O Throughput (Mbps)"] + df["Disk I/O Throughput (MB/s)"]
+    )
+    df["Uptime_Efficiency"] = df["Service Uptime (%)"] / df["Operational Costs ($)"]
+
+    # Customer Impact Metrics
+    df["Satisfaction_per_Dollar"] = (
+        df["Customer Satisfaction (CSAT)"] / df["Operational Costs ($)"]
+    )
+    df["Cost_per_Uptime"] = df["Operational Costs ($)"] / df["Service Uptime (%)"]
+
+    # Performance and Cost Efficiency
+    df["Response_per_Dollar"] = df["Response Time (ms)"] / df["Operational Costs ($)"]
+    df["Cost_Efficiency_Index"] = df["Service Uptime (%)"] / df["Operational Costs ($)"]
+
+    # Aggregated Metrics
+    df["Monthly_Avg_Satisfaction"] = (
+        df["Customer Satisfaction (CSAT)"].resample("MS").transform("mean")
+    )
+    df["Monthly_Total_Costs"] = (
+        df["Operational Costs ($)"].resample("MS").transform("sum")
     )
 
     # Handle potential infinite values due to division by zero
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.dropna(inplace=True)
+
+    # Reset the index to include the Timestamp column again
+    df.reset_index(inplace=True)
 
     return df

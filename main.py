@@ -59,6 +59,20 @@ BUSINESS_METRICS = [
 # Combined features for clustering
 CLUSTERING_FEATURES = FEATURES + BUSINESS_METRICS
 
+# Additional Metrics
+ADDITIONAL_METRICS = [
+    'CPU_to_Network_Ratio', 
+    'Memory_to_Disk_Ratio', 
+    'Cost_per_Throughput', 
+    'Uptime_Efficiency', 
+    'Satisfaction_per_Dollar', 
+    'Cost_per_Uptime', 
+    'Response_per_Dollar', 
+    'Cost_Efficiency_Index',
+    'Monthly_Avg_Satisfaction',
+    'Monthly_Total_Costs'
+]
+
 
 def main():
     # File paths
@@ -110,17 +124,12 @@ def main():
     # Step 6: Display Final KPIs
     print("Data Preprocessing Completed Successfully.")
 
-    # Plot summary statistics
+    # Plot summary statistics from cleaned and enriched data
     plot_summary_statistics(
         enriched_data,
         FEATURES
         + BUSINESS_METRICS
-        + [
-            "CPU_to_Memory_Ratio",
-            "Disk_to_Network_Throughput_Ratio",
-            "Cost_per_Satisfaction",
-            "Response_Time_per_Satisfaction",
-        ],
+        + ADDITIONAL_METRICS,
     )
 
     # Step 7: Generate and plot correlation matrix
@@ -128,27 +137,17 @@ def main():
         enriched_data,
         FEATURES
         + BUSINESS_METRICS
-        + [
-            "CPU_to_Memory_Ratio",
-            "Disk_to_Network_Throughput_Ratio",
-            "Cost_per_Satisfaction",
-            "Response_Time_per_Satisfaction",
-        ],
+        + ADDITIONAL_METRICS,
     )
     print("\nCorrelation Matrix:\n", correlation_matrix)
 
     # Step 8: Plot pair plots
-    plot_pair_plots(
-        enriched_data,
-        FEATURES
-        + BUSINESS_METRICS
-        + [
-            "CPU_to_Memory_Ratio",
-            "Disk_to_Network_Throughput_Ratio",
-            "Cost_per_Satisfaction",
-            "Response_Time_per_Satisfaction",
-        ],
-    )
+    # plot_pair_plots(
+    #     enriched_data,
+    #     FEATURES
+    #     + BUSINESS_METRICS
+    #     + ADDITIONAL_METRICS,
+    # )
 
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
