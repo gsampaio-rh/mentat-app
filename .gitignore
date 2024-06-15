@@ -169,7 +169,7 @@ cython_debug/
 SOURCE_DOCUMENTS/.DS_Store
 
 #csv
-*.csv
+# *.csv
 
 #data
 data/
