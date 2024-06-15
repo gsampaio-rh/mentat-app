@@ -1,14 +1,12 @@
-# clustering.py
-
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.metrics import silhouette_score
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import save_plot
-from sklearn.metrics import silhouette_score
 
 
 def apply_kmeans_clustering(scaled_data, num_clusters=3):
@@ -168,32 +166,47 @@ def tune_kmeans_clustering(scaled_data, max_clusters=10):
     - np.array: Cluster labels for the best clustering.
     - KMeans: Fitted KMeans model for the best clustering.
     """
+    silhouette_scores = []
+    cluster_range = range(2, max_clusters + 1)
     best_num_clusters = 0
     best_silhouette_score = -1
     best_clusters = None
     best_kmeans_model = None
 
-    for num_clusters in range(2, max_clusters + 1):
+    for num_clusters in cluster_range:
         clusters, kmeans_model = apply_kmeans_clustering(
             scaled_data, num_clusters=num_clusters
         )
         score = silhouette_score(scaled_data, clusters)
-        print(f"Silhouette Score for {num_clusters} clusters: {score}")
+        silhouette_scores.append(score)
 
         if score > best_silhouette_score:
             best_silhouette_score = score
             best_num_clusters = num_clusters
             best_clusters = clusters
             best_kmeans_model = kmeans_model
-            
-    # Validate the clustering
-    # The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The score ranges from -1 to 1, where:
-    # A score close to 1 indicates that the data points are well-clustered.
-    # A score close to 0 indicates overlapping clusters.
-    # A score close to -1 indicates that the data points are likely assigned to the wrong clusters.
 
+    # Validate the clustering
     print(
         f"Best number of clusters: {best_num_clusters} with silhouette score: {best_silhouette_score}"
     )
 
-    return best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model
+    # Plot silhouette scores
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x=list(cluster_range), y=silhouette_scores, marker="o")
+    plt.axvline(
+        x=best_num_clusters,
+        linestyle="--",
+        color="r",
+        label=f"Best: {best_num_clusters} clusters",
+    )
+    plt.xlabel("Number of Clusters")
+    plt.ylabel("Silhouette Score")
+    plt.title("Silhouette Scores for Different Numbers of Clusters")
+    plt.legend()
+    plt.grid(True, linestyle="--", linewidth=0.5)
+    plt.tight_layout()
+    save_plot(plt.gcf(), "silhouette_scores.png")
+    plt.show()
+
+    return best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_modelns.lineplot(x=list(cluster_range), y=silhouette_scores, marker="o")

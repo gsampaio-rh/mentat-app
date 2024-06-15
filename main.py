@@ -166,7 +166,7 @@ def main():
 
     # Step 12: Get and save PCA loadings
     pca_loadings = get_pca_loadings(pca_model, CLUSTERING_FEATURES)
-    pca_loadings.to_csv("pca_loadings.csv")
+    pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
     # Step 13: Apply t-SNE and plot
     tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], best_clusters)
