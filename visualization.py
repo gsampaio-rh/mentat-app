@@ -30,10 +30,12 @@ def plot_summary_statistics(data, features):
     for i, feature in enumerate(features):
         row, col = divmod(i, num_cols)
         sns.histplot(data[feature], kde=True, ax=axes[row, col], color=colors[i])
+        median_value = data[feature].median()
         axes[row, col].set_title(f"{feature} Distribution")
         axes[row, col].set_xlabel(feature)
         axes[row, col].set_ylabel("Count")
         axes[row, col].legend([feature])
+        axes[row, col].grid(True, linestyle="--", linewidth=0.5)
 
     # Remove any empty subplots
     for j in range(i + 1, num_rows * num_cols):
