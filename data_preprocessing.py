@@ -1,168 +1,64 @@
-# data_preprocessing.py
-
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-import numpy as np
+import logging
 
 
-def normalize_data(df, features):
+def handle_missing_values(data):
     """
-    Normalize the specified features in the DataFrame.
+    Handle missing values in the data.
 
-    Args:
-    - df (pd.DataFrame): DataFrame containing the data.
-    - features (list): List of features to normalize.
+    Parameters:
+    data (pd.DataFrame): The input data with potential missing values.
 
     Returns:
-    - pd.DataFrame: DataFrame with normalized features.
+    pd.DataFrame: Data with missing values handled.
     """
-    # Initial Data Description
-    initial_description = df[features].describe()
-    print(f"Initial Data Description:\n{initial_description}")
-
-    # Normalizing Data
-    df_normalized = df.copy()
-    scaler = MinMaxScaler()
-    df_normalized[features] = scaler.fit_transform(df_normalized[features])
-
-    # Final Data Description
-    final_description = df_normalized[features].describe()
-    print(f"Final Data Description:\n{final_description}")
-
-    return df_normalized
+    try:
+        # Fill missing values with the mean of the column
+        data = data.fillna(data.mean())
+        logging.info("Missing values handled successfully.")
+        return data
+    except Exception as e:
+        logging.error(f"An error occurred while handling missing values: {e}")
+        return None
 
 
-def clean_and_scale_data(data, features):
+def merge_data(operational_data, business_data):
     """
-    Clean and scale the specified features in the DataFrame.
+    Merge operational and business data on a common key.
 
-    Args:
-    - data (pd.DataFrame): DataFrame containing the data.
-    - features (list): List of features to clean and scale.
+    Parameters:
+    operational_data (pd.DataFrame): The operational metrics data.
+    business_data (pd.DataFrame): The business metrics data.
 
     Returns:
-    - pd.DataFrame: Cleaned DataFrame
-    - np.array: Scaled data
+    pd.DataFrame: The merged data.
     """
-    # Initial Data Shape
-    initial_shape = data.shape
-    print(f"Initial Data Shape: {initial_shape}")
-
-    # Missing Values before Cleaning
-    missing_values_before = data[features].isnull().sum()
-    print(f"Missing Values Before Cleaning:\n{missing_values_before}")
-
-    # Cleaning Data
-    data[features] = data[features].apply(pd.to_numeric, errors="coerce")
-    data = data.dropna(subset=features)
-
-    # Rows Dropped
-    rows_dropped = initial_shape[0] - data.shape[0]
-    print(f"Rows Dropped: {rows_dropped}")
-
-    # Missing Values after Cleaning
-    missing_values_after = data[features].isnull().sum()
-    print(f"Missing Values After Cleaning:\n{missing_values_after}")
-
-    # Final Data Shape
-    final_shape = data.shape
-    print(f"Final Data Shape: {final_shape}")
-
-    # Scaling Data
-    scaler = StandardScaler()
-    scaled_data = scaler.fit_transform(data[features])
-
-    return data, scaled_data
+    try:
+        merged_data = pd.merge(operational_data, business_data, on="timestamp")
+        logging.info("Data merged successfully.")
+        return merged_data
+    except KeyError as e:
+        logging.error(f"Merge key error: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"An error occurred while merging data: {e}")
+        return None
 
 
-def normalize_profiles(profiles):
+def normalize_data(data):
     """
-    Normalize the profiles DataFrame.
+    Normalize the data.
 
-    Args:
-    - profiles (pd.DataFrame): DataFrame containing the profiles.
+    Parameters:
+    data (pd.DataFrame): The input data to normalize.
 
     Returns:
-    - pd.DataFrame: Normalized profiles DataFrame.
+    pd.DataFrame: The normalized data.
     """
-    scaler = MinMaxScaler()
-    normalized_profiles = pd.DataFrame(
-        scaler.fit_transform(profiles), columns=profiles.columns, index=profiles.index
-    )
-    return normalized_profiles
-
-
-def preprocess_for_utilization(merged_df):
-    utilization_df = merged_df[
-        ["Server Configuration", "CPU Utilization (%)", "Memory Utilization (%)"]
-    ]
-    avg_utilization_df = (
-        utilization_df.groupby("Server Configuration").mean().reset_index()
-    )
-    return avg_utilization_df
-
-
-def preprocess_for_cost_reduction(merged_df):
-    cost_df = merged_df[
-        [
-            "Server Configuration",
-            "Operational Costs ($)",
-            "Customer Satisfaction (CSAT)",
-            "Response Time (ms)",
-            "Service Uptime (%)",
-        ]
-    ]
-    avg_cost_df = cost_df.groupby("Server Configuration").mean().reset_index()
-    return avg_cost_df
-
-
-def add_new_features(df):
-    """
-    Add new features to the DataFrame.
-
-    Args:
-    - df (pd.DataFrame): DataFrame containing the original features.
-
-    Returns:
-    - pd.DataFrame: DataFrame with new features added.
-    """
-    # Convert Timestamp to DatetimeIndex
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"])
-    df.set_index("Timestamp", inplace=True)
-
-    # Resource Utilization Ratios
-    df["CPU_to_Network_Ratio"] = (
-        df["CPU Utilization (%)"] / df["Network I/O Throughput (Mbps)"]
-    )
-    df["Memory_to_Disk_Ratio"] = (
-        df["Memory Utilization (%)"] / df["Disk I/O Throughput (MB/s)"]
-    )
-
-    # Efficiency Metrics
-    df["Cost_per_Throughput"] = df["Operational Costs ($)"] / (
-        df["Network I/O Throughput (Mbps)"] + df["Disk I/O Throughput (MB/s)"]
-    )
-    df["Uptime_Efficiency"] = df["Service Uptime (%)"] / df["Operational Costs ($)"]
-
-    # Customer Impact Metrics
-    df["Satisfaction_per_Dollar"] = (
-        df["Customer Satisfaction (CSAT)"] / df["Operational Costs ($)"]
-    )
-    df["Cost_per_Uptime"] = df["Operational Costs ($)"] / df["Service Uptime (%)"]
-
-    # Performance and Cost Efficiency
-    df["Response_per_Dollar"] = df["Response Time (ms)"] / df["Operational Costs ($)"]
-    df["Cost_Efficiency_Index"] = df["Service Uptime (%)"] / df["Operational Costs ($)"]
-
-    # Aggregated Metrics (Hourly)
-    df['Hourly_Avg_Satisfaction'] = df['Customer Satisfaction (CSAT)'].rolling('1H').mean()
-    df['Hourly_Total_Costs'] = df['Operational Costs ($)'].rolling('1H').sum()
-
-    # Handle potential infinite values due to division by zero
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df.dropna(inplace=True)
-
-    # Reset the index to include the Timestamp column again
-    df.reset_index(inplace=True)
-
-    return df
+    try:
+        normalized_data = (data - data.min()) / (data.max() - data.min())
+        logging.info("Data normalized successfully.")
+        return normalized_data
+    except Exception as e:
+        logging.error(f"An error occurred while normalizing data: {e}")
+        return None

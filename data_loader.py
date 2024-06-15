@@ -1,22 +1,32 @@
-# data_loader.py
-
 import pandas as pd
+import logging
 
 
-def read_csv_file(file_path):
+def load_data(operational_file, business_file):
     """
-    Reads a CSV file and returns a DataFrame.
+    Load operational and business data from CSV files.
 
-    Args:
-    - file_path (str): Path to the CSV file.
+    Parameters:
+    operational_file (str): Path to the operational metrics CSV file.
+    business_file (str): Path to the business metrics CSV file.
 
     Returns:
-    - pd.DataFrame: DataFrame containing the CSV data.
+    pd.DataFrame, pd.DataFrame: DataFrames containing the operational and business data.
     """
     try:
-        data = pd.read_csv(file_path)
-        print(f"Successfully read the file: {file_path}")
-        return data
+        operational_data = pd.read_csv(operational_file)
+        business_data = pd.read_csv(business_file)
+        logging.info("Data loaded successfully.")
+        return operational_data, business_data
+    except FileNotFoundError as e:
+        logging.error(f"File not found: {e}")
+        return None, None
+    except pd.errors.EmptyDataError as e:
+        logging.error(f"No data: {e}")
+        return None, None
+    except pd.errors.ParserError as e:
+        logging.error(f"Parsing error: {e}")
+        return None, None
     except Exception as e:
-        print(f"Error reading the file {file_path}: {e}")
-        return None
+        logging.error(f"An error occurred: {e}")
+        return None, None
