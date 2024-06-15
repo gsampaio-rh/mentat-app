@@ -71,6 +71,12 @@ def main():
     print("Operational Data Columns:", operational_data.columns.tolist())
     print("Business Data Columns:", business_data.columns.tolist())
 
+    # Print initial dataset summaries
+    print("\nInitial Operational Data Summary")
+    display_summary_statistics(operational_data, FEATURES)
+    print("\nInitial Business Data Summary")
+    display_summary_statistics(business_data, BUSINESS_METRICS)
+
     # Step 2: Normalize Data
     normalized_operational_data = normalize_data(operational_data, FEATURES)
     normalized_business_data = normalize_data(business_data, BUSINESS_METRICS)
