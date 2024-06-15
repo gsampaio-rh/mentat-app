@@ -32,3 +32,13 @@ class Config:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         logging.getLogger().addHandler(logging.StreamHandler())
+
+    @staticmethod
+    def ensure_output_dir_exists():
+        """
+        Ensure that the output directory exists. Create it if it doesn't.
+        """
+        output_dir = Config.OUTPUT_DIR
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        return output_dir

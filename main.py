@@ -20,6 +20,9 @@ def main():
     # Setup logging
     Config.setup_logging()
 
+    # Ensure output directory exists
+    Config.ensure_output_dir_exists()
+
     # Load data
     logging.info("Loading data...")
     operational_data, business_data = load_data(
@@ -42,11 +45,13 @@ def main():
     # Perform clustering analysis
     logging.info("Performing clustering analysis...")
     clustering = Clustering()
-    clusters, kmeans_model = clustering.apply_kmeans_clustering(combined_data)
-    pca_df, pca_model = clustering.apply_pca(combined_data, clusters)
-    tsne_df = clustering.apply_tsne(combined_data, clusters)
+    # Exclude non-numeric columns
+    numeric_data = combined_data.drop(columns=["Timestamp", "Server Configuration"])
+    clusters, kmeans_model = clustering.apply_kmeans_clustering(numeric_data)
+    pca_df, pca_model = clustering.apply_pca(numeric_data, clusters)
+    tsne_df = clustering.apply_tsne(numeric_data, clusters)
     best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model = (
-        clustering.tune_kmeans_clustering(combined_data)
+        clustering.tune_kmeans_clustering(numeric_data)
     )
     logging.info(
         f"Best number of clusters: {best_num_clusters} with Silhouette Score: {best_silhouette_score}"
@@ -54,6 +59,7 @@ def main():
 
     # Enrich combined data with cluster labels
     combined_data["Cluster"] = clusters
+    print("Combined data columns after clustering:", combined_data.columns.tolist())
 
     # Perform other analyses
     logging.info("Performing other analyses...")

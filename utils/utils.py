@@ -1,7 +1,7 @@
 import logging
 import matplotlib.pyplot as plt
 import os
-from config import Config
+from config.config import Config
 
 
 def save_plot(fig, filename):

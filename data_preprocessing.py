@@ -32,15 +32,21 @@ def preprocess_data(operational_data, business_data):
             columns=numeric_business_data.columns,
         )
 
-        # Merge the scaled operational and business data
+        # Merge the scaled operational and business data along with non-numeric columns
         combined_data = pd.merge(
+            operational_data[["Timestamp", "Server Configuration"]],
             scaled_operational_data,
-            scaled_business_data,
             left_index=True,
             right_index=True,
         )
+        combined_data = pd.merge(
+            combined_data, scaled_business_data, left_index=True, right_index=True
+        )
 
         logging.info("Data preprocessing completed successfully.")
+        print(
+            "Combined data columns after preprocessing:", combined_data.columns.tolist()
+        )
         return combined_data
     except Exception as e:
         logging.error(f"An error occurred during data preprocessing: {e}")
