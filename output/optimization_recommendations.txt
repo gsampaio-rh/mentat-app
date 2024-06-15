@@ -1,35 +1,6 @@
-Cluster 0 Recommendations:
- - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
- - Low memory utilization. Evaluate if resources can be scaled down to save costs.
- - Low network throughput. Evaluate if network resources are over-provisioned.
- - Low disk I/O. Evaluate if storage resources are over-provisioned.
- - Low service uptime. Investigate causes of downtime and improve reliability.
-
-Cluster 1 Recommendations:
- - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
- - Low memory utilization. Evaluate if resources can be scaled down to save costs.
- - Low network throughput. Evaluate if network resources are over-provisioned.
- - Low disk I/O. Evaluate if storage resources are over-provisioned.
- - Low service uptime. Investigate causes of downtime and improve reliability.
-
-Cluster 2 Recommendations:
- - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
- - Low memory utilization. Evaluate if resources can be scaled down to save costs.
- - Low network throughput. Evaluate if network resources are over-provisioned.
- - Low disk I/O. Evaluate if storage resources are over-provisioned.
- - Low service uptime. Investigate causes of downtime and improve reliability.
-
-Cluster 3 Recommendations:
- - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
- - Low memory utilization. Evaluate if resources can be scaled down to save costs.
- - Low network throughput. Evaluate if network resources are over-provisioned.
- - Low disk I/O. Evaluate if storage resources are over-provisioned.
- - Low service uptime. Investigate causes of downtime and improve reliability.
-
-Cluster 4 Recommendations:
- - Low CPU utilization. Evaluate if resources can be scaled down to save costs.
- - Low memory utilization. Evaluate if resources can be scaled down to save costs.
- - Low network throughput. Evaluate if network resources are over-provisioned.
- - Low disk I/O. Evaluate if storage resources are over-provisioned.
- - Low service uptime. Investigate causes of downtime and improve reliability.
-
+Cluster 0.0 Recommendations:
+- Customer satisfaction is low. Investigate and address customer issues.
+- Service uptime is below the target. Improve system reliability.
+Cluster 1.0 Recommendations:
+- Customer satisfaction is low. Investigate and address customer issues.
+- Service uptime is below the target. Improve system reliability.

@@ -8,18 +8,3 @@ Cluster 1 Insights:
  - Low operational costs. Evaluate if cost savings are affecting performance.
  - Low service uptime. Improve reliability and reduce downtimes.
 
-Cluster 2 Insights:
- - Low customer satisfaction. Investigate and address issues.
- - Low operational costs. Evaluate if cost savings are affecting performance.
- - Low service uptime. Improve reliability and reduce downtimes.
-
-Cluster 3 Insights:
- - Low customer satisfaction. Investigate and address issues.
- - Low operational costs. Evaluate if cost savings are affecting performance.
- - Low service uptime. Improve reliability and reduce downtimes.
-
-Cluster 4 Insights:
- - Low customer satisfaction. Investigate and address issues.
- - Low operational costs. Evaluate if cost savings are affecting performance.
- - Low service uptime. Improve reliability and reduce downtimes.
-

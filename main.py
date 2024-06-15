@@ -192,7 +192,7 @@ def main():
         )
         key_drivers = key_drivers[key_drivers > 0.5].index.tolist()
         key_drivers.remove(metric)
-        plot_pair_plots(enriched_data, key_drivers + [metric], OUTPUT_DIR, metric)
+        plot_pair_plots(enriched_data, key_drivers + [metric])
 
     # Visualize key driver impact over time
     for metric in BUSINESS_METRICS:

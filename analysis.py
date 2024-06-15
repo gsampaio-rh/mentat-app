@@ -47,68 +47,97 @@ def analyze_distributions(data, features, cluster_col="cluster"):
     return analysis_results
 
 
+def generate_cluster_profiles(enriched_data, features, business_metrics):
+    """
+    Generate profiles for each cluster with summary statistics.
+
+    Args:
+    - enriched_data (pd.DataFrame): DataFrame containing the enriched data with cluster assignments.
+    - features (list): List of operational features.
+    - business_metrics (list): List of business metrics.
+
+    Returns:
+    - pd.DataFrame: DataFrame containing the cluster profiles.
+    """
+    cluster_profiles = []
+
+    # Define default values for all expected keys
+    default_profile = {
+        "Cluster": None,
+        "Mean CPU Utilization (%)": 0,
+        "Mean Memory Utilization (%)": 0,
+        "Mean Network I/O Throughput (Mbps)": 0,
+        "Mean Disk I/O Throughput (MB/s)": 0,
+        "Mean Operational Costs ($)": 0,
+        "Mean Customer Satisfaction (CSAT)": 0,
+        "Mean Service Uptime (%)": 0,
+        "Mean Response Time (ms)": 0,
+    }
+
+    # Compute profiles for each cluster
+    for cluster_id in enriched_data["Cluster"].unique():
+        cluster_data = enriched_data[enriched_data["Cluster"] == cluster_id]
+
+        # Start with default profile
+        profile = default_profile.copy()
+        profile["Cluster"] = cluster_id
+
+        # Update with actual values
+        profile.update(cluster_data[features + business_metrics].mean().to_dict())
+
+        cluster_profiles.append(profile)
+
+    cluster_profiles_df = pd.DataFrame(cluster_profiles)
+    return cluster_profiles_df
+
+
 def generate_optimization_recommendations(cluster_profiles):
     """
     Generate optimization recommendations based on cluster profiles.
 
     Args:
-    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles.
+    - cluster_profiles (pd.DataFrame): DataFrame containing the cluster profiles with summary statistics.
 
     Returns:
-    - list: List of optimization recommendations.
+    - list: List of recommendations.
     """
     recommendations = []
-    for cluster in cluster_profiles.index:
-        profile = cluster_profiles.loc[cluster]
-        recommendations.append(f"Cluster {cluster} Recommendations:")
 
-        if profile["CPU Utilization (%)"] > 80:
-            recommendations.append(
-                " - High CPU utilization. Consider load balancing or upgrading CPU resources."
-            )
-        elif profile["CPU Utilization (%)"] < 20:
-            recommendations.append(
-                " - Low CPU utilization. Evaluate if resources can be scaled down to save costs."
-            )
+    for idx, profile in cluster_profiles.iterrows():
+        cluster_id = profile["Cluster"]
+        recommendation = f"Cluster {cluster_id} Recommendations:\n"
 
-        if profile["Memory Utilization (%)"] > 80:
-            recommendations.append(
-                " - High memory utilization. Consider adding more memory or optimizing memory usage."
-            )
-        elif profile["Memory Utilization (%)"] < 20:
-            recommendations.append(
-                " - Low memory utilization. Evaluate if resources can be scaled down to save costs."
-            )
+        if profile.get("Mean CPU Utilization (%)", 0) > 80:
+            recommendation += "- CPU utilization is high. Consider load balancing or upgrading CPU capacity.\n"
 
-        if profile["Network I/O Throughput (Mbps)"] > 1000:
-            recommendations.append(
-                " - High network throughput. Ensure network infrastructure can handle the load."
-            )
-        elif profile["Network I/O Throughput (Mbps)"] < 100:
-            recommendations.append(
-                " - Low network throughput. Evaluate if network resources are over-provisioned."
+        if profile.get("Mean Memory Utilization (%)", 0) > 80:
+            recommendation += "- Memory utilization is high. Consider optimizing memory usage or upgrading memory capacity.\n"
+
+        if profile.get("Mean Network I/O Throughput (Mbps)", 0) > 1000:
+            recommendation += "- Network I/O throughput is high. Ensure network bandwidth is sufficient.\n"
+
+        if profile.get("Mean Disk I/O Throughput (MB/s)", 0) > 500:
+            recommendation += "- Disk I/O throughput is high. Consider using faster storage solutions.\n"
+
+        if profile.get("Mean Operational Costs ($)", 0) > 10000:
+            recommendation += (
+                "- Operational costs are high. Look into cost-saving measures.\n"
             )
 
-        if profile["Disk I/O Throughput (MB/s)"] > 500:
-            recommendations.append(
-                " - High disk I/O. Consider using faster storage solutions or optimizing disk access patterns."
-            )
-        elif profile["Disk I/O Throughput (MB/s)"] < 50:
-            recommendations.append(
-                " - Low disk I/O. Evaluate if storage resources are over-provisioned."
+        if profile.get("Mean Customer Satisfaction (CSAT)", 0) < 70:
+            recommendation += "- Customer satisfaction is low. Investigate and address customer issues.\n"
+
+        if profile.get("Mean Service Uptime (%)", 0) < 99:
+            recommendation += (
+                "- Service uptime is below the target. Improve system reliability.\n"
             )
 
-        if profile["Service Uptime (%)"] < 95:
-            recommendations.append(
-                " - Low service uptime. Investigate causes of downtime and improve reliability."
+        if profile.get("Mean Response Time (ms)", 0) > 200:
+            recommendation += (
+                "- Response time is high. Optimize performance to reduce latency.\n"
             )
 
-        if profile["Response Time (ms)"] > 1000:
-            recommendations.append(
-                " - High response time. Optimize application performance to reduce response time."
-            )
-
-        recommendations.append("")  # Add a newline for better readability
+        recommendations.append(recommendation.strip())
 
     return recommendations
 
@@ -169,25 +198,6 @@ def generate_business_insights(cluster_profiles):
         insights.append("")  # Add a newline for better readability
 
     return insights
-
-
-def generate_cluster_profiles(data, features, business_metrics, cluster_col="cluster"):
-    """
-    Generate profiles for each cluster based on the specified features and business metrics.
-
-    Args:
-    - data (pd.DataFrame): DataFrame containing the data.
-    - features (list): List of features to include in the profiles.
-    - business_metrics (list): List of business metrics to include in the profiles.
-    - cluster_col (str): Name of the cluster column.
-
-    Returns:
-    - pd.DataFrame: DataFrame containing the cluster profiles.
-    """
-    cluster_profiles = data.groupby(cluster_col)[features + business_metrics].mean()
-    print("Cluster Profiles:")
-    print(cluster_profiles)
-    return cluster_profiles
 
 
 def identify_best_worst_clusters(cluster_profiles, metric):
