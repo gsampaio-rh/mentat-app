@@ -69,8 +69,8 @@ ADDITIONAL_METRICS = [
     'Cost_per_Uptime', 
     'Response_per_Dollar', 
     'Cost_Efficiency_Index',
-    'Monthly_Avg_Satisfaction',
-    'Monthly_Total_Costs'
+    'Hourly_Avg_Satisfaction',
+    'Hourly_Total_Costs'
 ]
 
 

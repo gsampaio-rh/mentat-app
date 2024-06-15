@@ -154,13 +154,9 @@ def add_new_features(df):
     df["Response_per_Dollar"] = df["Response Time (ms)"] / df["Operational Costs ($)"]
     df["Cost_Efficiency_Index"] = df["Service Uptime (%)"] / df["Operational Costs ($)"]
 
-    # Aggregated Metrics
-    df["Monthly_Avg_Satisfaction"] = (
-        df["Customer Satisfaction (CSAT)"].resample("MS").transform("mean")
-    )
-    df["Monthly_Total_Costs"] = (
-        df["Operational Costs ($)"].resample("MS").transform("sum")
-    )
+    # Aggregated Metrics (Hourly)
+    df['Hourly_Avg_Satisfaction'] = df['Customer Satisfaction (CSAT)'].rolling('1H').mean()
+    df['Hourly_Total_Costs'] = df['Operational Costs ($)'].rolling('1H').sum()
 
     # Handle potential infinite values due to division by zero
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
