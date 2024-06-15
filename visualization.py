@@ -21,12 +21,15 @@ def plot_summary_statistics(data, features):
     num_cols = 2  # Number of columns
     num_rows = (num_features + 1) // num_cols  # Calculate number of rows
 
+    # Define colors for each feature
+    colors = sns.color_palette("husl", num_features)
+
     # Adjust the figure size to fit a MacBook 15" screen
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 2))
 
     for i, feature in enumerate(features):
         row, col = divmod(i, num_cols)
-        sns.histplot(data[feature], kde=True, ax=axes[row, col])
+        sns.histplot(data[feature], kde=True, ax=axes[row, col], color=colors[i])
         axes[row, col].set_title(f"{feature} Distribution")
         axes[row, col].set_xlabel(feature)
         axes[row, col].set_ylabel("Count")
