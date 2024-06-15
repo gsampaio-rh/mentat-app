@@ -18,9 +18,11 @@ def plot_summary_statistics(data, features):
     - features (list): List of features to plot summary statistics for.
     """
     num_features = len(features)
-    num_cols = 2
-    num_rows = (num_features + 1) // num_cols
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 5))
+    num_cols = 2  # Number of columns
+    num_rows = (num_features + 1) // num_cols  # Calculate number of rows
+
+    # Adjust the figure size to fit a MacBook 15" screen
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(15, num_rows * 2))
 
     for i, feature in enumerate(features):
         row, col = divmod(i, num_cols)
