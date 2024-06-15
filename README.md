@@ -1,9 +1,8 @@
-
 # Mentat Server Metrics Analysis
 
 ## Introduction
 
-This project aims to simulate and analyze server metrics to provide actionable business insights. The analysis includes clustering server performance data, correlating it with business metrics, and generating recommendations for optimization.
+This project aims to simulate and analyze server metrics to provide actionable business insights. The analysis includes clustering server performance data based on server configurations, correlating it with business metrics, and generating recommendations for optimization.
 
 ## Business Objectives
 
@@ -47,10 +46,21 @@ The project simulates realistic server metrics data to perform the analysis. The
 1. **Data Reading:** Reads operational and business metrics from CSV files.
 2. **Data Merging:** Merges operational and business data for comprehensive analysis.
 3. **Correlation Analysis:** Generates a correlation matrix between server performance and business metrics.
-4. **Clustering:** Applies K-Means clustering to group server performance data.
-5. **Profile Generation:** Creates profiles for each cluster based on average metrics.
+4. **Clustering:** Applies K-Means clustering to group server performance data based on server configurations.
+5. **Profile Generation:** Creates profiles for each cluster based on average metrics and server configurations.
 6. **Insights Generation:** Provides optimization recommendations and business insights.
 7. **Visualization:** Plots key metrics, temporal trends, and cluster insights.
+
+## Clusters Configuration
+
+The server performance data is grouped into clusters based on different configurations:
+
+- **EC2 API Servers (m5.large)**
+- **EC2 Database Servers (r5.large)**
+- **EC2 Streaming Servers (c5.large)**
+- **EC2 Recommendation System Servers (p3.2xlarge)**
+
+Each cluster represents a specific type of server configuration, which helps in understanding the performance characteristics and business impact of each type.
 
 ## Results
 
@@ -58,9 +68,45 @@ The analysis provides:
 
 - A correlation matrix between server performance and business metrics.
 - Temporal trends of key business metrics.
-- Profiles for each cluster.
+- Profiles for each cluster based on server configuration.
 - Best and worst performing clusters.
 - Optimization recommendations and business insights.
+
+### Detailed Business Metrics and Insights
+
+1. **Customer Satisfaction (CSAT)**
+   - **Average CSAT Score:** Track the average customer satisfaction score over different time periods.
+   - **CSAT vs. Server Performance:** Analyze how variations in CPU, memory, network I/O, and disk I/O impact customer satisfaction.
+   - **CSAT Trends:** Identify trends and patterns in customer satisfaction over time.
+
+2. **Operational Costs**
+   - **Total Operational Costs:** Calculate the total operational costs associated with running the servers.
+   - **Cost per Server:** Determine the operational cost for each server configuration.
+   - **Cost Efficiency:** Identify the most cost-efficient server configurations based on their performance and business impact.
+   - **Cost Reduction Opportunities:** Provide recommendations for reducing operational costs without compromising performance.
+
+3. **Service Uptime**
+   - **Overall Uptime Percentage:** Measure the overall uptime percentage across all server configurations.
+   - **Uptime per Server:** Track the uptime percentage for each server configuration.
+   - **Downtime Analysis:** Identify the root causes of downtime and suggest mitigation strategies.
+   - **Impact of Uptime on Business Metrics:** Analyze how server uptime affects customer satisfaction and operational costs.
+
+4. **Response Time**
+   - **Average Response Time:** Calculate the average response time across all server configurations.
+   - **Response Time per Server:** Track the response time for each server configuration.
+   - **Response Time Trends:** Identify trends and patterns in server response times over different periods.
+   - **Response Time Optimization:** Provide recommendations for optimizing response times based on server performance data.
+
+5. **Server Performance Insights**
+   - **High-Performance Clusters:** Identify clusters of servers that consistently perform well based on their configurations.
+   - **Low-Performance Clusters:** Identify clusters of servers that require optimization based on their configurations.
+   - **Performance Variability:** Measure the variability in server performance and its impact on business metrics.
+   - **Performance Improvement Suggestions:** Provide actionable recommendations for improving server performance based on the clustering analysis.
+
+6. **Business Impact Analysis**
+   - **Correlation Analysis:** Show the correlation between operational metrics (CPU, memory, network I/O, disk I/O) and business metrics (CSAT, operational costs, uptime, response time).
+   - **Key Drivers:** Identify the key drivers that have the most significant impact on business metrics.
+   - **Scenario Analysis:** Conduct scenario analysis to predict the impact of changes in server performance on business outcomes.
 
 ## Installation
 
