@@ -152,3 +152,48 @@ def apply_tsne(scaled_data, clusters):
     plt.show()
 
     return tsne_df
+
+
+def tune_kmeans_clustering(scaled_data, max_clusters=10):
+    """
+    Tune the number of clusters for K-Means clustering using silhouette scores.
+
+    Args:
+    - scaled_data (np.array): Scaled data.
+    - max_clusters (int): Maximum number of clusters to test.
+
+    Returns:
+    - int: Best number of clusters.
+    - float: Best silhouette score.
+    - np.array: Cluster labels for the best clustering.
+    - KMeans: Fitted KMeans model for the best clustering.
+    """
+    best_num_clusters = 0
+    best_silhouette_score = -1
+    best_clusters = None
+    best_kmeans_model = None
+
+    for num_clusters in range(2, max_clusters + 1):
+        clusters, kmeans_model = apply_kmeans_clustering(
+            scaled_data, num_clusters=num_clusters
+        )
+        score = silhouette_score(scaled_data, clusters)
+        print(f"Silhouette Score for {num_clusters} clusters: {score}")
+
+        if score > best_silhouette_score:
+            best_silhouette_score = score
+            best_num_clusters = num_clusters
+            best_clusters = clusters
+            best_kmeans_model = kmeans_model
+            
+    # Validate the clustering
+    # The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The score ranges from -1 to 1, where:
+    # A score close to 1 indicates that the data points are well-clustered.
+    # A score close to 0 indicates overlapping clusters.
+    # A score close to -1 indicates that the data points are likely assigned to the wrong clusters.
+
+    print(
+        f"Best number of clusters: {best_num_clusters} with silhouette score: {best_silhouette_score}"
+    )
+
+    return best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model

@@ -23,7 +23,14 @@ from visualization import (
     plot_business_insights_with_arrows,
     plot_cost_reduction_opportunities,
 )
-from clustering import apply_kmeans_clustering, apply_pca, get_pca_loadings, apply_tsne
+from clustering import (
+    apply_kmeans_clustering,
+    apply_pca,
+    get_pca_loadings,
+    apply_tsne,
+    tune_kmeans_clustering,
+)
+
 from analysis import (
     display_summary_statistics,
     analyze_distributions,
@@ -145,32 +152,24 @@ def main():
     #     FEATURES + BUSINESS_METRICS + ADDITIONAL_METRICS,
     # )
 
-    # Step 9: Apply K-Means Clustering
-    # Ensure scaled_data length matches the cleaned_data index
-    clusters, kmeans_model = apply_kmeans_clustering(
-        scaled_data[: len(cleaned_data)], num_clusters=5
+    # Step 9: Tune the number of clusters
+    best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model = (
+        tune_kmeans_clustering(scaled_data[: len(cleaned_data)])
     )
-    enriched_data["Cluster"] = clusters
+    enriched_data["Cluster"] = best_clusters
 
-    # Step 10: Apply PCA and plot
-    pca_df, pca_model = apply_pca(scaled_data[: len(cleaned_data)], clusters)
+    # Step 10: Use the best number of clusters
+    enriched_data["Cluster"] = best_clusters
 
-    # Step 11: Get and save PCA loadings
+    # Step 11: Apply PCA and plot
+    pca_df, pca_model = apply_pca(scaled_data[: len(cleaned_data)], best_clusters)
+
+    # Step 12: Get and save PCA loadings
     pca_loadings = get_pca_loadings(pca_model, CLUSTERING_FEATURES)
     pca_loadings.to_csv("pca_loadings.csv")
 
-    # Step 12: Apply t-SNE and plot
-    tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], clusters)
-
-    # Validate the clustering
-    #The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The score ranges from -1 to 1, where:
-    # A score close to 1 indicates that the data points are well-clustered.
-    # A score close to 0 indicates overlapping clusters.
-    # A score close to -1 indicates that the data points are likely assigned to the wrong clusters.
-    
-    print(
-        f"Silhouette Score for Clustering: {silhouette_score(scaled_data[:len(cleaned_data)], clusters)}"
-    )
+    # Step 13: Apply t-SNE and plot
+    tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], best_clusters)
 
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
