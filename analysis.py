@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import save_plot
+import os
 
 
 def display_summary_statistics(data, features):
@@ -253,3 +254,47 @@ def generate_correlation_matrix(data, features):
     plt.show()
 
     return correlation_matrix
+
+
+def calculate_correlation_coefficients(data, features, business_metrics, output_dir):
+    """
+    Calculate correlation coefficients for the provided data and save the results.
+
+    :param data: DataFrame containing the data
+    :param features: List of feature columns
+    :param business_metrics: List of business metric columns
+    :param output_dir: Directory to save the output
+    :return: DataFrame of correlation coefficients
+    """
+    correlation_coefficients = data[features + business_metrics].corr()
+    print("\nCorrelation Coefficients:\n", correlation_coefficients)
+    correlation_coefficients.to_csv(
+        os.path.join(output_dir, "correlation_coefficients.csv")
+    )
+    return correlation_coefficients
+
+
+def identify_key_drivers(
+    correlation_coefficients, business_metrics, output_dir, threshold=0.5
+):
+    """
+    Identify key drivers for each business metric and save the results.
+
+    :param correlation_coefficients: DataFrame of correlation coefficients
+    :param business_metrics: List of business metric columns
+    :param output_dir: Directory to save the output
+    :param threshold: Correlation coefficient threshold to consider a variable as a key driver
+    """
+    for metric in business_metrics:
+        print(f"\nKey Drivers for {metric}:")
+        sorted_correlations = (
+            correlation_coefficients[metric].abs().sort_values(ascending=False)
+        )
+        key_drivers = sorted_correlations[
+            sorted_correlations > threshold
+        ].index.tolist()
+        key_drivers.remove(metric)  # Remove the metric itself from the list
+        print(key_drivers)
+        with open(os.path.join(output_dir, f"key_drivers_{metric}.txt"), "w") as f:
+            for driver in key_drivers:
+                f.write(f"{driver}\n")

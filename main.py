@@ -10,19 +10,12 @@ from data_preprocessing import (
 )
 from visualization import (
     plot_summary_statistics,
-    plot_pair_plots,
-    plot_all_metrics_single_chart,
-    plot_bubble_chart,
-    visualize_clusters,
-    plot_temporal_trends,
-    plot_resource_utilization_efficiency,
-    plot_cost_benefit_analysis,
-    plot_server_config_metrics,
-    plot_cost_vs_performance,
-    plot_pca_loadings,
-    plot_business_insights_with_arrows,
-    plot_cost_reduction_opportunities,
+    plot_correlation_heatmap, 
+    plot_correlation_bar, 
+    plot_pair_plots, 
+    plot_key_driver_impact
 )
+
 from clustering import (
     apply_kmeans_clustering,
     apply_pca,
@@ -40,7 +33,10 @@ from analysis import (
     generate_cluster_profiles,
     identify_best_worst_clusters,
     generate_correlation_matrix,
+    calculate_correlation_coefficients,  # Add this import
+    identify_key_drivers,  # Add this import
 )
+
 # Import silhouette_score
 from sklearn.metrics import silhouette_score
 
@@ -85,8 +81,8 @@ ADDITIONAL_METRICS = [
 
 def main():
     # File paths
-    operational_file_path = "/mnt/data/netflix_operational_metrics.csv"
-    business_file_path = "/mnt/data/netflix_business_metrics.csv"
+    operational_file_path = "data/netflix_operational_metrics.csv"
+    business_file_path = "data/netflix_business_metrics.csv"
 
     # Step 1: Read Data
     operational_data = read_csv_file(operational_file_path)
@@ -171,6 +167,41 @@ def main():
 
     # Step 13: Apply t-SNE and plot
     tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], best_clusters)
+
+    # Step 14: Correlation Analysis and Key Driver Identification
+    print("\nStep 14: Correlation Analysis and Key Driver Identification")
+
+    # Calculate correlation coefficients
+    correlation_coefficients = calculate_correlation_coefficients(
+        enriched_data, FEATURES, BUSINESS_METRICS, OUTPUT_DIR
+    )
+
+    # Identify key drivers of business metrics
+    identify_key_drivers(correlation_coefficients, BUSINESS_METRICS, OUTPUT_DIR)
+
+    # Visualize correlation heatmap
+    plot_correlation_heatmap(correlation_coefficients, OUTPUT_DIR)
+
+    # Visualize correlation bar plots for key drivers
+    plot_correlation_bar(correlation_coefficients, BUSINESS_METRICS, OUTPUT_DIR)
+
+    # Visualize pair plots for each business metric and its key drivers
+    for metric in BUSINESS_METRICS:
+        key_drivers = (
+            correlation_coefficients[metric].abs().sort_values(ascending=False)
+        )
+        key_drivers = key_drivers[key_drivers > 0.5].index.tolist()
+        key_drivers.remove(metric)
+        plot_pair_plots(enriched_data, key_drivers + [metric], OUTPUT_DIR, metric)
+
+    # Visualize key driver impact over time
+    for metric in BUSINESS_METRICS:
+        key_drivers = (
+            correlation_coefficients[metric].abs().sort_values(ascending=False)
+        )
+        key_drivers = key_drivers[key_drivers > 0.5].index.tolist()
+        key_drivers.remove(metric)
+        plot_key_driver_impact(enriched_data, key_drivers, metric, OUTPUT_DIR)
 
     # # Apply K-Means clustering
     # clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)

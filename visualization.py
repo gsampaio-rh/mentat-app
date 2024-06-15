@@ -112,6 +112,44 @@ def plot_temporal_trends(data, metrics):
     plt.show()
 
 
+def plot_correlation_bar(correlation_coefficients, business_metrics, output_dir):
+    for metric in business_metrics:
+        sorted_correlations = correlation_coefficients[metric].abs().sort_values(ascending=False)
+        sorted_correlations = sorted_correlations.drop(metric)  # Exclude the metric itself
+        fig=plt.figure(figsize=(10, 6))
+        sns.barplot(x=sorted_correlations.values, y=sorted_correlations.index)
+        plt.title(f'Correlation Coefficients for {metric}')
+        plt.xlabel('Correlation Coefficient')
+        plt.ylabel('Features')
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, f'correlation_bar_{metric}.png'))
+        save_plot(fig, f"correlation_bar_{metric}.png")
+        plt.show()
+
+
+def plot_correlation_heatmap(correlation_matrix, output_dir):
+    fig=plt.figure(figsize=(12, 10))
+    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f")
+    plt.title("Correlation Heatmap")
+    plt.tight_layout()
+    save_plot(fig, "correlation_heatmap.png")
+    plt.show()
+
+
+def plot_key_driver_impact(data, key_drivers, metric, output_dir):
+    fig=plt.figure(figsize=(12, 8))
+    for driver in key_drivers:
+        plt.plot(data["Timestamp"], data[driver], label=driver)
+    plt.xlabel("Timestamp")
+    plt.ylabel(metric)
+    plt.title(f"Impact of Key Drivers on {metric} Over Time")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"key_driver_impact_{metric}.png"))
+    save_plot(fig, f"key_driver_impact_{metric}.png")
+    plt.show()
+
+
 def plot_pair_plots(data, features):
     """
     Plot pair plots for the specified features.
