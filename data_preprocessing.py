@@ -113,3 +113,30 @@ def preprocess_for_cost_reduction(merged_df):
     ]
     avg_cost_df = cost_df.groupby("Server Configuration").mean().reset_index()
     return avg_cost_df
+
+
+def handle_outliers(df, features, method="IQR"):
+    """
+    Handle outliers in the DataFrame.
+
+    Args:
+    - df (pd.DataFrame): DataFrame containing the data.
+    - features (list): List of features to handle outliers.
+    - method (str): Method to handle outliers ('IQR' or 'z-score').
+
+    Returns:
+    - pd.DataFrame: DataFrame with outliers handled.
+    """
+    if method == "IQR":
+        for feature in features:
+            Q1 = df[feature].quantile(0.25)
+            Q3 = df[feature].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            df = df[(df[feature] >= lower_bound) & (df[feature] <= upper_bound)]
+    elif method == "z-score":
+        from scipy import stats
+
+        df = df[(np.abs(stats.zscore(df[features])) < 3).all(axis=1)]
+    return df

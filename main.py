@@ -102,19 +102,21 @@ def main():
     cleaned_data, scaled_data = clean_and_scale_data(combined_data, CLUSTERING_FEATURES)
     print("Cleaned Data Shape:", cleaned_data.shape)
 
+    # Optionally handle outliers here (if necessary)
+
     # Step 5: Display Final KPIs
     print("Data Preprocessing Completed Successfully.")
 
     # Plot summary statistics
-    plot_summary_statistics(combined_data, FEATURES + BUSINESS_METRICS)
+    plot_summary_statistics(cleaned_data, FEATURES + BUSINESS_METRICS)
 
-    # Step 7: Generate and plot correlation matrix
+    # Step 6: Generate and plot correlation matrix
     correlation_matrix = generate_correlation_matrix(
         cleaned_data, FEATURES + BUSINESS_METRICS
     )
     print("\nCorrelation Matrix:\n", correlation_matrix)
 
-    # Step 8: Plot pair plots
+    # Step 7: Plot pair plots
     plot_pair_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
 
     # Apply K-Means clustering
