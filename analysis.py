@@ -225,12 +225,22 @@ def generate_correlation_matrix(data, features):
     correlation_matrix = data[features].corr()
 
     # Plot the correlation matrix
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))  # Keep the figure size fixed
+
     sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
     ax.set_title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
 
+    # Adjust the rotation and alignment of the x-axis labels for better readability
+    plt.xticks(rotation=45, ha='right')
+
+    # Adjust the rotation and alignment of the y-axis labels if necessary
+    plt.yticks(rotation=0)
+
+    # Adjust layout to ensure everything fits well
+    plt.tight_layout()
+
     # Save the plot
     save_plot(fig, "correlation_matrix.png")
-    plt.close(fig)  # Close the figure to avoid displaying it inline
+    plt.show()
 
     return correlation_matrix

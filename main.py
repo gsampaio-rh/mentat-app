@@ -107,6 +107,18 @@ def main():
     # Plot summary statistics
     plot_summary_statistics(combined_data, FEATURES + BUSINESS_METRICS)
 
+    # Step 7: Generate and plot correlation matrix
+    correlation_matrix = generate_correlation_matrix(
+        cleaned_data, FEATURES + BUSINESS_METRICS
+    )
+    print("\nCorrelation Matrix:\n", correlation_matrix)
+
+    # Step 8: Plot pair plots
+    # plot_pair_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
+
+    # # Step 9: Plot box plots
+    # plot_box_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
+
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
 
