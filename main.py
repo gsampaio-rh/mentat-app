@@ -34,6 +34,8 @@ from analysis import (
     identify_best_worst_clusters,
     generate_correlation_matrix,
 )
+# Import silhouette_score
+from sklearn.metrics import silhouette_score
 
 import pandas as pd
 import os
@@ -127,27 +129,48 @@ def main():
     # Plot summary statistics from cleaned and enriched data
     plot_summary_statistics(
         enriched_data,
-        FEATURES
-        + BUSINESS_METRICS
-        + ADDITIONAL_METRICS,
+        FEATURES + BUSINESS_METRICS + ADDITIONAL_METRICS,
     )
 
     # Step 7: Generate and plot correlation matrix
     correlation_matrix = generate_correlation_matrix(
         enriched_data,
-        FEATURES
-        + BUSINESS_METRICS
-        + ADDITIONAL_METRICS,
+        FEATURES + BUSINESS_METRICS + ADDITIONAL_METRICS,
     )
     print("\nCorrelation Matrix:\n", correlation_matrix)
 
     # Step 8: Plot pair plots
     # plot_pair_plots(
     #     enriched_data,
-    #     FEATURES
-    #     + BUSINESS_METRICS
-    #     + ADDITIONAL_METRICS,
+    #     FEATURES + BUSINESS_METRICS + ADDITIONAL_METRICS,
     # )
+
+    # Step 9: Apply K-Means Clustering
+    # Ensure scaled_data length matches the cleaned_data index
+    clusters, kmeans_model = apply_kmeans_clustering(
+        scaled_data[: len(cleaned_data)], num_clusters=5
+    )
+    enriched_data["Cluster"] = clusters
+
+    # Step 10: Apply PCA and plot
+    pca_df, pca_model = apply_pca(scaled_data[: len(cleaned_data)], clusters)
+
+    # Step 11: Get and save PCA loadings
+    pca_loadings = get_pca_loadings(pca_model, CLUSTERING_FEATURES)
+    pca_loadings.to_csv("pca_loadings.csv")
+
+    # Step 12: Apply t-SNE and plot
+    tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], clusters)
+
+    # Validate the clustering
+    #The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The score ranges from -1 to 1, where:
+    # A score close to 1 indicates that the data points are well-clustered.
+    # A score close to 0 indicates overlapping clusters.
+    # A score close to -1 indicates that the data points are likely assigned to the wrong clusters.
+    
+    print(
+        f"Silhouette Score for Clustering: {silhouette_score(scaled_data[:len(cleaned_data)], clusters)}"
+    )
 
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)

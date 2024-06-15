@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from utils import save_plot
+from sklearn.metrics import silhouette_score
 
 
 def apply_kmeans_clustering(scaled_data, num_clusters=3):
@@ -24,6 +25,11 @@ def apply_kmeans_clustering(scaled_data, num_clusters=3):
     """
     kmeans = KMeans(n_clusters=num_clusters, random_state=42)
     clusters = kmeans.fit_predict(scaled_data)
+
+    # Calculate silhouette score
+    silhouette_avg = silhouette_score(scaled_data, clusters)
+    print(f"Silhouette Score for {num_clusters} clusters: {silhouette_avg}")
+
     return clusters, kmeans
 
 
