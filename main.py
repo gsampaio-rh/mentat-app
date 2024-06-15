@@ -203,53 +203,24 @@ def main():
         key_drivers.remove(metric)
         plot_key_driver_impact(enriched_data, key_drivers, metric, OUTPUT_DIR)
 
-    # # Apply K-Means clustering
-    # clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
+    # Step 15: Generate Optimization Recommendations
+    print("\nStep 15: Generate Optimization Recommendations")
+    cluster_profiles = generate_cluster_profiles(
+        enriched_data, FEATURES, BUSINESS_METRICS
+    )
+    recommendations = generate_optimization_recommendations(cluster_profiles)
+    with open(os.path.join(OUTPUT_DIR, "optimization_recommendations.txt"), "w") as f:
+        for recommendation in recommendations:
+            f.write(recommendation + "\n")
+    print("Optimization Recommendations:\n", "\n".join(recommendations))
 
-    # # Check the clustered data
-    # print("Clustered Data Head:\n", clustered_data[:5])  # Use slicing for numpy array
-
-    # # Add the cluster labels to the cleaned data
-    # cleaned_data["cluster"] = clustered_data
-
-    # # Verify the 'Cluster' column addition
-    # print("Cleaned Data Columns after adding 'Cluster':", cleaned_data.columns.tolist())
-
-    # # Generate cluster profiles
-    # cluster_profiles = generate_cluster_profiles(
-    #     cleaned_data, FEATURES, BUSINESS_METRICS
-    # )
-
-    # print("Cluster Profiles:\n", cluster_profiles)
-
-    # # Normalize cluster profiles for plotting
-    # normalized_cluster_profiles = normalize_data(
-    #     cluster_profiles, FEATURES + BUSINESS_METRICS
-    # )
-
-    # # Save cluster profiles
-    # cluster_profiles.to_csv(os.path.join(OUTPUT_DIR, "cluster_profiles.csv"))
-
-    # # Plot temporal trends
-    # plot_temporal_trends(business_data, BUSINESS_METRICS)
-
-    # # Visualize resource utilization efficiency
-    # avg_utilization_df = preprocess_for_utilization(combined_data)
-    # plot_resource_utilization_efficiency(avg_utilization_df)
-
-    # # Preprocess for cost reduction analysis
-    # avg_cost_df = preprocess_for_cost_reduction(combined_data)
-
-    # # Plot cost reduction opportunities
-    # plot_cost_reduction_opportunities(avg_cost_df)
-
-    # # Apply PCA and plot the results
-    # pca_df, pca = apply_pca(scaled_data, clustered_data)
-    # pca_loadings = get_pca_loadings(pca, CLUSTERING_FEATURES)
-    # print("PCA Loadings:\n", pca_loadings)
-
-    # # Save PCA loadings
-    # pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
+    # Step 16: Generate Business Insights
+    print("\nStep 16: Generate Business Insights")
+    insights = generate_business_insights(cluster_profiles)
+    with open(os.path.join(OUTPUT_DIR, "business_insights.txt"), "w") as f:
+        for insight in insights:
+            f.write(insight + "\n")
+    print("Business Insights:\n", "\n".join(insights))
 
 
 if __name__ == "__main__":
