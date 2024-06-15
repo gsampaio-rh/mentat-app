@@ -2,6 +2,7 @@
 
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import numpy as np
 
 
 def normalize_data(df, features):
@@ -139,4 +140,32 @@ def handle_outliers(df, features, method="IQR"):
         from scipy import stats
 
         df = df[(np.abs(stats.zscore(df[features])) < 3).all(axis=1)]
+    return df
+
+
+def add_new_features(df):
+    """
+    Add new features to the DataFrame.
+
+    Args:
+    - df (pd.DataFrame): DataFrame containing the original features.
+
+    Returns:
+    - pd.DataFrame: DataFrame with new features added.
+    """
+    df["CPU_to_Memory_Ratio"] = df["CPU Utilization (%)"] / df["Memory Utilization (%)"]
+    df["Disk_to_Network_Throughput_Ratio"] = (
+        df["Disk I/O Throughput (MB/s)"] / df["Network I/O Throughput (Mbps)"]
+    )
+    df["Cost_per_Satisfaction"] = (
+        df["Operational Costs ($)"] / df["Customer Satisfaction (CSAT)"]
+    )
+    df["Response_Time_per_Satisfaction"] = (
+        df["Response Time (ms)"] / df["Customer Satisfaction (CSAT)"]
+    )
+
+    # Handle potential infinite values due to division by zero
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True)
+
     return df
