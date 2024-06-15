@@ -104,6 +104,9 @@ def main():
     # Step 5: Display Final KPIs
     print("Data Preprocessing Completed Successfully.")
 
+    # Plot summary statistics
+    plot_summary_statistics(combined_data, FEATURES + BUSINESS_METRICS)
+
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
 
@@ -130,9 +133,6 @@ def main():
 
     # Save cluster profiles
     cluster_profiles.to_csv(os.path.join(OUTPUT_DIR, "cluster_profiles.csv"))
-
-    # Plot summary statistics
-    plot_summary_statistics(combined_data, FEATURES + BUSINESS_METRICS)
 
     # Plot temporal trends
     plot_temporal_trends(business_data, BUSINESS_METRICS)
