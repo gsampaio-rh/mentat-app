@@ -1,4 +1,8 @@
-# analysis_factory.py
+from analysis.correlation_analysis import CorrelationAnalysis
+from analysis.cluster_analysis import ClusteringAnalysis
+
+# Import other analysis classes as needed
+
 
 class AnalysisFactory:
     """
@@ -24,6 +28,6 @@ class AnalysisFactory:
             raise ValueError("Unknown analysis type")
 
 
-# Usage
+# Example usage
 factory = AnalysisFactory()
 analysis = factory.create_analysis("correlation")

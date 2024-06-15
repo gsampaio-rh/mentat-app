@@ -1,5 +1,33 @@
 import pandas as pd
 import logging
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
+
+def preprocess_data(operational_data, business_data):
+    """
+    Preprocess operational and business data.
+
+    Args:
+    - operational_data (pd.DataFrame): DataFrame containing the operational data.
+    - business_data (pd.DataFrame): DataFrame containing the business data.
+
+    Returns:
+    - np.array: Scaled operational data.
+    - np.array: Scaled business data.
+    """
+    try:
+        # Standardize the operational data
+        scaler = StandardScaler()
+        scaled_operational_data = scaler.fit_transform(operational_data)
+
+        # Standardize the business data
+        scaled_business_data = scaler.fit_transform(business_data)
+
+        logging.info("Data preprocessing completed successfully.")
+        return scaled_operational_data, scaled_business_data
+    except Exception as e:
+        logging.error(f"An error occurred during data preprocessing: {e}")
+        return None, None
 
 
 def handle_missing_values(data):
