@@ -112,6 +112,36 @@ def plot_temporal_trends(data, metrics):
     plt.show()
 
 
+def plot_pair_plots(data, features):
+    """
+    Plot pair plots for the specified features.
+
+    Args:
+    - data (pd.DataFrame): DataFrame containing the data.
+    - features (list): List of features to include in the pair plots.
+    """
+    # Determine the number of features
+    num_features = len(features)
+
+    # Adjust the figure size based on the number of features
+    plot_size = num_features * 1.5
+    if plot_size < 10:
+        plot_size = 10  # Ensure a minimum size
+
+    # Create pair plot
+    pair_plot = sns.pairplot(data[features], height=1.5, aspect=1.2)
+
+    # Adjust the layout to fit the screen better
+    pair_plot.fig.suptitle("Pair Plots", y=1.02)
+    pair_plot.fig.set_size_inches(
+        plot_size, plot_size * 0.75
+    )  # Reduce height for better fit
+    plt.tight_layout()
+
+    # Show the plot
+    plt.show()
+
+
 def visualize_clusters(data, cluster_labels, features):
     sns.pairplot(data[features + [cluster_labels]], hue=cluster_labels)
     plt.show()

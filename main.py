@@ -10,6 +10,7 @@ from data_preprocessing import (
 )
 from visualization import (
     plot_summary_statistics,
+    plot_pair_plots,
     plot_all_metrics_single_chart,
     plot_bubble_chart,
     visualize_clusters,
@@ -114,10 +115,7 @@ def main():
     print("\nCorrelation Matrix:\n", correlation_matrix)
 
     # Step 8: Plot pair plots
-    # plot_pair_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
-
-    # # Step 9: Plot box plots
-    # plot_box_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
+    plot_pair_plots(cleaned_data, FEATURES + BUSINESS_METRICS)
 
     # Apply K-Means clustering
     clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
