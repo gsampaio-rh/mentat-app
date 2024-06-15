@@ -187,6 +187,11 @@ def tune_kmeans_clustering(scaled_data, max_clusters=10):
             best_kmeans_model = kmeans_model
 
     # Validate the clustering
+    # The silhouette score is a measure of how similar an object is to its own cluster (cohesion) compared to other clusters (separation). The score ranges from -1 to 1, where:
+    # A score close to 1 indicates that the data points are well-clustered.
+    # A score close to 0 indicates overlapping clusters.
+    # A score close to -1 indicates that the data points are likely assigned to the wrong clusters.
+
     print(
         f"Best number of clusters: {best_num_clusters} with silhouette score: {best_silhouette_score}"
     )
@@ -209,4 +214,4 @@ def tune_kmeans_clustering(scaled_data, max_clusters=10):
     save_plot(plt.gcf(), "silhouette_scores.png")
     plt.show()
 
-    return best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_modelns.lineplot(x=list(cluster_range), y=silhouette_scores, marker="o")
+    return best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model

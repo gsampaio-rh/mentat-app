@@ -85,8 +85,8 @@ ADDITIONAL_METRICS = [
 
 def main():
     # File paths
-    operational_file_path = "data/netflix_operational_metrics.csv"
-    business_file_path = "data/netflix_business_metrics.csv"
+    operational_file_path = "/mnt/data/netflix_operational_metrics.csv"
+    business_file_path = "/mnt/data/netflix_business_metrics.csv"
 
     # Step 1: Read Data
     operational_data = read_csv_file(operational_file_path)
@@ -145,6 +145,7 @@ def main():
         FEATURES + BUSINESS_METRICS + ADDITIONAL_METRICS,
     )
     print("\nCorrelation Matrix:\n", correlation_matrix)
+    correlation_matrix.to_csv(os.path.join(OUTPUT_DIR, "correlation_matrix.csv"))
 
     # Step 8: Plot pair plots
     # plot_pair_plots(
@@ -171,53 +172,53 @@ def main():
     # Step 13: Apply t-SNE and plot
     tsne_df = apply_tsne(scaled_data[: len(cleaned_data)], best_clusters)
 
-    # Apply K-Means clustering
-    clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
+    # # Apply K-Means clustering
+    # clustered_data, kmeans_model = apply_kmeans_clustering(scaled_data, num_clusters=5)
 
-    # Check the clustered data
-    print("Clustered Data Head:\n", clustered_data[:5])  # Use slicing for numpy array
+    # # Check the clustered data
+    # print("Clustered Data Head:\n", clustered_data[:5])  # Use slicing for numpy array
 
-    # Add the cluster labels to the cleaned data
-    cleaned_data["cluster"] = clustered_data
+    # # Add the cluster labels to the cleaned data
+    # cleaned_data["cluster"] = clustered_data
 
-    # Verify the 'Cluster' column addition
-    print("Cleaned Data Columns after adding 'Cluster':", cleaned_data.columns.tolist())
+    # # Verify the 'Cluster' column addition
+    # print("Cleaned Data Columns after adding 'Cluster':", cleaned_data.columns.tolist())
 
-    # Generate cluster profiles
-    cluster_profiles = generate_cluster_profiles(
-        cleaned_data, FEATURES, BUSINESS_METRICS
-    )
+    # # Generate cluster profiles
+    # cluster_profiles = generate_cluster_profiles(
+    #     cleaned_data, FEATURES, BUSINESS_METRICS
+    # )
 
-    print("Cluster Profiles:\n", cluster_profiles)
+    # print("Cluster Profiles:\n", cluster_profiles)
 
-    # Normalize cluster profiles for plotting
-    normalized_cluster_profiles = normalize_data(
-        cluster_profiles, FEATURES + BUSINESS_METRICS
-    )
+    # # Normalize cluster profiles for plotting
+    # normalized_cluster_profiles = normalize_data(
+    #     cluster_profiles, FEATURES + BUSINESS_METRICS
+    # )
 
-    # Save cluster profiles
-    cluster_profiles.to_csv(os.path.join(OUTPUT_DIR, "cluster_profiles.csv"))
+    # # Save cluster profiles
+    # cluster_profiles.to_csv(os.path.join(OUTPUT_DIR, "cluster_profiles.csv"))
 
-    # Plot temporal trends
-    plot_temporal_trends(business_data, BUSINESS_METRICS)
+    # # Plot temporal trends
+    # plot_temporal_trends(business_data, BUSINESS_METRICS)
 
-    # Visualize resource utilization efficiency
-    avg_utilization_df = preprocess_for_utilization(combined_data)
-    plot_resource_utilization_efficiency(avg_utilization_df)
+    # # Visualize resource utilization efficiency
+    # avg_utilization_df = preprocess_for_utilization(combined_data)
+    # plot_resource_utilization_efficiency(avg_utilization_df)
 
-    # Preprocess for cost reduction analysis
-    avg_cost_df = preprocess_for_cost_reduction(combined_data)
+    # # Preprocess for cost reduction analysis
+    # avg_cost_df = preprocess_for_cost_reduction(combined_data)
 
-    # Plot cost reduction opportunities
-    plot_cost_reduction_opportunities(avg_cost_df)
+    # # Plot cost reduction opportunities
+    # plot_cost_reduction_opportunities(avg_cost_df)
 
-    # Apply PCA and plot the results
-    pca_df, pca = apply_pca(scaled_data, clustered_data)
-    pca_loadings = get_pca_loadings(pca, CLUSTERING_FEATURES)
-    print("PCA Loadings:\n", pca_loadings)
+    # # Apply PCA and plot the results
+    # pca_df, pca = apply_pca(scaled_data, clustered_data)
+    # pca_loadings = get_pca_loadings(pca, CLUSTERING_FEATURES)
+    # print("PCA Loadings:\n", pca_loadings)
 
-    # Save PCA loadings
-    pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
+    # # Save PCA loadings
+    # pca_loadings.to_csv(os.path.join(OUTPUT_DIR, "pca_loadings.csv"))
 
 
 if __name__ == "__main__":
