@@ -15,9 +15,19 @@ def normalize_data(df, features):
     Returns:
     - pd.DataFrame: DataFrame with normalized features.
     """
+    # Initial Data Description
+    initial_description = df[features].describe()
+    print(f"Initial Data Description:\n{initial_description}")
+
+    # Normalizing Data
     df_normalized = df.copy()
     scaler = MinMaxScaler()
     df_normalized[features] = scaler.fit_transform(df_normalized[features])
+
+    # Final Data Description
+    final_description = df_normalized[features].describe()
+    print(f"Final Data Description:\n{final_description}")
+
     return df_normalized
 
 
