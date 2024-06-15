@@ -1,49 +1,66 @@
+
 # Mentat Server Metrics Analysis
-
-This project simulates and analyzes server metrics to provide actionable business insights. The analysis includes clustering server performance data, correlating it with business metrics, and generating recommendations for optimization.
-
-## Table of Contents
-
-- [Mentat Server Metrics Analysis](#mentat-server-metrics-analysis)
-  - [Table of Contents](#table-of-contents)
-  - [Introduction](#introduction)
-  - [Data Simulation](#data-simulation)
-  - [Analysis Workflow](#analysis-workflow)
-  - [Features](#features)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Results](#results)
-  - [Contributing](#contributing)
-  - [License](#license)
 
 ## Introduction
 
-This project aims to generate realistic server metrics, perform clustering analysis, and derive business insights. It helps identify optimization opportunities and understand the correlation between server performance and business metrics.
+This project aims to simulate and analyze server metrics to provide actionable business insights. The analysis includes clustering server performance data, correlating it with business metrics, and generating recommendations for optimization.
+
+## Business Objectives
+
+The main objectives of this project are:
+
+1. To identify optimization opportunities within server operations.
+2. To understand the correlation between server performance and business metrics.
+3. To generate actionable insights and recommendations for improving operational efficiency and customer satisfaction.
+4. To explain and demonstrate this analysis process in a way that is understandable for non-data science people.
+
+## Problem Definition
+
+The specific problem this project aims to solve is to:
+
+- Analyze server performance data to identify patterns and correlations.
+- Group servers with similar performance characteristics using clustering techniques.
+- Provide insights and recommendations based on the analysis to optimize server operations and improve key business metrics such as customer satisfaction and operational costs.
+
+## Key Metrics
+
+The key metrics to be analyzed in this project include:
+
+1. **Operational Metrics:**
+   - CPU Utilization (%)
+   - Memory Utilization (%)
+   - Network I/O Throughput (Mbps)
+   - Disk I/O Throughput (MB/s)
+
+2. **Business Metrics:**
+   - Customer Satisfaction (CSAT)
+   - Operational Costs ($)
+   - Service Uptime (%)
+   - Response Time (ms)
 
 ## Data Simulation
 
-The script simulates operational and business metrics for servers, including:
-
-- **Operational Metrics**: CPU Utilization, Memory Utilization, Network I/O Throughput, Disk I/O Throughput.
-- **Business Metrics**: Customer Satisfaction (CSAT), Operational Costs, Service Uptime, Response Time.
+The project simulates realistic server metrics data to perform the analysis. The data includes both operational and business metrics for a comprehensive understanding of server performance and its impact on business outcomes.
 
 ## Analysis Workflow
 
-1. **Data Reading**: Reads operational and business metrics from CSV files.
-2. **Data Merging**: Merges operational and business data for comprehensive analysis.
-3. **Correlation Analysis**: Generates a correlation matrix between server performance and business metrics.
-4. **Clustering**: Applies K-Means clustering to group server performance data.
-5. **Profile Generation**: Creates profiles for each cluster based on average metrics.
-6. **Insights Generation**: Provides optimization recommendations and business insights.
-7. **Visualization**: Plots key metrics, temporal trends, and cluster insights.
+1. **Data Reading:** Reads operational and business metrics from CSV files.
+2. **Data Merging:** Merges operational and business data for comprehensive analysis.
+3. **Correlation Analysis:** Generates a correlation matrix between server performance and business metrics.
+4. **Clustering:** Applies K-Means clustering to group server performance data.
+5. **Profile Generation:** Creates profiles for each cluster based on average metrics.
+6. **Insights Generation:** Provides optimization recommendations and business insights.
+7. **Visualization:** Plots key metrics, temporal trends, and cluster insights.
 
-## Features
+## Results
 
-- **Simulated Data**: Generates realistic server metrics data.
-- **Clustering**: Identifies clusters of server performance.
-- **Correlation Analysis**: Analyzes the relationship between operational metrics and business outcomes.
-- **Optimization Recommendations**: Provides actionable insights for each cluster.
-- **Visualization**: Visualizes data trends and insights.
+The analysis provides:
+
+- A correlation matrix between server performance and business metrics.
+- Temporal trends of key business metrics.
+- Profiles for each cluster.
+- Best and worst performing clusters.
+- Optimization recommendations and business insights.
 
 ## Installation
 
@@ -62,27 +79,17 @@ The script simulates operational and business metrics for servers, including:
 
 ## Usage
 
-1. **Generate Data**: Run the script to generate simulated data.
+1. **Generate Data:** Run the script to generate simulated data.
 
     ```sh
     python generate_data.py
     ```
 
-2. **Run Analysis**: Execute the main analysis script.
+2. **Run Analysis:** Execute the main analysis script.
 
     ```sh
     python main.py
     ```
-
-## Results
-
-The analysis provides:
-
-- Correlation matrix between server performance and business metrics.
-- Temporal trends of key business metrics.
-- Profiles for each cluster.
-- Best and worst performing clusters.
-- Optimization recommendations and business insights.
 
 ## Contributing
 
