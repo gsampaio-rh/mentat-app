@@ -216,22 +216,31 @@ def generate_correlation_matrix(data, features):
     Returns:
     - pd.DataFrame: DataFrame containing the correlation matrix.
     """
-    # Check if the specified features are in the DataFrame
-    for feature in features:
-        if feature not in data.columns:
-            raise ValueError(f"Feature '{feature}' not found in data columns")
-
-    # Calculate the correlation matrix
     correlation_matrix = data[features].corr()
 
     # Plot the correlation matrix
     fig, ax = plt.subplots(figsize=(12, 8))  # Keep the figure size fixed
 
-    sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5, ax=ax)
+    sns.heatmap(
+        correlation_matrix,
+        annot=True,
+        cmap="coolwarm",
+        linewidths=0.5,
+        ax=ax,
+        cbar_kws={"label": "Correlation Coefficient"},
+    )
     ax.set_title("Correlation Matrix of Business Metrics and Resources", fontsize=16)
 
+    # Add custom color bar label
+    cbar = ax.collections[0].colorbar
+    cbar.set_label(
+        "Correlation Coefficient\n(Higher positive correlation to Higher inverse correlation)",
+        rotation=270,
+        labelpad=30,
+    )
+
     # Adjust the rotation and alignment of the x-axis labels for better readability
-    plt.xticks(rotation=45, ha='right')
+    plt.xticks(rotation=45, ha="right")
 
     # Adjust the rotation and alignment of the y-axis labels if necessary
     plt.yticks(rotation=0)
