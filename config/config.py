@@ -9,15 +9,16 @@ class Config:
 
     # Directory settings
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATA_DIR = os.path.join(BASE_DIR, "data")
-    OUTPUT_DIR = os.path.join(BASE_DIR, "output")
+    PROJECT_DIR = os.path.dirname(BASE_DIR)  # Parent directory of the config directory
+    DATA_DIR = os.path.join(PROJECT_DIR, "data")
+    OUTPUT_DIR = os.path.join(PROJECT_DIR, "output")
 
     # File paths
     OPERATIONAL_FILE = os.path.join(DATA_DIR, "netflix_operational_metrics.csv")
     BUSINESS_FILE = os.path.join(DATA_DIR, "netflix_business_metrics.csv")
 
     # Logging settings
-    LOG_FILE = os.path.join(BASE_DIR, "app.log")
+    LOG_FILE = os.path.join(PROJECT_DIR, "app.log")
 
     @staticmethod
     def setup_logging():

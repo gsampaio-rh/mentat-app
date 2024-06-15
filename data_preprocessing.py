@@ -12,16 +12,26 @@ def preprocess_data(operational_data, business_data):
     - business_data (pd.DataFrame): DataFrame containing the business data.
 
     Returns:
-    - np.array: Scaled operational data.
-    - np.array: Scaled business data.
+    - pd.DataFrame: Scaled operational data.
+    - pd.DataFrame: Scaled business data.
     """
     try:
-        # Standardize the operational data
-        scaler = StandardScaler()
-        scaled_operational_data = scaler.fit_transform(operational_data)
+        # Identify numeric columns
+        numeric_operational_data = operational_data.select_dtypes(include=[float, int])
+        numeric_business_data = business_data.select_dtypes(include=[float, int])
 
-        # Standardize the business data
-        scaled_business_data = scaler.fit_transform(business_data)
+        # Standardize the numeric operational data
+        scaler = StandardScaler()
+        scaled_operational_data = pd.DataFrame(
+            scaler.fit_transform(numeric_operational_data),
+            columns=numeric_operational_data.columns,
+        )
+
+        # Standardize the numeric business data
+        scaled_business_data = pd.DataFrame(
+            scaler.fit_transform(numeric_business_data),
+            columns=numeric_business_data.columns,
+        )
 
         logging.info("Data preprocessing completed successfully.")
         return scaled_operational_data, scaled_business_data
