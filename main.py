@@ -31,34 +31,46 @@ def main():
 
     # Preprocess data
     logging.info("Preprocessing data...")
-    scaled_operational_data, scaled_business_data = preprocess_data(
-        operational_data, business_data
-    )
-    if scaled_operational_data is None or scaled_business_data is None:
+    combined_data = preprocess_data(operational_data, business_data)
+    if combined_data is None:
         logging.error("Data preprocessing failed. Exiting.")
         return
+
+    # Print combined data columns for debugging
+    print("Combined data columns:", combined_data.columns.tolist())
 
     # Perform clustering analysis
     logging.info("Performing clustering analysis...")
     clustering = Clustering()
-    clusters, kmeans_model = clustering.apply_kmeans_clustering(scaled_operational_data)
-    pca_df, pca_model = clustering.apply_pca(scaled_operational_data, clusters)
-    tsne_df = clustering.apply_tsne(scaled_operational_data, clusters)
+    clusters, kmeans_model = clustering.apply_kmeans_clustering(combined_data)
+    pca_df, pca_model = clustering.apply_pca(combined_data, clusters)
+    tsne_df = clustering.apply_tsne(combined_data, clusters)
     best_num_clusters, best_silhouette_score, best_clusters, best_kmeans_model = (
-        clustering.tune_kmeans_clustering(scaled_operational_data)
+        clustering.tune_kmeans_clustering(combined_data)
     )
+    logging.info(
+        f"Best number of clusters: {best_num_clusters} with Silhouette Score: {best_silhouette_score}"
+    )
+
+    # Enrich combined data with cluster labels
+    combined_data["Cluster"] = clusters
 
     # Perform other analyses
     logging.info("Performing other analyses...")
     analysis_factory = AnalysisFactory()
+
+    # Ensure analysis types are correct
     summary_statistics = analysis_factory.create_analysis(
         "stat"
     ).display_summary_statistics(operational_data, operational_data.columns.tolist())
     cluster_profiles = analysis_factory.create_analysis(
         "cluster"
     ).generate_cluster_profiles(
-        pca_df, operational_data.columns.tolist(), business_data.columns.tolist()
+        combined_data, operational_data.columns.tolist(), business_data.columns.tolist()
     )
+    if cluster_profiles is None:
+        logging.error("Cluster profile generation failed. Exiting.")
+        return
 
     # Generate recommendations and insights
     logging.info("Generating recommendations and insights...")

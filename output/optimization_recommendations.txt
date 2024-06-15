@@ -1,6 +1,0 @@
-Cluster 0.0 Recommendations:
-- Customer satisfaction is low. Investigate and address customer issues.
-- Service uptime is below the target. Improve system reliability.
-Cluster 1.0 Recommendations:
-- Customer satisfaction is low. Investigate and address customer issues.
-- Service uptime is below the target. Improve system reliability.

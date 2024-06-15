@@ -12,8 +12,7 @@ def preprocess_data(operational_data, business_data):
     - business_data (pd.DataFrame): DataFrame containing the business data.
 
     Returns:
-    - pd.DataFrame: Scaled operational data.
-    - pd.DataFrame: Scaled business data.
+    - pd.DataFrame: Scaled combined data.
     """
     try:
         # Identify numeric columns
@@ -33,11 +32,19 @@ def preprocess_data(operational_data, business_data):
             columns=numeric_business_data.columns,
         )
 
+        # Merge the scaled operational and business data
+        combined_data = pd.merge(
+            scaled_operational_data,
+            scaled_business_data,
+            left_index=True,
+            right_index=True,
+        )
+
         logging.info("Data preprocessing completed successfully.")
-        return scaled_operational_data, scaled_business_data
+        return combined_data
     except Exception as e:
         logging.error(f"An error occurred during data preprocessing: {e}")
-        return None, None
+        return None
 
 
 def handle_missing_values(data):

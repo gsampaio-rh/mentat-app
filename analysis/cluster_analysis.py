@@ -33,6 +33,13 @@ class ClusteringAnalysis:
         }
 
         try:
+            # Verify column names
+            expected_columns = features + business_metrics
+            missing_columns = [col for col in expected_columns if col not in enriched_data.columns]
+            if missing_columns:
+                logging.error(f"Missing columns in enriched_data: {missing_columns}")
+                return pd.DataFrame()
+
             for cluster_id in enriched_data["Cluster"].unique():
                 cluster_data = enriched_data[enriched_data["Cluster"] == cluster_id]
                 profile = default_profile.copy()
